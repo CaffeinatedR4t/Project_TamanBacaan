@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.project.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.R
 import com.project.tamanbacaan.models.Book
 
 class BookAdapter(private val books: List<Book>) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {

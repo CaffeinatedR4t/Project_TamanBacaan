@@ -5,10 +5,10 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import com.project.tamanbacaan.R
-import com.project.tamanbacaan.fragments.HomeFragment
-import com.project.tamanbacaan.fragments.SearchFragment
-import com.project.tamanbacaan.fragments.BookmarkFragment
+import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.BookmarkFragment
 
 class MainActivity : AppCompatActivity() {
 

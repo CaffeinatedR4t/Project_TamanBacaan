@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="primary_background">#0F2B3C</color>
+    <color name="card_background">#1A3A4A</color>
+    <color name="white">#FFFFFF</color>
+    <color name="text_secondary">#8A9BA8</color>
+    <color name="accent_green">#4CAF50</color>
+    <color name="gift_background">#FF6B9D</color>
 </resources>
