@@ -4,34 +4,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F2B3C">
+    android:background="@color/background_light">
 
-    <!-- Top Bar with Settings -->
+    <!-- Top Bar -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
-        android:gravity="end|center_vertical"
+        android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
+        android:background="@color/primary_blue"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/btnNotification"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_notifications"
-            android:layout_marginEnd="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp" />
+        <TextView
+            android:id="@+id/appTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="TamanBacaan"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
         <ImageView
-            android:id="@+id/btnSettings"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_settings"
+            android:id="@+id/btnProfile"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_profile"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="4dp" />
+            android:padding="4dp"
+            app:tint="@color/white" />
     </LinearLayout>
 
     <!-- Fragment Container -->
@@ -44,17 +47,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation (3 Tabs Only) -->
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:orientation="horizontal"
-        android:background="#0F2B3C"
+        android:background="@color/white"
         android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Home Button -->
+        <!-- Home Tab -->
         <LinearLayout
             android:id="@+id/btnHome"
             android:layout_width="0dp"
@@ -65,21 +68,23 @@
             android:background="?attr/selectableItemBackground">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_home"
-                app:tint="#FFFFFF" />
+            android:id="@+id/homeTabIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_home"
+            app:tint="@color/primary_blue" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="For You"
-                android:textColor="#FFFFFF"
-                android:textSize="10sp"
-                android:layout_marginTop="2dp" />
+            android:id="@+id/homeTabText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Home"
+            android:textColor="@color/primary_blue"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp" />
         </LinearLayout>
 
-        <!-- Search Button -->
+        <!-- Search Tab -->
         <LinearLayout
             android:id="@+id/btnSearch"
             android:layout_width="0dp"
@@ -90,71 +95,23 @@
             android:background="?attr/selectableItemBackground">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_search"
-                app:tint="#8A9BA8" />
+            android:id="@+id/searchTabIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_search"
+            app:tint="@color/text_secondary" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Shorts"
-                android:textColor="#8A9BA8"
-                android:textSize="10sp"
-                android:layout_marginTop="2dp" />
+            android:id="@+id/searchTabText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Search"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp" />
         </LinearLayout>
 
-        <!-- Add Button -->
-        <LinearLayout
-            android:id="@+id/btnAdd"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="?attr/selectableItemBackground">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_add"
-                app:tint="#8A9BA8" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Create"
-                android:textColor="#8A9BA8"
-                android:textSize="10sp"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Explore Button -->
-        <LinearLayout
-            android:id="@+id/btnExplore"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="?attr/selectableItemBackground">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_explore"
-                app:tint="#8A9BA8" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Explore"
-                android:textColor="#8A9BA8"
-                android:textSize="10sp"
-                android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Bookmark Button -->
+        <!-- Bookmark Tab -->
         <LinearLayout
             android:id="@+id/btnBookmark"
             android:layout_width="0dp"
@@ -165,18 +122,20 @@
             android:background="?attr/selectableItemBackground">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_bookmark"
-                app:tint="#8A9BA8" />
+                android:id="@+id/bookmarkTabIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_bookmark"
+            app:tint="@color/text_secondary" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="My Library"
-                android:textColor="#8A9BA8"
-                android:textSize="10sp"
-                android:layout_marginTop="2dp" />
+                android:id="@+id/bookmarkTabText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="My Books"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,8 +6,29 @@ data class Book(
     val author: String,
     val description: String,
     val coverUrl: String,
-    val readingTime: String,
-    val chapters: Int,
     val category: String,
-    var isBookmarked: Boolean = false
-)
+    var isBookmarked: Boolean = false,
+    var isAvailable: Boolean = true,
+    var isBorrowed: Boolean = false,
+    val isbn: String = "",
+    val publicationYear: Int = 0,
+    val borrowedDate: String? = null,
+    val dueDate: String? = null
+) {
+
+    fun getAvailabilityStatus(): String {
+        return when {
+            isBorrowed -> "Borrowed by you"
+            !isAvailable -> "Not Available"
+            else -> "Available"
+        }
+    }
+
+    fun getStatusColor(): Int {
+        return when {
+            isBorrowed -> android.R.color.holo_orange_dark
+            !isAvailable -> android.R.color.holo_red_dark
+            else -> android.R.color.holo_green_dark
+        }
+    }
+}
