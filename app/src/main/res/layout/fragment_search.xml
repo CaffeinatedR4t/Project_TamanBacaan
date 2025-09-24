@@ -1,19 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0F2B3C"
+    android:background="@color/background_light"
     android:padding="16dp">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Search Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:background="#DDDDDD"
+        android:padding="8dp"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false">
+
+        <!-- Icon Search -->
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_search"
+            app:tint="#444444" />
+
+        <!-- EditText Pencarian -->
+        <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Cari buku..."
+            android:textColor="#222222"
+            android:textColorHint="#777777"
+            android:background="@android:color/transparent"
+            android:paddingStart="8dp"
+            android:inputType="text" />
+    </LinearLayout>
+
+    <!-- Dummy List Buku -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Search Fragment"
-        android:textColor="#FFFFFF"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_gravity="center"
-        android:layout_marginTop="100dp" />
+        android:orientation="vertical"
+        android:layout_marginTop="16dp">
+
+        <!-- Item Buku 1 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="#E0E0E0"
+            android:text="📘 To Kill a Mockingbird"
+            android:textColor="#222222"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Item Buku 2 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="#E0E0E0"
+            android:text="📗 The Great Gatsby"
+            android:textColor="#222222"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Item Buku 3 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:background="#E0E0E0"
+            android:text="📙 Pride and Prejudice"
+            android:textColor="#222222"
+            android:layout_marginBottom="8dp" />
+
+    </LinearLayout>
 
 </LinearLayout>

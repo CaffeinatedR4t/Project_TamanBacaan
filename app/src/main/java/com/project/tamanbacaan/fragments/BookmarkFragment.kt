@@ -14,9 +14,6 @@ class BookmarkFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Create a simple layout for now
-        return inflater.inflate(android.R.layout.simple_list_item_1, container, false).apply {
-            findViewById<android.widget.TextView>(android.R.id.text1).text = "Bookmark Fragment"
-        }
+        return inflater.inflate(R.layout.fragment_bookmark, container, false)
     }
 }
