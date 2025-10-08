@@ -1,5 +1,6 @@
-package com.project.tamanbacaan.activities
+package com.caffeinatedr4t.tamanbacaan.activities // KOREKSI PACKAGE
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -9,10 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import com.project.tamanbacaan.fragments.HomeFragment
-import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
+import com.caffeinatedr4t.tamanbacaan.R // R class sudah benar
 import com.caffeinatedr4t.tamanbacaan.fragments.BookmarkFragment
-import com.caffeinatedr4t.tamanbacaan.R // Ensure this is your app's R class
+import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
+import com.caffeinatedr4t.tamanbacaan.utils.NotificationHelper
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,14 +24,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // --- BARU: Inisialisasi Channel Notifikasi (Req. 9) ---
+        NotificationHelper.createNotificationChannel(this)
+        // Jika Anda ingin mengarahkan pengguna ke LoginActivity dulu:
+        // startActivity(Intent(this, LoginActivity::class.java))
+        // finish()
+        // -----------------------------------------------------
+
         // Load home fragment by default
         loadFragment(HomeFragment())
-        updateTabSelection(0) // Will call the updated setTabActive/Inactive
+        updateTabSelection(0)
 
         // Set up bottom navigation
         setupBottomNavigation()
     }
-
+    // ... (setupBottomNavigation, loadFragment, updateTabSelection, setTabActive, setTabInactive tetap sama)
     private fun setupBottomNavigation() {
         findViewById<View>(R.id.btnHome).setOnClickListener {
             if (currentTabIndex != 0) {

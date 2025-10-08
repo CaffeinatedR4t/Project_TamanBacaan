@@ -1,4 +1,4 @@
-package com.project.tamanbacaan.models
+package com.caffeinatedr4t.tamanbacaan.models
 
 data class Book(
     val id: String,
@@ -13,7 +13,12 @@ data class Book(
     val isbn: String = "",
     val publicationYear: Int = 0,
     val borrowedDate: String? = null,
-    val dueDate: String? = null
+    val dueDate: String? = null,
+    // --- BARU UNTUK REQ. 4 & 8 ---
+    val avgRating: Float = 0.0f,
+    val totalReviews: Int = 0,
+    val synopsis: String = description
+    // ----------------------------
 ) {
 
     fun getAvailabilityStatus(): String {

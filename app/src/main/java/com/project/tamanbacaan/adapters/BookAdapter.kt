@@ -1,5 +1,6 @@
-package com.caffeinatedr4t.tamanbacaan.adapters
+package com.caffeinatedr4t.tamanbacaan.adapters // KOREKSI PACKAGE
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,7 +10,9 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
-import com.project.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
+import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 
 class BookAdapter(
     private val books: List<Book>,
@@ -70,10 +73,15 @@ class BookAdapter(
             )
 
             // Click listeners
-            itemView.setOnClickListener { onBookClick(book) }
+            itemView.setOnClickListener {
+                // Arahkan ke BookDetailActivity (Req. 4)
+                val intent = Intent(itemView.context, BookDetailActivity::class.java)
+                intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
+                itemView.context.startActivity(intent)
+            }
 
             actionButton.setOnClickListener {
-                // Handle borrow/return action
+                // Handle borrow/return action (Req. 5 & 7, simulasi)
                 handleBookAction(book)
             }
 
