@@ -13,10 +13,6 @@
         android:icon="@drawable/ic_add"
         android:title="Pinjaman" />
     <item
-        android:id="@+id/nav_admin_verification"
-        android:icon="@drawable/ic_notifications"
-        android:title="Verifikasi" />
-    <item
         android:id="@+id/nav_admin_reports"
         android:icon="@drawable/ic_settings"
         android:title="Laporan" />

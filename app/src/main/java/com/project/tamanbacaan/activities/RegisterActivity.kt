@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
-import com.caffeinatedr4t.tamanbacaan.data.RegistrationRequest // Import Model
 
 class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +27,6 @@ class RegisterActivity : AppCompatActivity() {
         val btnRegister: Button = findViewById(R.id.btnRegister)
         val tvLogin: TextView = findViewById(R.id.tvLogin)
 
-        // Tampilkan/Sembunyikan input nama orang tua berdasarkan status anak
         cbIsChild.setOnCheckedChangeListener { _, isChecked ->
             etParentName.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (!isChecked) etParentName.text.clear()
@@ -53,24 +51,18 @@ class RegisterActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // SIMULASI PANGGIL REPOSITORY UNTUK MENYIMPAN REQUEST
-            val request = RegistrationRequest(
-                requestId = "", // ID akan diisi oleh Repository
-                fullName = fullName,
-                nik = nik,
-                isChild = isChild,
-                parentName = parentName,
-                addressRtRw = address,
-                requestDate = "Hari Ini"
+            // FIX: Langsung register dan aktifkan pengguna
+            val newUser = BookRepository.registerNewMember(
+                fullName, nik, email, address, isChild, parentName
             )
 
-            if (BookRepository.addRegistrationRequest(request)) {
-                Toast.makeText(this, "Pendaftaran berhasil dikirim. Menunggu verifikasi oleh Pengelola TBM.", Toast.LENGTH_LONG).show()
+            if (newUser != null) {
+                Toast.makeText(this, "Pendaftaran Berhasil! Silakan Login dengan Email Anda.", Toast.LENGTH_LONG).show()
             } else {
-                Toast.makeText(this, "Gagal mengirim pendaftaran. Coba lagi.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gagal: Email atau NIK sudah terdaftar.", Toast.LENGTH_SHORT).show()
             }
 
-            // Setelah pendaftaran berhasil/dikirim, kembali ke halaman login
+            // Kembali ke halaman login
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
             finish()

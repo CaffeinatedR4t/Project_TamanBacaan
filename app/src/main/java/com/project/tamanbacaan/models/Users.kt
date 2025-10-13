@@ -6,8 +6,9 @@ data class User(
     val email: String,
     val nik: String,
     val addressRtRw: String,
-    val role: String = "member", // "member" atau "admin"
-    val status: String = "Active", // "Active" atau "Pending Verification"
+    val role: String = "member",
+    val status: String = "Active",
     val isChild: Boolean = false,
-    val parentName: String? = null
+    val parentName: String? = null,
+    val isVerified: Boolean = false // BARU: Status Verifikasi RT/RW
 )

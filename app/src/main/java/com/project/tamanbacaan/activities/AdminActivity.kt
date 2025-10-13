@@ -1,16 +1,14 @@
 package com.caffeinatedr4t.tamanbacaan.activities
 
 import android.os.Bundle
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan.fragments.admin.AdminProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.BookManagementFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.ReportFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.TransactionManagementFragment
-import com.caffeinatedr4t.tamanbacaan.fragments.admin.VerificationRequestsFragment
-import com.caffeinatedr4t.tamanbacaan.fragments.admin.MemberManagementFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.admin.MemberManagementFragment // Member Management digunakan untuk Verifikasi RT/RW
+// REMOVED: import com.caffeinatedr4t.tamanbacaan.fragments.admin.VerificationRequestsFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class AdminActivity : AppCompatActivity() {
@@ -19,7 +17,7 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
-        val btnProfile = findViewById<ImageView>(R.id.btnAdminProfile)
+
         val bottomNav = findViewById<BottomNavigationView>(R.id.adminBottomNav)
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -27,7 +25,7 @@ class AdminActivity : AppCompatActivity() {
                     loadFragment(BookManagementFragment())
                     true
                 }
-                R.id.nav_admin_members -> { // Manajemen Anggota (CRUD Anggota)
+                R.id.nav_admin_members -> { // Manajemen Anggota (CRUD + Verifikasi RT/RW)
                     loadFragment(MemberManagementFragment())
                     true
                 }
@@ -35,10 +33,7 @@ class AdminActivity : AppCompatActivity() {
                     loadFragment(TransactionManagementFragment())
                     true
                 }
-                R.id.nav_admin_verification -> { // BARU: Verifikasi Registrasi
-                    loadFragment(VerificationRequestsFragment())
-                    true
-                }
+                // REMOVED: nav_admin_verification
                 R.id.nav_admin_reports -> {
                     loadFragment(ReportFragment())
                     true
@@ -46,11 +41,7 @@ class AdminActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        // Tombol Profil di TopBar
-        btnProfile.setOnClickListener {
-            loadFragment(AdminProfileFragment())
-        }
-        // Load default fragment
+
         if (savedInstanceState == null) {
             bottomNav.selectedItemId = R.id.nav_admin_books
         }
