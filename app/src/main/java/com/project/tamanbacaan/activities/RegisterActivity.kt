@@ -10,6 +10,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
+import com.caffeinatedr4t.tamanbacaan.data.RegistrationRequest // Import Model
 
 class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,7 +28,7 @@ class RegisterActivity : AppCompatActivity() {
         val btnRegister: Button = findViewById(R.id.btnRegister)
         val tvLogin: TextView = findViewById(R.id.tvLogin)
 
-        // 🔹 Sembunyikan field nama orang tua jika bukan anak
+        // Tampilkan/Sembunyikan input nama orang tua berdasarkan status anak
         cbIsChild.setOnCheckedChangeListener { _, isChecked ->
             etParentName.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (!isChecked) etParentName.text.clear()
@@ -41,28 +43,35 @@ class RegisterActivity : AppCompatActivity() {
             val isChild = cbIsChild.isChecked
             val parentName = if (isChild) etParentName.text.toString() else null
 
-            // 🔸 Validasi dasar
+            // Validasi Dasar
             if (fullName.isEmpty() || nik.length != 16 || email.isEmpty() || password.isEmpty() || address.isEmpty()) {
-                Toast.makeText(this, "Lengkapi semua data dengan benar (NIK harus 16 digit).", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Mohon lengkapi semua data dengan benar. Pastikan NIK 16 digit.", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
             if (isChild && parentName.isNullOrEmpty()) {
-                Toast.makeText(this, "Nama Orang Tua wajib diisi untuk anak.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Nama Orang Tua wajib diisi untuk pendaftaran Anak.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // SIMULASI REGISTRASI dengan NIK KTP / NIK Orang Tua
-            // Di sini Anda akan memanggil Retrofit ApiService.register(RegisterRequest)
-            Toast.makeText(this, "Pendaftaran sedang diproses dengan NIK: $nik. Mohon tunggu verifikasi oleh Pengelola TBM.", Toast.LENGTH_LONG).show()
+            // SIMULASI PANGGIL REPOSITORY UNTUK MENYIMPAN REQUEST
+            val request = RegistrationRequest(
+                requestId = "", // ID akan diisi oleh Repository
+                fullName = fullName,
+                nik = nik,
+                isChild = isChild,
+                parentName = parentName,
+                addressRtRw = address,
+                requestDate = "Hari Ini"
+            )
 
-            // 🔸 Kirim data user baru ke LoginActivity
-            val intent = Intent(this, LoginActivity::class.java).apply {
-                putExtra("REGISTERED_NAME", fullName)
-                putExtra("REGISTERED_EMAIL", email)
-                putExtra("REGISTERED_PASSWORD", password)
-                putExtra("REGISTERED_NIK", nik)
-                putExtra("REGISTERED_ADDRESS", address)
+            if (BookRepository.addRegistrationRequest(request)) {
+                Toast.makeText(this, "Pendaftaran berhasil dikirim. Menunggu verifikasi oleh Pengelola TBM.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Gagal mengirim pendaftaran. Coba lagi.", Toast.LENGTH_SHORT).show()
             }
+
+            // Setelah pendaftaran berhasil/dikirim, kembali ke halaman login
+            val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
             finish()
         }

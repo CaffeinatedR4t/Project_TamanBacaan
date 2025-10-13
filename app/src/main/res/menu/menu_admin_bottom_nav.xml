@@ -5,9 +5,17 @@
         android:icon="@drawable/ic_explore"
         android:title="Buku" />
     <item
-        android:id="@+id/nav_admin_transactions"
-        android:icon="@drawable/ic_search"
-        android:title="Transaksi" />
+        android:id="@+id/nav_admin_members"
+        android:icon="@drawable/ic_profile"
+        android:title="Anggota" />
+    <item
+        android:id="@+id/nav_admin_requests"
+        android:icon="@drawable/ic_add"
+        android:title="Pinjaman" />
+    <item
+        android:id="@+id/nav_admin_verification"
+        android:icon="@drawable/ic_notifications"
+        android:title="Verifikasi" />
     <item
         android:id="@+id/nav_admin_reports"
         android:icon="@drawable/ic_settings"

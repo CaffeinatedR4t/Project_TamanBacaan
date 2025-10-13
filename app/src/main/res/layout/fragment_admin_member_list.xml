@@ -7,6 +7,7 @@
     android:background="@color/background_light">
 
     <TextView
+        android:id="@+id/tvListTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Daftar Anggota TBM"
@@ -15,7 +16,6 @@
         android:textColor="@color/text_primary"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Daftar Anggota -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewMembers"
         android:layout_width="match_parent"
