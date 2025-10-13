@@ -4,19 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.ListView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.adapters.PendingRequestAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.data.PendingRequest
 
 class TransactionManagementFragment : Fragment() {
 
-    private lateinit var recyclerView: RecyclerView
-    // Untuk demo cepat, kita gunakan ListView atau ArrayAdapter sederhana.
-    private lateinit var listViewMembers: ListView
+    private lateinit var recyclerViewRequests: RecyclerView
+    private lateinit var requestAdapter: PendingRequestAdapter
+    private val pendingRequests = mutableListOf<PendingRequest>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -27,18 +28,51 @@ class TransactionManagementFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Menggunakan ListView untuk menampilkan daftar anggota
-        listViewMembers = view.findViewById(R.id.recyclerViewMembers) as ListView
+        recyclerViewRequests = view.findViewById(R.id.recyclerViewMembers)
 
-        // Ambil data anggota simulasi
-        val memberList = BookRepository.getSampleMembers()
+        setupRecyclerView()
+        loadPendingRequests()
+    }
 
-        val adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_list_item_1,
-            memberList
+    private fun setupRecyclerView() {
+        // Menggunakan Adapter Permintaan Baru
+        requestAdapter = PendingRequestAdapter(pendingRequests,
+            onApprove = { request -> handleApproval(request, true) },
+            onReject = { request -> handleApproval(request, false) }
         )
 
-        listViewMembers.adapter = adapter
+        recyclerViewRequests.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = requestAdapter
+        }
+    }
+
+    // Memuat daftar Permintaan Pinjaman Tertunda (Request -> Approval)
+    private fun loadPendingRequests() {
+        val requests = BookRepository.getPendingRequests()
+
+        requestAdapter.updateData(requests)
+
+        if (requests.isEmpty()) {
+            Toast.makeText(context, "Tidak ada permintaan pinjaman yang tertunda.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun handleApproval(request: PendingRequest, isApproved: Boolean) {
+        val result: Boolean
+        val message: String
+
+        if (isApproved) {
+            // Panggil Repository untuk menyetujui
+            result = BookRepository.approveRequest(request.requestId)
+            message = if (result) "Permintaan disetujui! Buku '${request.book.title}' telah dipinjamkan." else "Gagal menyetujui permintaan."
+        } else {
+            // Panggil Repository untuk menolak
+            result = BookRepository.rejectRequest(request.requestId)
+            message = if (result) "Permintaan pinjaman ditolak." else "Gagal menolak permintaan."
+        }
+
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        loadPendingRequests() // Muat ulang daftar setelah aksi
     }
 }

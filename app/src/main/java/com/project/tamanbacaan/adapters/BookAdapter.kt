@@ -14,6 +14,7 @@ import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
 
 class BookAdapter(
     private val books: List<Book>,
@@ -51,21 +52,31 @@ class BookAdapter(
             statusText.text = book.getAvailabilityStatus()
             statusText.setTextColor(ContextCompat.getColor(itemView.context, book.getStatusColor()))
 
-            // Set action button
+            // --- FIX: Logic Pinjaman menjadi Request Pinjam (memerlukan persetujuan Admin) ---
             when {
+                // Pinjaman Aktif (Hanya bisa dikembalikan)
                 book.isBorrowed -> {
-                    actionButton.text = "Return Book (Confirm)" // Clarification: Online Confirmation
+                    actionButton.text = "Return Book (Confirm)"
                     actionButton.isEnabled = true
                 }
+                // Tersedia (Bisa di-Request)
                 book.isAvailable -> {
-                    actionButton.text = "Borrow Book"
+                    actionButton.text = "Request Pinjam"
                     actionButton.isEnabled = true
                 }
+                // Tidak Tersedia (Jika sudah di-request atau stok habis)
                 else -> {
-                    actionButton.text = "Not Available"
+                    // Cek apakah buku sedang dalam proses request (hanya simulasi)
+                    val isPending = BookRepository.getPendingRequests().any { it.book.id == book.id }
+                    if (isPending) {
+                        actionButton.text = "Menunggu Persetujuan"
+                    } else {
+                        actionButton.text = "Stok Habis"
+                    }
                     actionButton.isEnabled = false
                 }
             }
+            // ---------------------------------------------------------------------------------
 
             // Set bookmark state
             bookmarkButton.setImageResource(
@@ -81,7 +92,6 @@ class BookAdapter(
             }
 
             actionButton.setOnClickListener {
-                // Req. Anggota: Mengembalikan buku (online confirmation)
                 handleBookAction(book)
             }
 
@@ -94,22 +104,28 @@ class BookAdapter(
         private fun handleBookAction(book: Book) {
             when {
                 book.isBorrowed -> {
-                    // PANGGIL API UNTUK KONFIRMASI PENGEMBALIAN BUKU
+                    // Req. Anggota: Mengembalikan buku (online confirmation)
                     Toast.makeText(itemView.context, "Mengirim konfirmasi pengembalian buku '${book.title}' ke server...", Toast.LENGTH_SHORT).show()
 
                     // Simulasi Sukses:
-                    book.isBorrowed = false
-                    book.isAvailable = true
+                    BookRepository.updateBook(book.copy(isBorrowed = false, isAvailable = true))
                     Toast.makeText(itemView.context, "Pengembalian berhasil dikonfirmasi secara online!", Toast.LENGTH_SHORT).show()
+                    notifyItemChanged(adapterPosition)
                 }
                 book.isAvailable -> {
-                    // Borrow book logic
-                    book.isBorrowed = true
-                    book.isAvailable = false
-                    Toast.makeText(itemView.context, "Buku '${book.title}' dipinjam (simulasi).", Toast.LENGTH_SHORT).show()
+                    // FIX: Ganti logic Borrow menjadi Request Pinjam (memerlukan persetujuan Admin)
+                    val memberId = "M001"
+                    val memberName = "User Test"
+
+                    if (BookRepository.addPendingRequest(book, memberName, memberId)) {
+                        Toast.makeText(itemView.context, "Permintaan pinjaman untuk '${book.title}' berhasil dikirim. Menunggu persetujuan Pengelola!", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(itemView.context, "Gagal: Buku sudah dalam permintaan atau tidak tersedia.", Toast.LENGTH_SHORT).show()
+                    }
+                    // TIDAK ADA PERUBAHAN STATUS LOKAL
+                    notifyItemChanged(adapterPosition) // Refresh untuk menampilkan 'Menunggu Persetujuan'
                 }
             }
-            notifyItemChanged(adapterPosition)
         }
     }
 }
