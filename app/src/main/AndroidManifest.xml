@@ -49,6 +49,8 @@
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan" />
 
+        <activity android:name=".activities.EditBookActivity" />
+
         <!-- VerificationActivity -->
         <activity android:name=".activities.VerificationActivity"
             android:exported="false"

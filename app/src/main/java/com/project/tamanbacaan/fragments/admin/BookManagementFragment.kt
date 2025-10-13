@@ -1,5 +1,7 @@
 package com.caffeinatedr4t.tamanbacaan.fragments.admin
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,18 +10,22 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
+import com.caffeinatedr4t.tamanbacaan.activities.EditBookActivity
+import com.caffeinatedr4t.tamanbacaan.adapters.AdminBookAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 
 class BookManagementFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var bookAdapter: BookAdapter
+    private lateinit var bookAdapter: AdminBookAdapter
     private val booksList = mutableListOf<Book>()
 
     // Form Views
@@ -30,7 +36,14 @@ class BookManagementFragment : Fragment() {
     private lateinit var etStock: EditText
     private lateinit var btnSaveBook: Button
 
-    private var bookToEdit: Book? = null // Untuk menyimpan buku yang sedang diedit
+    // Activity Result Launcher untuk refresh data setelah edit
+    private val editBookLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            loadBooks() // Refresh list setelah edit
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -55,12 +68,18 @@ class BookManagementFragment : Fragment() {
         setupFormListeners()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh list ketika kembali ke fragment ini
+        loadBooks()
+    }
+
     private fun setupRecyclerView() {
-        // Menggunakan BookAdapter yang sama, tetapi dengan fungsi klik Admin
-        bookAdapter = BookAdapter(booksList) { book ->
-            // Ketika buku diklik di Admin, mulai mode edit
-            startEditMode(book)
-        }
+        // Menggunakan AdminBookAdapter dengan callback untuk Delete saja
+        bookAdapter = AdminBookAdapter(
+            books = booksList,
+            onDeleteClick = { book -> showDeleteConfirmation(book) }
+        )
 
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
@@ -76,58 +95,53 @@ class BookManagementFragment : Fragment() {
 
     private fun setupFormListeners() {
         btnSaveBook.setOnClickListener {
-            saveBook()
+            saveNewBook()
         }
-        // Admin bisa klik item_book untuk mengedit
     }
 
-    private fun startEditMode(book: Book) {
-        bookToEdit = book
-        formTitle.text = "Edit Buku: ${book.title}"
-        etTitle.setText(book.title)
-        etAuthor.setText(book.author)
-        etCategory.setText(book.category)
-        // Simulasi Stok: Ambil isAvailable (true/false) menjadi Stok 1/0 untuk demo CRUD
-        etStock.setText(if (book.isAvailable) "1" else "0")
-        btnSaveBook.text = "SIMPAN PERUBAHAN"
+    private fun showDeleteConfirmation(book: Book) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Hapus Buku")
+            .setMessage("Apakah Anda yakin ingin menghapus '${book.title}'?\n\nData buku akan dihapus permanen.")
+            .setPositiveButton("Hapus") { _, _ ->
+                deleteBook(book)
+            }
+            .setNegativeButton("Batal") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
-    private fun saveBook() {
+    private fun saveNewBook() {
         val title = etTitle.text.toString().trim()
         val author = etAuthor.text.toString().trim()
         val category = etCategory.text.toString().trim()
         val stock = etStock.text.toString().toIntOrNull() ?: 0
 
-        if (title.isEmpty() || author.isEmpty() || stock < 0) {
-            Toast.makeText(context, "Judul, Penulis, dan Stok harus valid.", Toast.LENGTH_SHORT).show()
+        if (title.isEmpty() || author.isEmpty()) {
+            Toast.makeText(context, "Judul dan Penulis harus diisi.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (bookToEdit != null) {
-            // UPDATE Logic
-            val updatedBook = bookToEdit!!.copy(
-                title = title,
-                author = author,
-                category = category,
-                isAvailable = stock > 0,
-                description = bookToEdit!!.description // Pertahankan deskripsi lama
-            )
-            BookRepository.updateBook(updatedBook)
-            Toast.makeText(context, "Buku berhasil diupdate!", Toast.LENGTH_SHORT).show()
-        } else {
-            // CREATE Logic
-            val newBook = Book(
-                id = "", // ID akan diisi oleh Repository
-                title = title,
-                author = author,
-                category = category,
-                isAvailable = stock > 0,
-                description = "Deskripsi default dari Admin.",
-                coverUrl = ""
-            )
-            BookRepository.addBook(newBook)
-            Toast.makeText(context, "Buku baru berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
+        if (stock < 0) {
+            Toast.makeText(context, "Stok tidak boleh negatif.", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        // CREATE Logic
+        val newBook = Book(
+            id = "", // ID akan diisi oleh Repository
+            title = title,
+            author = author,
+            category = category.ifEmpty { "Uncategorized" },
+            isAvailable = stock > 0,
+            description = "Deskripsi buku akan diisi melalui halaman edit.",
+            coverUrl = ""
+        )
+
+        BookRepository.addBook(newBook)
+        Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
 
         // Reset UI
         loadBooks()
@@ -135,7 +149,6 @@ class BookManagementFragment : Fragment() {
     }
 
     private fun resetForm() {
-        bookToEdit = null
         formTitle.text = "Tambah Buku Baru"
         etTitle.text.clear()
         etAuthor.text.clear()
@@ -144,9 +157,7 @@ class BookManagementFragment : Fragment() {
         btnSaveBook.text = "SIMPAN BUKU BARU"
     }
 
-    // Fungsionalitas Delete
-    // (Dalam implementasi nyata, tombol Delete harus ada di item RecyclerView Admin)
-    fun deleteBook(book: Book) {
+    private fun deleteBook(book: Book) {
         if (BookRepository.deleteBook(book.id)) {
             Toast.makeText(context, "'${book.title}' berhasil dihapus.", Toast.LENGTH_SHORT).show()
             loadBooks()

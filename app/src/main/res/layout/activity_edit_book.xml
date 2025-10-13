@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/white">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+        <!-- Judul Halaman -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Edit Buku"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="@color/black"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Input Judul -->
+        <EditText
+            android:id="@+id/etEditTitle"
+            android:hint="Judul Buku"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input Penulis -->
+        <EditText
+            android:id="@+id/etEditAuthor"
+            android:hint="Penulis"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input Deskripsi -->
+        <EditText
+            android:id="@+id/etEditDescription"
+            android:hint="Deskripsi Buku"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:minLines="3"
+            android:gravity="top"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input Kategori -->
+        <EditText
+            android:id="@+id/etEditCategory"
+            android:hint="Kategori"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input ISBN -->
+        <EditText
+            android:id="@+id/etEditIsbn"
+            android:hint="ISBN"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input Tahun Publikasi -->
+        <EditText
+            android:id="@+id/etEditPublicationYear"
+            android:hint="Tahun Publikasi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Input URL Cover -->
+        <EditText
+            android:id="@+id/etEditCoverUrl"
+            android:hint="URL Cover Buku (opsional)"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textUri"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Checkbox Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="20dp">
+
+            <CheckBox
+                android:id="@+id/cbIsAvailable"
+                android:text="Tersedia untuk dipinjam"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <CheckBox
+                android:id="@+id/cbIsBorrowed"
+                android:text="Sedang dipinjam"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- Tombol Simpan -->
+        <Button
+            android:id="@+id/btnSaveEditBook"
+            android:text="Simpan Perubahan"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/primary_blue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="sans-serif-medium" />
+
+    </LinearLayout>
+</ScrollView>
