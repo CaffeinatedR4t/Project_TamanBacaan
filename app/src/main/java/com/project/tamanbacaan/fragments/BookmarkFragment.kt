@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan.fragments // KOREKSI PACKAGE
+package com.caffeinatedr4t.tamanbacaan.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater

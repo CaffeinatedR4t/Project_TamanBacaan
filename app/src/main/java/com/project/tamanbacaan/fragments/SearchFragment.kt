@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan.fragments // KOREKSI PACKAGE
+package com.caffeinatedr4t.tamanbacaan.fragments
 
 import android.os.Bundle
 import android.text.Editable
@@ -14,26 +14,26 @@ import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
-import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
-// Import untuk mendapatkan daftar buku sample
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 
 class SearchFragment : Fragment() {
 
     private lateinit var etSearch: EditText
     private lateinit var recyclerView: RecyclerView
     private lateinit var tvEmptySearch: TextView
+    private lateinit var chipGroupCategories: ChipGroup
     private lateinit var bookAdapter: BookAdapter
 
-    // Gunakan daftar buku dari HomeFragment sebagai sumber data simulasi
     private val allBooks = HomeFragment().getSampleLibraryBooks()
     private val searchResults = mutableListOf<Book>()
+    private var selectedCategory: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Layout sudah diperbarui di Fix 2
         return inflater.inflate(R.layout.fragment_search, container, false)
     }
 
@@ -43,25 +43,46 @@ class SearchFragment : Fragment() {
         etSearch = view.findViewById(R.id.etSearch)
         recyclerView = view.findViewById(R.id.recyclerViewSearchResults)
         tvEmptySearch = view.findViewById(R.id.tvEmptySearch)
+        chipGroupCategories = view.findViewById(R.id.chipGroupCategories)
 
         setupRecyclerView()
+        setupCategoryChips()
         setupSearchListener()
     }
 
     private fun setupRecyclerView() {
-        // Gunakan BookAdapter yang sama untuk menampilkan hasil
         bookAdapter = BookAdapter(searchResults) { book ->
-            // Handle book click - navigate to book details (Logic sudah di handle di adapter)
+            // Handle book click
         }
-
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = bookAdapter
         }
-
-        // Mulai dengan menyembunyikan recycler view
         recyclerView.visibility = View.GONE
     }
+
+    // --- LOGIC FILTER KATEGORI (Req. System: Filter) ---
+    private fun setupCategoryChips() {
+        val categories = allBooks.map { it.category }.distinct().toMutableList()
+        categories.add(0, "Semua") // Tambahkan opsi 'Semua'
+
+        categories.forEach { categoryName ->
+            val chip = Chip(context).apply {
+                text = categoryName
+                isCheckable = true
+                if (categoryName == "Semua") isChecked = true
+
+                setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        selectedCategory = if (categoryName == "Semua") null else categoryName
+                        filterBooks(etSearch.text.toString()) // Refilter hasil
+                    }
+                }
+            }
+            chipGroupCategories.addView(chip)
+        }
+    }
+    // ------------------------------------
 
     private fun setupSearchListener() {
         etSearch.addTextChangedListener(object : TextWatcher {
@@ -77,28 +98,30 @@ class SearchFragment : Fragment() {
         searchResults.clear()
         val lowerCaseQuery = query.trim().lowercase()
 
-        if (lowerCaseQuery.isEmpty()) {
-            // Tampilkan pesan kosong/instruksi saat tidak ada input
+        val fullSearchList = allBooks.filter { book ->
+            val matchesQuery = lowerCaseQuery.isEmpty() ||
+                    book.title.lowercase().contains(lowerCaseQuery) ||
+                    book.author.lowercase().contains(lowerCaseQuery) ||
+                    book.category.lowercase().contains(lowerCaseQuery)
+
+            val matchesCategory = selectedCategory == null || book.category == selectedCategory
+
+            matchesQuery && matchesCategory // Gabungkan kriteria pencarian dan filter
+        }
+
+        searchResults.addAll(fullSearchList)
+
+        if (lowerCaseQuery.isEmpty() && selectedCategory == null) {
+            tvEmptySearch.text = "Ketik judul, penulis, atau kategori untuk mencari."
+            tvEmptySearch.visibility = View.VISIBLE
+            recyclerView.visibility = View.GONE
+        } else if (fullSearchList.isEmpty()) {
+            tvEmptySearch.text = "Tidak ada hasil ditemukan."
             tvEmptySearch.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } else {
-            // Filter berdasarkan judul, penulis, atau kategori (Req. 3)
-            val filteredList = allBooks.filter {
-                it.title.lowercase().contains(lowerCaseQuery) ||
-                        it.author.lowercase().contains(lowerCaseQuery) ||
-                        it.category.lowercase().contains(lowerCaseQuery)
-            }
-
-            searchResults.addAll(filteredList)
-
-            if (filteredList.isEmpty()) {
-                tvEmptySearch.text = "Tidak ada hasil ditemukan untuk \"$query\"."
-                tvEmptySearch.visibility = View.VISIBLE
-                recyclerView.visibility = View.GONE
-            } else {
-                tvEmptySearch.visibility = View.GONE
-                recyclerView.visibility = View.VISIBLE
-            }
+            tvEmptySearch.visibility = View.GONE
+            recyclerView.visibility = View.VISIBLE
         }
         bookAdapter.notifyDataSetChanged()
     }

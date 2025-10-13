@@ -23,20 +23,32 @@ class LoginActivity : AppCompatActivity() {
             val email = etEmail.text.toString()
             val password = etPassword.text.toString()
 
-            // Simulasi Login
-            if (email == "user@test.com" && password == "123456") {
-                Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show()
-                // Arahkan ke MainActivity
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            } else {
-                Toast.makeText(this, "Email atau Password salah", Toast.LENGTH_SHORT).show()
+            // Simulasi Dual Role Login
+            when {
+                // ADMIN LOGIN
+                email == "admin@tbm.com" && password == "admin123" -> {
+                    Toast.makeText(this, "Login Pengelola Berhasil!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, AdminActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                // MEMBER LOGIN
+                email == "user@test.com" && password == "123456" -> {
+                    Toast.makeText(this, "Login Anggota berhasil!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                else -> {
+                    Toast.makeText(this, "Email atau Password salah", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
+        // Arahkan ke Halaman Registrasi yang baru
         tvRegister.setOnClickListener {
-            Toast.makeText(this, "Fitur Registrasi belum diimplementasikan", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, RegisterActivity::class.java))
+            finish()
         }
     }
 }

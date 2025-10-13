@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan.adapters // KOREKSI PACKAGE
+package com.caffeinatedr4t.tamanbacaan.adapters
 
 import android.content.Intent
 import android.view.LayoutInflater
@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
@@ -53,7 +54,7 @@ class BookAdapter(
             // Set action button
             when {
                 book.isBorrowed -> {
-                    actionButton.text = "Return Book"
+                    actionButton.text = "Return Book (Confirm)" // Clarification: Online Confirmation
                     actionButton.isEnabled = true
                 }
                 book.isAvailable -> {
@@ -74,36 +75,38 @@ class BookAdapter(
 
             // Click listeners
             itemView.setOnClickListener {
-                // Arahkan ke BookDetailActivity (Req. 4)
                 val intent = Intent(itemView.context, BookDetailActivity::class.java)
                 intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
                 itemView.context.startActivity(intent)
             }
 
             actionButton.setOnClickListener {
-                // Handle borrow/return action (Req. 5 & 7, simulasi)
+                // Req. Anggota: Mengembalikan buku (online confirmation)
                 handleBookAction(book)
             }
 
             bookmarkButton.setOnClickListener {
-                // Handle bookmark toggle
                 book.isBookmarked = !book.isBookmarked
                 notifyItemChanged(adapterPosition)
             }
         }
 
         private fun handleBookAction(book: Book) {
-            // This would normally connect to your library management system
             when {
                 book.isBorrowed -> {
-                    // Return book logic
+                    // PANGGIL API UNTUK KONFIRMASI PENGEMBALIAN BUKU
+                    Toast.makeText(itemView.context, "Mengirim konfirmasi pengembalian buku '${book.title}' ke server...", Toast.LENGTH_SHORT).show()
+
+                    // Simulasi Sukses:
                     book.isBorrowed = false
                     book.isAvailable = true
+                    Toast.makeText(itemView.context, "Pengembalian berhasil dikonfirmasi secara online!", Toast.LENGTH_SHORT).show()
                 }
                 book.isAvailable -> {
                     // Borrow book logic
                     book.isBorrowed = true
                     book.isAvailable = false
+                    Toast.makeText(itemView.context, "Buku '${book.title}' dipinjam (simulasi).", Toast.LENGTH_SHORT).show()
                 }
             }
             notifyItemChanged(adapterPosition)

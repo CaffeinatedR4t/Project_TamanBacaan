@@ -1,6 +1,5 @@
-package com.caffeinatedr4t.tamanbacaan.activities // KOREKSI PACKAGE
+package com.caffeinatedr4t.tamanbacaan.activities
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -10,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import com.caffeinatedr4t.tamanbacaan.R // R class sudah benar
+import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.fragments.BookmarkFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
@@ -24,12 +23,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // --- BARU: Inisialisasi Channel Notifikasi (Req. 9) ---
         NotificationHelper.createNotificationChannel(this)
-        // Jika Anda ingin mengarahkan pengguna ke LoginActivity dulu:
-        // startActivity(Intent(this, LoginActivity::class.java))
-        // finish()
-        // -----------------------------------------------------
 
         // Load home fragment by default
         loadFragment(HomeFragment())
@@ -38,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         // Set up bottom navigation
         setupBottomNavigation()
     }
-    // ... (setupBottomNavigation, loadFragment, updateTabSelection, setTabActive, setTabInactive tetap sama)
+
     private fun setupBottomNavigation() {
         findViewById<View>(R.id.btnHome).setOnClickListener {
             if (currentTabIndex != 0) {

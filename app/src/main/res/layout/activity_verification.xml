@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Verifikasi Anggota Baru"
+            android:textColor="@color/text_primary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/card_background">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Detail Pendaftaran"
+                    android:textColor="@color/primary_blue_dark"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NIK KTP/Orang Tua:"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tvVerificationNik"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="32xxxxxxxxxxxxxx"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nama Anggota:"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tvVerificationMemberName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Budi Santoso (Anak)"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Alamat RT/RW/Kelurahan:"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tvVerificationAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RT 005/RW 003, Kelurahan Bahagia"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aksi Pengelola"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnVerifyAccept"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Verifikasi dan Setujui"
+            android:backgroundTint="@color/success_green"
+            android:textColor="@color/white"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnVerifyReject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tolak Pendaftaran"
+            android:backgroundTint="@color/error_red"
+            android:textColor="@color/white" />
+
+    </LinearLayout>
+</ScrollView>

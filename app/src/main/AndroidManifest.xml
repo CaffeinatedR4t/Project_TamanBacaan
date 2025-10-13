@@ -16,6 +16,7 @@
         android:theme="@style/Base.Theme.TamanBacaan"
         tools:targetApi="tiramisu">
 
+        <!-- LoginActivity is the LAUNCHER ACTIVITY -->
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
@@ -26,13 +27,30 @@
             </intent-filter>
         </activity>
 
+        <!-- BARU: RegisterActivity -->
+        <activity android:name=".activities.RegisterActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan" />
+
+        <!-- MainActivity (Anggota) -->
         <activity
             android:name=".activities.MainActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan">
         </activity>
 
+        <!-- BookDetailActivity -->
         <activity android:name=".activities.BookDetailActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan" />
+
+        <!-- AdminActivity (Pengelola TBM) -->
+        <activity android:name=".activities.AdminActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan" />
+
+        <!-- VerificationActivity -->
+        <activity android:name=".activities.VerificationActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan" />
     </application>
