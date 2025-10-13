@@ -1,9 +1,11 @@
 package com.caffeinatedr4t.tamanbacaan.activities
 
 import android.os.Bundle
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.fragments.admin.AdminProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.BookManagementFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.ReportFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.TransactionManagementFragment
@@ -15,6 +17,7 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
+        val btnProfile = findViewById<ImageView>(R.id.btnAdminProfile)
         val bottomNav = findViewById<BottomNavigationView>(R.id.adminBottomNav)
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -32,6 +35,11 @@ class AdminActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+        }
+
+        // Tombol Profil di TopBar
+        btnProfile.setOnClickListener {
+            loadFragment(AdminProfileFragment())
         }
 
         // Load default fragment
