@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView // FIX: Tambahkan import TextView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,12 +18,12 @@ class MemberManagementFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var memberAdapter: MemberAdapter
+    private lateinit var tvListTitle: TextView // Declare tvListTitle
     private val memberList = mutableListOf<User>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        // Menggunakan layout daftar anggota yang sama
         return inflater.inflate(R.layout.fragment_admin_member_list, container, false)
     }
 
@@ -31,11 +31,7 @@ class MemberManagementFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView = view.findViewById(R.id.recyclerViewMembers)
-
-        // FIX: Inisialisasi TextView untuk Judul List yang baru ditambahkan
-        val tvListTitle: TextView = view.findViewById(R.id.tvListTitle)
-        // Menampilkan jumlah anggota (Req: Cek jumlah user)
-        tvListTitle.text = "Daftar Anggota Aktif (${BookRepository.getAllMembers().size} Pengguna)"
+        tvListTitle = view.findViewById(R.id.tvListTitle)
 
         setupRecyclerView()
         loadMembers()
@@ -43,7 +39,7 @@ class MemberManagementFragment : Fragment() {
 
     private fun setupRecyclerView() {
         memberAdapter = MemberAdapter(memberList,
-            onEdit = { user -> handleEdit(user) },
+            onVerifyToggle = { user -> handleVerifyToggle(user) }, // FIX: Menggunakan onVerifyToggle
             onRemove = { user -> handleRemove(user) }
         )
 
@@ -54,27 +50,32 @@ class MemberManagementFragment : Fragment() {
     }
 
     private fun loadMembers() {
-        memberAdapter.updateData(BookRepository.getAllMembers())
+        val allMembers = BookRepository.getAllMembers()
+        memberAdapter.updateData(allMembers)
+
+        // Update Title (Req: Cek jumlah user)
+        tvListTitle.text = "Daftar Anggota Aktif (${allMembers.size} Pengguna)"
     }
 
-    // --- CRUD Logic Handlers ---
+    // --- NEW Verification Logic ---
+    private fun handleVerifyToggle(user: User) {
+        val newStatus = !user.isVerified
 
-    private fun handleEdit(user: User) {
-        // Req: Admin bisa EDIT User
-        Toast.makeText(context, "Membuka form edit untuk Anggota: ${user.fullName}", Toast.LENGTH_SHORT).show()
-
-        // Simulasi Edit: Mengubah NIK
-        val editedUser = user.copy(nik = "UPDATED_ADMIN_NIK_${System.currentTimeMillis()}")
-        BookRepository.updateMember(editedUser)
+        // Panggil Repository untuk mengubah status verifikasi
+        if (BookRepository.toggleVerificationStatus(user.id)) {
+            val action = if (newStatus) "Diverifikasi" else "Dibatalkan verifikasi"
+            Toast.makeText(context, "${user.fullName} telah ${action} sebagai warga RT/RW.", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(context, "Gagal mengubah status verifikasi.", Toast.LENGTH_SHORT).show()
+        }
         loadMembers() // Refresh list
-        Toast.makeText(context, "Simulasi: NIK ${user.fullName} diperbarui.", Toast.LENGTH_SHORT).show()
     }
 
+    // --- Remove Logic (Tetap) ---
     private fun handleRemove(user: User) {
-        // Req: Admin bisa REMOVE User
         if (BookRepository.deleteMember(user.id)) {
             Toast.makeText(context, "Anggota ${user.fullName} berhasil dihapus permanen.", Toast.LENGTH_LONG).show()
-            loadMembers() // Refresh list
+            loadMembers()
         } else {
             Toast.makeText(context, "Gagal menghapus anggota.", Toast.LENGTH_SHORT).show()
         }
