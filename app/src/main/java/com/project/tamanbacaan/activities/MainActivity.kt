@@ -15,9 +15,11 @@ import androidx.appcompat.app.AlertDialog
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.fragments.BookmarkFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.NotificationFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.ProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
 import com.caffeinatedr4t.tamanbacaan.utils.NotificationHelper
+import kotlin.jvm.java
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,7 +49,7 @@ class MainActivity : AppCompatActivity() {
         setupBottomNavigation()
 
         // 🔹 Setup tombol profil di top bar
-        setupProfileButton()
+        setupTopNavigation()
     }
 
     private fun setupBottomNavigation() {
@@ -73,7 +75,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupProfileButton() {
+    private fun setupTopNavigation() {
+        // 🔹 Tombol profil
         val btnProfile = findViewById<ImageView>(R.id.btnProfile)
         btnProfile.setOnClickListener {
             val fragment = ProfileFragment()
@@ -88,6 +91,13 @@ class MainActivity : AppCompatActivity() {
             fragment.arguments = bundle
 
             loadFragment(fragment)
+            updateTabSelection(-1) // Tidak ada tab bawah yang aktif
+        }
+
+        // 🔹 Tombol notifikasi
+        val btnNotification: ImageView = findViewById(R.id.btnNotification)
+        btnNotification.setOnClickListener {
+            loadFragment(NotificationFragment())
             updateTabSelection(-1) // Tidak ada tab bawah yang aktif
         }
     }
