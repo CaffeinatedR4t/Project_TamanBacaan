@@ -12,6 +12,7 @@ import com.caffeinatedr4t.tamanbacaan.fragments.admin.ReportFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.TransactionManagementFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.MemberManagementFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.caffeinatedr4t.tamanbacaan.fragments.admin.EventManagementFragment
 
 class AdminActivity : AppCompatActivity() {
 
@@ -51,6 +52,10 @@ class AdminActivity : AppCompatActivity() {
                 }
                 R.id.nav_admin_members -> { // Manajemen Anggota (CRUD + Verifikasi RT/RW)
                     loadFragment(MemberManagementFragment())
+                    true
+                }
+                R.id.nav_admin_events -> {
+                    loadFragment(EventManagementFragment())
                     true
                 }
                 R.id.nav_admin_requests -> { // Permintaan Pinjaman (Transaksi)

@@ -9,8 +9,12 @@
         android:icon="@drawable/ic_profile"
         android:title="Anggota" />
     <item
-        android:id="@+id/nav_admin_requests"
+        android:id="@+id/nav_admin_events"
         android:icon="@drawable/ic_add"
+        android:title="Pengumuman" />
+    <item
+        android:id="@+id/nav_admin_requests"
+        android:icon="@drawable/ic_pinjamanbuku"
         android:title="Pinjaman" />
     <item
         android:id="@+id/nav_admin_reports"

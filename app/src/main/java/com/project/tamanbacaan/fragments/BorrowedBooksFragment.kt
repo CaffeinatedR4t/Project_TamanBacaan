@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
 class BorrowedBooksFragment : Fragment() {
 
@@ -52,5 +53,29 @@ class BorrowedBooksFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
             adapter = bookAdapter
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Muat ulang data setiap kali fragment ini ditampilkan
+        loadBorrowedBooks()
+    }
+
+    private fun setupRecyclerView() {
+        // Inisialisasi adapter dengan list kosong terlebih dahulu
+        bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = bookAdapter
+        }
+    }
+
+    private fun loadBorrowedBooks() {
+        // Ambil semua buku dari repository, lalu filter yang statusnya isBorrowed = true
+        val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
+
+        // Perbarui adapter dengan data yang sudah difilter
+        bookAdapter = BookAdapter(borrowedBooks) { }
+        recyclerView.adapter = bookAdapter
     }
 }

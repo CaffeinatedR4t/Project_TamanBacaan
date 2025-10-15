@@ -1,8 +1,12 @@
 package com.caffeinatedr4t.tamanbacaan.data
 
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.User
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
+import java.text.SimpleDateFormat
+import java.util.Calendar
 
 /**
  * Repository yang mensimulasikan database/API backend.
@@ -10,7 +14,8 @@ import java.util.concurrent.atomic.AtomicLong
  * Mendukung fungsi CRUD untuk manajemen buku dan anggota.
  */
 object BookRepository {
-
+    private val eventNotifications = mutableListOf<EventNotification>()
+    private val nextEventId = AtomicLong(3) // Lanjutkan dari ID 2
     private val bookList = mutableListOf<Book>()
     private val pendingRequests = mutableListOf<PendingRequest>()
     // registrationRequests REMOVED (Diganti dengan aktivasi instan)
@@ -21,6 +26,9 @@ object BookRepository {
     private val nextUserId = AtomicLong(103) // Lanjutkan ID anggota setelah M102
 
     init {
+        // Data Sample untuk event
+        eventNotifications.add(EventNotification("1", "Bedah Buku 'Laut Bercerita'", "Ikuti bedah buku bersama penulis Leila S. Chudori pada 10 Oktober 2025!", "05/10/2025"))
+        eventNotifications.add(EventNotification("2", "Diskon Sewa Buku 50%", "Nikmati diskon 50% untuk semua kategori buku hingga 12 Oktober 2025!", "07/10/2025"))
         // Data Sample Buku
         bookList.add(Book(id = "1", title = "To Kill a Mockingbird", author = "Harper Lee", description = "A classic novel about racial injustice in the American South", coverUrl = "", category = "Fiction", isAvailable = true, isbn = "978-0-06-112008-4", avgRating = 4.5f, totalReviews = 120))
         bookList.add(Book(id = "2", title = "1984", author = "George Orwell", description = "A dystopian social science fiction novel", coverUrl = "", category = "Fiction", isAvailable = false, isbn = "978-0-452-28423-4", avgRating = 4.8f, totalReviews = 250))
@@ -36,6 +44,19 @@ object BookRepository {
         activeMembers.add(User(id="M100", fullName="Budi Santoso", email="user@test.com", nik="32xxxxxxxxxxxxxx", addressRtRw = "RT 005/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = true)) // Sudah diverifikasi
         activeMembers.add(User(id="M101", fullName="Siti Aisyah", email="siti@test.com", nik="32xxxxxxxxxxxxxy", addressRtRw = "RT 004/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = false)) // Belum diverifikasi
         activeMembers.add(User(id="M102", fullName="Daffa Permana", email="daffa@test.com", nik="32xxxxxxxxxxxxzz", addressRtRw = "RT 002/RW 001, Kel. Demo", isChild = true, parentName = "Ayah Daffa", isVerified = false)) // Belum diverifikasi
+    }
+
+    // Tambahkan fungsi-fungsi ini di dalam BookRepository
+    fun getAllEvents(): List<EventNotification> = eventNotifications.toList()
+
+    fun addEvent(title: String, message: String) {
+        val newEvent = EventNotification(
+            id = nextEventId.getAndIncrement().toString(),
+            title = title,
+            message = message,
+            date = "15/10/2025" // Tanggal hari ini (simulasi)
+        )
+        eventNotifications.add(0, newEvent) // Tambah di paling atas
     }
 
     // --- Book CRUD ---
@@ -69,11 +90,37 @@ object BookRepository {
     }
     fun getPendingRequests(): List<PendingRequest> = pendingRequests.toList()
     fun approveRequest(requestId: String): Boolean {
-        val request = pendingRequests.find { it.requestId == requestId } ?: return false;
-        val bookIndex = bookList.indexOfFirst { it.id == request.book.id };
-        if (bookIndex != -1) { val approvedBook = bookList[bookIndex].copy(isAvailable = false, isBorrowed = true); bookList[bookIndex] = approvedBook };
-        val iterator = pendingRequests.iterator();
-        while (iterator.hasNext()) { if (iterator.next().requestId == requestId) { iterator.remove(); return true } };
+        val request = pendingRequests.find { it.requestId == requestId } ?: return false
+        val bookIndex = bookList.indexOfFirst { it.id == request.book.id }
+
+        if (bookIndex != -1) {
+            // 1. Dapatkan tanggal hari ini
+            val calendar = Calendar.getInstance()
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val borrowedDate = dateFormat.format(calendar.time)
+
+            // 2. Tambahkan 14 hari untuk jatuh tempo
+            calendar.add(Calendar.DAY_OF_YEAR, 14)
+            val dueDate = dateFormat.format(calendar.time)
+
+            // 3. Salin objek buku dengan menambahkan tanggal
+            val approvedBook = bookList[bookIndex].copy(
+                isAvailable = false,
+                isBorrowed = true,
+                borrowedDate = borrowedDate, // Set tanggal pinjam
+                dueDate = dueDate             // Set tanggal jatuh tempo
+            )
+            bookList[bookIndex] = approvedBook
+        }
+
+        // Hapus dari daftar permintaan
+        val iterator = pendingRequests.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next().requestId == requestId) {
+                iterator.remove()
+                return true
+            }
+        }
         return false
     }
     fun rejectRequest(requestId: String): Boolean {
