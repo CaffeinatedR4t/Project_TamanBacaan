@@ -5,6 +5,8 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.fragments.NotificationFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.ProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.AdminProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.BookManagementFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.ReportFragment
@@ -19,7 +21,25 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
+        // Setup topNavigation
+        setupTopNavigation()
+        // Setup topNavigation
+        setupBottomNavigation()
+    }
+
+    private fun setupTopNavigation() {
         val btnProfile = findViewById<ImageView>(R.id.btnAdminProfile)
+        val btnNotification = findViewById<ImageView>(R.id.btnNotification)
+        // Tombol Profil di TopBar
+        btnProfile.setOnClickListener {
+            loadFragment(AdminProfileFragment())
+        }
+        // Tombol Notifikasi di TopBar
+        btnNotification.setOnClickListener {
+            loadFragment(NotificationFragment())
+        }
+    }
+    private fun setupBottomNavigation() {
         val bottomNav = findViewById<BottomNavigationView>(R.id.adminBottomNav)
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -43,16 +63,7 @@ class AdminActivity : AppCompatActivity() {
                 else -> false
             }
         }
-        // Tombol Profil di TopBar
-        btnProfile.setOnClickListener {
-            loadFragment(AdminProfileFragment())
-        }
-
-        if (savedInstanceState == null) {
-            bottomNav.selectedItemId = R.id.nav_admin_books
-        }
     }
-
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.admin_nav_host_fragment, fragment)

@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="@color/primary_blue"
+        android:background="@color/primary_blue_dark"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -65,5 +65,6 @@
         app:itemIconTint="@color/primary_blue_dark"
         app:itemTextColor="@color/primary_blue_dark"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/menu_bottom_nav" />
+        app:menu="@menu/menu_bottom_nav"
+        app:labelVisibilityMode="selected" />
 </androidx.constraintlayout.widget.ConstraintLayout>

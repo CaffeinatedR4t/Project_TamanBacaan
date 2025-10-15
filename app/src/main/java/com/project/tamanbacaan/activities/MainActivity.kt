@@ -41,15 +41,37 @@ class MainActivity : AppCompatActivity() {
             loadFragment(HomeFragment())
         }
 
-        // Setup navigasi bawah BARU
-        setupBottomNavigation()
-
-        // Setup tombol profil di top bar
+        // Setup topNavigation
         setupTopNavigation()
+
+        // Setup botNavigation
+        setupBottomNavigation()
+    }
+
+    private fun setupTopNavigation() {
+        val btnProfile = findViewById<ImageView>(R.id.btnProfile)
+        btnProfile.setOnClickListener {
+            val fragment = ProfileFragment()
+
+            val bundle = Bundle().apply {
+                putString("USER_NAME", userName)
+                putString("USER_EMAIL", userEmail)
+                putString("USER_NIK", userNik)
+                putString("USER_ADDRESS", userAddress)
+            }
+            fragment.arguments = bundle
+
+            loadFragment(fragment)
+        }
+
+        // Tombol notifikasi
+        val btnNotification: ImageView = findViewById(R.id.btnNotification)
+        btnNotification.setOnClickListener {
+            loadFragment(NotificationFragment())
+        }
     }
 
     private fun setupBottomNavigation() {
-        // Mengganti logic manual dengan BottomNavigationView
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -67,33 +89,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> false
             }
-        }
-    }
-
-    private fun setupTopNavigation() {
-        val btnProfile = findViewById<ImageView>(R.id.btnProfile)
-        btnProfile.setOnClickListener {
-            val fragment = ProfileFragment()
-
-            val bundle = Bundle().apply {
-                putString("USER_NAME", userName)
-                putString("USER_EMAIL", userEmail)
-                putString("USER_NIK", userNik)
-                putString("USER_ADDRESS", userAddress)
-            }
-            fragment.arguments = bundle
-
-            loadFragment(fragment)
-            findViewById<BottomNavigationView>(R.id.bottomNavigation).menu.setGroupCheckable(0, false, true)
-        }
-
-        // Tombol notifikasi
-        val btnNotification: ImageView = findViewById(R.id.btnNotification)
-        btnNotification.setOnClickListener {
-            // Muat Fragment Notifikasi
-            loadFragment(NotificationFragment())
-            // Hilangkan highlight BottomNav saat membuka Notifikasi
-            findViewById<BottomNavigationView>(R.id.bottomNavigation).menu.setGroupCheckable(0, false, true)
         }
     }
 
