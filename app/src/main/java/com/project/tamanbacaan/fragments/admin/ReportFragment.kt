@@ -14,6 +14,13 @@ import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
 class ReportFragment : Fragment() {
 
+    // Deklarasikan TextViews untuk statistik
+    private lateinit var tvTotalMembers: TextView
+    private lateinit var tvPendingRequests: TextView
+    private lateinit var tvBorrowedBooks: TextView
+    private lateinit var tvTotalBooks: TextView
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -23,11 +30,38 @@ class ReportFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Inisialisasi view untuk statistik buku terpopuler
         val container = view.findViewById<LinearLayout>(R.id.containerTopBooks)
         displayTopBooks(container)
+
+        // Inisialisasi TextViews untuk statistik TBM
+        tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
+        tvPendingRequests = view.findViewById(R.id.tvPendingRequests)
+        tvBorrowedBooks = view.findViewById(R.id.tvBorrowedBooks)
+        tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
+
+        // Muat data statistik
+        loadActivityStats()
     }
 
+    // --- FUNGSI BARU UNTUK MEMUAT STATISTIK AKTIVITAS ---
+    private fun loadActivityStats() {
+        // Ambil data dari repository
+        val totalMembers = BookRepository.getAllMembers().size
+        val pendingRequests = BookRepository.getPendingRequests().size
+        val borrowedBooks = BookRepository.getAllBooks().count { it.isBorrowed }
+        val totalBooks = BookRepository.getAllBooks().size
+
+        // Set teks ke TextViews
+        tvTotalMembers.text = totalMembers.toString()
+        tvPendingRequests.text = pendingRequests.toString()
+        tvBorrowedBooks.text = borrowedBooks.toString()
+        tvTotalBooks.text = totalBooks.toString()
+    }
+    // ---------------------------------------------------
+
     private fun displayTopBooks(container: LinearLayout) {
+        // ... (kode displayTopBooks tetap sama)
         val topBooks = BookRepository.getTopBooks().entries.sortedByDescending { it.value }
         val maxCount = topBooks.firstOrNull()?.value ?: 1 // Untuk skala bar
 
@@ -49,7 +83,6 @@ class ReportFragment : Fragment() {
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     0.4f // 40% lebar
                 ).apply {
-                    // Perlu menggunakan setMargins di sini karena kita menggunakan LayoutParams
                     setMargins(16, 4, 0, 4)
                 }
                 setTextColor(Color.parseColor("#212121"))
@@ -80,7 +113,6 @@ class ReportFragment : Fragment() {
                     setMargins(8, 4, 0, 4)
                 }
                 setTextColor(resources.getColor(R.color.primary_blue_dark))
-                // FIX: Mengganti textStyle dengan setTypeface (Line 77)
                 setTypeface(null, Typeface.BOLD)
             }
             barContainer.addView(countView)
