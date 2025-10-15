@@ -57,95 +57,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Bottom Navigation (3 Tabs Only) -->
-    <LinearLayout
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:orientation="horizontal"
+        android:layout_height="wrap_content"
         android:background="@color/white"
-        android:elevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <!-- Home Tab -->
-        <LinearLayout
-            android:id="@+id/btnHome"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="?attr/selectableItemBackground">
-
-            <ImageView
-            android:id="@+id/homeTabIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_home"
-            app:tint="@color/primary_blue" />
-
-            <TextView
-            android:id="@+id/homeTabText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Home"
-            android:textColor="@color/primary_blue"
-            android:textSize="10sp"
-            android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Search Tab -->
-        <LinearLayout
-            android:id="@+id/btnSearch"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="?attr/selectableItemBackground">
-
-            <ImageView
-            android:id="@+id/searchTabIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_search"
-            app:tint="@color/text_secondary" />
-
-            <TextView
-            android:id="@+id/searchTabText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Search"
-            android:textColor="@color/text_secondary"
-            android:textSize="10sp"
-            android:layout_marginTop="2dp" />
-        </LinearLayout>
-
-        <!-- Bookmark Tab -->
-        <LinearLayout
-            android:id="@+id/btnBookmark"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="?attr/selectableItemBackground">
-
-            <ImageView
-                android:id="@+id/bookmarkTabIcon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_bookmark"
-            app:tint="@color/text_secondary" />
-
-            <TextView
-                android:id="@+id/bookmarkTabText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="My Books"
-            android:textColor="@color/text_secondary"
-            android:textSize="10sp"
-            android:layout_marginTop="2dp" />
-        </LinearLayout>
-    </LinearLayout>
+        app:itemIconTint="@color/primary_blue_dark"
+        app:itemTextColor="@color/primary_blue_dark"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/menu_bottom_nav" />
 </androidx.constraintlayout.widget.ConstraintLayout>
