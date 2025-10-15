@@ -41,11 +41,33 @@ class MainActivity : AppCompatActivity() {
             loadFragment(HomeFragment())
         }
 
-        // Setup topNavigation
-        setupTopNavigation()
-
-        // Setup botNavigation
+        // Setup navigasi bawah BARU
         setupBottomNavigation()
+
+        // Setup tombol profil di top bar
+        setupTopNavigation()
+    }
+
+    private fun setupBottomNavigation() {
+        // Mengganti logic manual dengan BottomNavigationView
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.btnHome -> {
+                    loadFragment(HomeFragment())
+                    true
+                }
+                R.id.btnSearch -> {
+                    loadFragment(SearchFragment())
+                    true
+                }
+                R.id.btnBookmark -> {
+                    loadFragment(BookmarkFragment())
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     private fun setupTopNavigation() {
@@ -67,28 +89,9 @@ class MainActivity : AppCompatActivity() {
         // Tombol notifikasi
         val btnNotification: ImageView = findViewById(R.id.btnNotification)
         btnNotification.setOnClickListener {
+            // Muat Fragment Notifikasi
             loadFragment(NotificationFragment())
-        }
-    }
-
-    private fun setupBottomNavigation() {
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.btnHome -> {
-                    loadFragment(HomeFragment())
-                    true
-                }
-                R.id.btnSearch -> {
-                    loadFragment(SearchFragment())
-                    true
-                }
-                R.id.btnBookmark -> {
-                    loadFragment(BookmarkFragment())
-                    true
-                }
-                else -> false
-            }
+            // Hilangkan highlight BottomNav saat membuka Notifikasi
         }
     }
 
