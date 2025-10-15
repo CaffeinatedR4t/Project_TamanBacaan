@@ -46,6 +46,16 @@ object BookRepository {
         activeMembers.add(User(id="M102", fullName="Daffa Permana", email="daffa@test.com", nik="32xxxxxxxxxxxxzz", addressRtRw = "RT 002/RW 001, Kel. Demo", isChild = true, parentName = "Ayah Daffa", isVerified = false)) // Belum diverifikasi
     }
 
+    fun toggleBookmarkStatus(bookId: String): Boolean {
+        val bookIndex = bookList.indexOfFirst { it.id == bookId }
+        if (bookIndex != -1) {
+            val book = bookList[bookIndex]
+            bookList[bookIndex] = book.copy(isBookmarked = !book.isBookmarked)
+            return true
+        }
+        return false
+    }
+
     // Tambahkan fungsi-fungsi ini di dalam BookRepository
     fun getAllEvents(): List<EventNotification> = eventNotifications.toList()
 

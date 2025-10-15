@@ -96,8 +96,21 @@ class BookAdapter(
             }
 
             bookmarkButton.setOnClickListener {
-                book.isBookmarked = !book.isBookmarked
-                notifyItemChanged(adapterPosition)
+                // Panggil repository untuk mengubah status bookmark
+                BookRepository.toggleBookmarkStatus(book.id)
+
+                // Perbarui tampilan ikon secara langsung
+                val updatedBook = BookRepository.getBookById(book.id) // Ambil status terbaru
+                if (updatedBook != null) {
+                    bookmarkButton.setImageResource(
+                        if (updatedBook.isBookmarked) R.drawable.ic_bookmark_filled
+                        else R.drawable.ic_bookmark
+                    )
+                }
+
+                // Beri tahu pengguna
+                val message = if (updatedBook?.isBookmarked == true) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
+                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
 

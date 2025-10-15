@@ -10,24 +10,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
 class BookmarkedFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var bookAdapter: BookAdapter
 
-    // Simulasi data buku yang di-bookmark
-    private val bookmarkedBooks = listOf(
-        Book(
-            id = "4",
-            title = "Pride and Prejudice",
-            author = "Jane Austen",
-            description = "A romantic novel of manners",
-            coverUrl = "",
-            category = "Romance",
-            isBookmarked = true // PENTING: Set ke true
-        )
-    )
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,13 +31,33 @@ class BookmarkedFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView = view.findViewById(R.id.recyclerViewMyBooks)
-        bookAdapter = BookAdapter(bookmarkedBooks) { book ->
-            // Handle click (e.g. show detail)
-        }
+        setupRecyclerView()
+        loadBookmarkedBooks()
+    }
 
+    // 👈 2. TAMBAHKAN onResume AGAR LIST SELALU UPDATE
+    override fun onResume() {
+        super.onResume()
+        // Muat ulang data setiap kali fragment ini ditampilkan
+        loadBookmarkedBooks()
+    }
+
+    private fun setupRecyclerView() {
+        // Inisialisasi adapter dengan list kosong terlebih dahulu
+        bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = bookAdapter
         }
+    }
+
+    // 👈 3. BUAT FUNGSI BARU UNTUK MENGAMBIL DATA ASLI
+    private fun loadBookmarkedBooks() {
+        // Ambil semua buku dari repository, lalu filter yang statusnya isBookmarked = true
+        val bookmarkedBooks = BookRepository.getAllBooks().filter { it.isBookmarked }
+
+        // Perbarui adapter dengan data yang sudah difilter
+        bookAdapter = BookAdapter(bookmarkedBooks) { }
+        recyclerView.adapter = bookAdapter
     }
 }
