@@ -13,7 +13,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="@color/primary_blue_dark"
+        android:background="@color/primary_blue"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView

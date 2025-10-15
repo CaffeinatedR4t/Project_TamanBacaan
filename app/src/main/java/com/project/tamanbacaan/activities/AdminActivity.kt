@@ -6,13 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.fragments.NotificationFragment
-import com.caffeinatedr4t.tamanbacaan.fragments.ProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.AdminProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.BookManagementFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.ReportFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.admin.TransactionManagementFragment
-import com.caffeinatedr4t.tamanbacaan.fragments.admin.MemberManagementFragment // Member Management digunakan untuk Verifikasi RT/RW
-// REMOVED: import com.caffeinatedr4t.tamanbacaan.fragments.admin.VerificationRequestsFragment
+import com.caffeinatedr4t.tamanbacaan.fragments.admin.MemberManagementFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class AdminActivity : AppCompatActivity() {
@@ -21,6 +19,10 @@ class AdminActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
 
+        // Tampilkan fragment Home pertama kali
+        if (savedInstanceState == null) {
+            loadFragment(BookManagementFragment())
+        }
         // Setup topNavigation
         setupTopNavigation()
         // Setup topNavigation
