@@ -39,5 +39,10 @@
         <activity android:name=".activities.AdminActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan"
-            android:windowSoftInputMode="adjustPan"/> </application>
+            android:windowSoftInputMode="adjustPan"/>
+        <!-- BookDetailActivity -->
+        <activity android:name=".activities.BookDetailActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan" />
+    </application>
 </manifest>
