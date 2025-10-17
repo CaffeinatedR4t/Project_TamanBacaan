@@ -62,6 +62,7 @@ class AdminActivity : AppCompatActivity() {
                     loadFragment(TransactionManagementFragment())
                     true
                 }
+                // REMOVED: nav_admin_verification
                 R.id.nav_admin_reports -> {
                     loadFragment(ReportFragment())
                     true
