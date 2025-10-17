@@ -16,24 +16,30 @@ import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
 
+// Adapter untuk menampilkan daftar buku di sisi pengguna.
 class BookAdapter(
-    private val books: List<Book>,
-    private val onBookClick: (Book) -> Unit
+    private val books: List<Book>, // Daftar buku.
+    private val onBookClick: (Book) -> Unit // Fungsi saat item buku di-klik.
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
+    // Membuat ViewHolder baru.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_book, parent, false)
         return BookViewHolder(view)
     }
 
+    // Menghubungkan data dengan ViewHolder.
     override fun onBindViewHolder(holder: BookViewHolder, position: Int) {
         holder.bind(books[position])
     }
 
+    // Mengembalikan jumlah total buku.
     override fun getItemCount(): Int = books.size
 
+    // Kelas ViewHolder untuk satu item buku.
     inner class BookViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        // Inisialisasi view dari layout.
         private val bookTitle: TextView = itemView.findViewById(R.id.bookTitle)
         private val bookAuthor: TextView = itemView.findViewById(R.id.bookAuthor)
         private val bookDescription: TextView = itemView.findViewById(R.id.bookDescription)
@@ -42,31 +48,32 @@ class BookAdapter(
         private val actionButton: Button = itemView.findViewById(R.id.actionButton)
         private val bookmarkButton: ImageView = itemView.findViewById(R.id.bookmarkButton)
 
+        // Mengisi data buku ke view.
         fun bind(book: Book) {
             bookTitle.text = book.title
             bookAuthor.text = book.author
             bookDescription.text = book.description
             bookCategory.text = book.category
 
-            // Set status
+            // Mengatur teks dan warna status ketersediaan buku.
             statusText.text = book.getAvailabilityStatus()
             statusText.setTextColor(ContextCompat.getColor(itemView.context, book.getStatusColor()))
 
-            // --- FIX: Logic Pinjaman menjadi Request Pinjam (memerlukan persetujuan Admin) ---
+            // Logika untuk tombol aksi (Pinjam/Kembalikan).
             when {
-                // Pinjaman Aktif (Hanya bisa dikembalikan)
+                // Jika buku sedang dipinjam, tombol menjadi "Kembalikan".
                 book.isBorrowed -> {
                     actionButton.text = "Return Book (Confirm)"
                     actionButton.isEnabled = true
                 }
-                // Tersedia (Bisa di-Request)
+                // Jika buku tersedia, tombol menjadi "Request Pinjam".
                 book.isAvailable -> {
                     actionButton.text = "Request Pinjam"
                     actionButton.isEnabled = true
                 }
-                // Tidak Tersedia (Jika sudah di-request atau stok habis)
+                // Jika tidak tersedia.
                 else -> {
-                    // Cek apakah buku sedang dalam proses request (hanya simulasi)
+                    // Cek apakah buku sedang dalam proses request.
                     val isPending = BookRepository.getPendingRequests().any { it.book.id == book.id }
                     if (isPending) {
                         actionButton.text = "Menunggu Persetujuan"
@@ -76,30 +83,31 @@ class BookAdapter(
                     actionButton.isEnabled = false
                 }
             }
-            // ---------------------------------------------------------------------------------
 
-            // Set bookmark state
+            // Mengatur ikon bookmark (terisi atau kosong).
             bookmarkButton.setImageResource(
                 if (book.isBookmarked) R.drawable.ic_bookmark_filled
                 else R.drawable.ic_bookmark
             )
 
-            // Click listeners
+            // Aksi saat item buku di-klik: Buka detail buku.
             itemView.setOnClickListener {
                 val intent = Intent(itemView.context, BookDetailActivity::class.java)
                 intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
                 itemView.context.startActivity(intent)
             }
 
+            // Aksi saat tombol aksi (Pinjam/Kembalikan) di-klik.
             actionButton.setOnClickListener {
                 handleBookAction(book)
             }
 
+            // Aksi saat tombol bookmark di-klik.
             bookmarkButton.setOnClickListener {
-                // Panggil repository untuk mengubah status bookmark
+                // Mengubah status bookmark melalui repository.
                 BookRepository.toggleBookmarkStatus(book.id)
 
-                // Perbarui tampilan ikon secara langsung
+                // Memperbarui ikon bookmark secara langsung.
                 val updatedBook = BookRepository.getBookById(book.id) // Ambil status terbaru
                 if (updatedBook != null) {
                     bookmarkButton.setImageResource(
@@ -108,23 +116,24 @@ class BookAdapter(
                     )
                 }
 
-                // Beri tahu pengguna
+                // Menampilkan pesan toast.
                 val message = if (updatedBook?.isBookmarked == true) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
                 Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
 
+        // Fungsi untuk menangani aksi peminjaman atau pengembalian buku.
         private fun handleBookAction(book: Book) {
             when {
+                // Jika mengembalikan buku.
                 book.isBorrowed -> {
-                    // Req. Anggota: Mengembalikan buku (online confirmation)
                     Toast.makeText(itemView.context, "Mengirim konfirmasi pengembalian buku '${book.title}' ke server...", Toast.LENGTH_SHORT).show()
-
-                    // Simulasi Sukses:
+                    // Simulasi pengembalian berhasil.
                     BookRepository.updateBook(book.copy(isBorrowed = false, isAvailable = true))
                     Toast.makeText(itemView.context, "Pengembalian berhasil dikonfirmasi secara online!", Toast.LENGTH_SHORT).show()
                     notifyItemChanged(adapterPosition)
                 }
+                // Jika meminta untuk meminjam buku.
                 book.isAvailable -> {
                     // FIX: Ganti logic Borrow menjadi Request Pinjam (memerlukan persetujuan Admin)
                     val memberId = "M001"
@@ -135,8 +144,7 @@ class BookAdapter(
                     } else {
                         Toast.makeText(itemView.context, "Gagal: Buku sudah dalam permintaan atau tidak tersedia.", Toast.LENGTH_SHORT).show()
                     }
-                    // TIDAK ADA PERUBAHAN STATUS LOKAL
-                    notifyItemChanged(adapterPosition) // Refresh untuk menampilkan 'Menunggu Persetujuan'
+                    notifyItemChanged(adapterPosition) // Refresh untuk menampilkan status 'Menunggu Persetujuan'.
                 }
             }
         }

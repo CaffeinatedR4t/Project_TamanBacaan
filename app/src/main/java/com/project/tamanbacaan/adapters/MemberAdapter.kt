@@ -10,12 +10,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.models.User
 
+// Adapter untuk mengelola daftar anggota di sisi admin.
 class MemberAdapter(
     private val members: MutableList<User>,
     private val onVerifyToggle: (User) -> Unit, // Ganti onEdit menjadi onVerifyToggle
     private val onRemove: (User) -> Unit
 ) : RecyclerView.Adapter<MemberAdapter.MemberViewHolder>() {
 
+    // ViewHolder untuk satu item anggota.
     class MemberViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvName: TextView = itemView.findViewById(R.id.tvMemberName)
         val tvDetails: TextView = itemView.findViewById(R.id.tvMemberDetails)
@@ -24,18 +26,21 @@ class MemberAdapter(
         val btnRemove: Button = itemView.findViewById(R.id.btnRemoveMember)
     }
 
+    // Membuat ViewHolder baru.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemberViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_member_management, parent, false)
         return MemberViewHolder(view)
     }
 
+    // Menghubungkan data anggota dengan ViewHolder.
     override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
         val user = members[position]
 
-        // Tampilkan data dasar
+        // Menampilkan data dasar anggota.
         holder.tvName.text = "${user.fullName} (ID: ${user.id})"
 
+        // Menampilkan detail anggota.
         val details = StringBuilder()
         details.append("NIK: ${user.nik}\n")
         details.append("RT/RW: ${user.addressRtRw}\n")
@@ -46,7 +51,7 @@ class MemberAdapter(
         }
         holder.tvDetails.text = details.toString()
 
-        // Tampilkan Status Verifikasi (Req: Dapat memverifikasi data anggota)
+        // Menampilkan status verifikasi.
         if (user.isVerified) {
             holder.tvStatus.text = "VERIFIED"
             holder.tvStatus.setTextColor(ContextCompat.getColor(holder.itemView.context, R.color.success_green))
@@ -59,13 +64,15 @@ class MemberAdapter(
             holder.btnVerify.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.primary_blue))
         }
 
-        // Listeners
+        // Menambahkan listener untuk tombol verifikasi dan hapus.
         holder.btnVerify.setOnClickListener { onVerifyToggle(user) }
         holder.btnRemove.setOnClickListener { onRemove(user) }
     }
 
+    // Mengembalikan jumlah total anggota.
     override fun getItemCount(): Int = members.size
 
+    // Memperbarui daftar anggota.
     fun updateData(newMembers: List<User>) {
         members.clear()
         members.addAll(newMembers)
