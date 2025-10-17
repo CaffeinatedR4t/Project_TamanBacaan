@@ -25,7 +25,7 @@ data class Book(
         return when {
             isBorrowed -> "Borrowed by you"
             !isAvailable -> "Not Available"
-            else -> "Available"
+            else -> "Recommended"
         }
     }
 
