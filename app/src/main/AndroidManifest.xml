@@ -20,40 +20,24 @@
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
-            android:theme="@style/Base.Theme.TamanBacaan">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:theme="@style/Base.Theme.TamanBacaan"
+            android:windowSoftInputMode="adjustPan"> <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
         </activity>
 
-        <!-- BARU: RegisterActivity -->
         <activity android:name=".activities.RegisterActivity"
             android:exported="false"
-            android:theme="@style/Base.Theme.TamanBacaan" />
+            android:theme="@style/Base.Theme.TamanBacaan"
+            android:windowSoftInputMode="adjustPan"/> <activity
+        android:name=".activities.MainActivity"
+        android:exported="false"
+        android:theme="@style/Base.Theme.TamanBacaan"
+        android:windowSoftInputMode="adjustPan"> </activity>
 
-        <!-- MainActivity (Anggota) -->
-        <activity
-            android:name=".activities.MainActivity"
-            android:exported="false"
-            android:theme="@style/Base.Theme.TamanBacaan">
-        </activity>
-
-        <!-- BookDetailActivity -->
-        <activity android:name=".activities.BookDetailActivity"
-            android:exported="false"
-            android:theme="@style/Base.Theme.TamanBacaan" />
-
-        <!-- AdminActivity (Pengelola TBM) -->
         <activity android:name=".activities.AdminActivity"
             android:exported="false"
-            android:theme="@style/Base.Theme.TamanBacaan" />
-
-        <activity android:name=".activities.EditBookActivity" />
-
-        <!-- VerificationActivity -->
-        <activity android:name=".activities.VerificationActivity"
-            android:exported="false"
-            android:theme="@style/Base.Theme.TamanBacaan" />
-    </application>
+            android:theme="@style/Base.Theme.TamanBacaan"
+            android:windowSoftInputMode="adjustPan"/> </application>
 </manifest>
