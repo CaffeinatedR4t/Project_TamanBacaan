@@ -12,12 +12,18 @@ import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
+/**
+ * Fragment yang menampilkan daftar buku yang sedang dipinjam (Borrowed Books) oleh pengguna.
+ * Fragment ini merupakan salah satu tab di dalam BookmarkFragment.
+ */
 class BorrowedBooksFragment : Fragment() {
 
+    // RecyclerView untuk menampilkan daftar buku pinjaman
     private lateinit var recyclerView: RecyclerView
+    // Adapter untuk mengelola dan menampilkan data buku
     private lateinit var bookAdapter: BookAdapter
 
-    // Simulasi data buku yang sedang dipinjam
+    // Simulasi data buku yang sedang dipinjam (Data awal untuk keperluan inisialisasi/testing)
     private val borrowedBooks = listOf(
         Book(
             id = "5",
@@ -33,6 +39,10 @@ class BorrowedBooksFragment : Fragment() {
         )
     )
 
+    /**
+     * Membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.
+     * Menggunakan layout `fragment_my_books_list` yang berisi RecyclerView.
+     */
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -41,28 +51,48 @@ class BorrowedBooksFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_my_books_list, container, false)
     }
 
+    /**
+     * Dipanggil setelah `onCreateView()`.
+     * Inisialisasi RecyclerView, adapter, dan set initial data/adapter.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Inisialisasi RecyclerView
         recyclerView = view.findViewById(R.id.recyclerViewMyBooks)
+
+        // Inisialisasi adapter dengan data dummy/initial
         bookAdapter = BookAdapter(borrowedBooks) { book ->
-            // Handle click (e.g. show detail with return reminder)
+            // Logika klik item (misalnya, menampilkan detail dengan pengingat pengembalian)
         }
 
         recyclerView.apply {
+            // Mengatur layout manager ke LinearLayoutManager (daftar vertikal)
             layoutManager = LinearLayoutManager(context)
+            // Mengatur adapter ke RecyclerView
             adapter = bookAdapter
         }
+
+        // Memastikan RecyclerView disiapkan dan data yang sebenarnya dimuat dari Repository
+        setupRecyclerView()
+        loadBorrowedBooks()
     }
 
+    /**
+     * Dipanggil ketika fragment mulai terlihat oleh pengguna.
+     * Memastikan daftar buku pinjaman selalu diperbarui (refresh) dari Repository.
+     */
     override fun onResume() {
         super.onResume()
         // Muat ulang data setiap kali fragment ini ditampilkan
         loadBorrowedBooks()
     }
 
+    /**
+     * Menyiapkan RecyclerView dengan layout manager dan menginisialisasi adapter dengan list kosong.
+     */
     private fun setupRecyclerView() {
-        // Inisialisasi adapter dengan list kosong terlebih dahulu
+        // Inisialisasi ulang adapter dengan list kosong terlebih dahulu
         bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
@@ -70,11 +100,15 @@ class BorrowedBooksFragment : Fragment() {
         }
     }
 
+    /**
+     * Mengambil daftar buku dari BookRepository, memfilter yang statusnya `isBorrowed = true`,
+     * dan memperbarui adapter RecyclerView.
+     */
     private fun loadBorrowedBooks() {
-        // Ambil semua buku dari repository, lalu filter yang statusnya isBorrowed = true
+        // Mengambil semua buku dari repository, lalu memfilter yang sedang dipinjam
         val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
 
-        // Perbarui adapter dengan data yang sudah difilter
+        // Membuat ulang dan mengatur adapter dengan data pinjaman yang sudah difilter
         bookAdapter = BookAdapter(borrowedBooks) { }
         recyclerView.adapter = bookAdapter
     }

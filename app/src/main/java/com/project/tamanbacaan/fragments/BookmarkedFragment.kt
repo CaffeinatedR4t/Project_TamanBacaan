@@ -12,13 +12,22 @@ import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
+/**
+ * Fragment yang menampilkan daftar buku yang telah ditandai (bookmarked) oleh pengguna.
+ * Fragment ini terletak di dalam TabLayout/ViewPager2 dari BookmarkFragment.
+ */
 class BookmarkedFragment : Fragment() {
 
+    // Variabel untuk RecyclerView yang menampilkan daftar buku
     private lateinit var recyclerView: RecyclerView
+    // Adapter untuk mengelola dan menampilkan data buku dalam RecyclerView
     private lateinit var bookAdapter: BookAdapter
 
 
-
+    /**
+     * Dipanggil untuk membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.
+     * Menggunakan layout `fragment_my_books_list` yang berisi RecyclerView.
+     */
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -27,36 +36,52 @@ class BookmarkedFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_my_books_list, container, false)
     }
 
+    /**
+     * Dipanggil setelah `onCreateView()` dan memastikan view sudah dibuat.
+     * Inisialisasi RecyclerView dan memuat data bookmark.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Inisialisasi RecyclerView dari layout
         recyclerView = view.findViewById(R.id.recyclerViewMyBooks)
         setupRecyclerView()
         loadBookmarkedBooks()
     }
 
-    // 👈 2. TAMBAHKAN onResume AGAR LIST SELALU UPDATE
+    /**
+     * Dipanggil ketika fragment mulai terlihat oleh pengguna.
+     * Memastikan daftar buku yang ditandai selalu diperbarui (refresh) setiap kali fragment aktif
+     * karena status bookmark bisa berubah di fragment lain.
+     */
     override fun onResume() {
         super.onResume()
-        // Muat ulang data setiap kali fragment ini ditampilkan
         loadBookmarkedBooks()
     }
 
+    /**
+     * Menyiapkan RecyclerView dengan layout manager dan adapter awal.
+     */
     private fun setupRecyclerView() {
         // Inisialisasi adapter dengan list kosong terlebih dahulu
         bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
         recyclerView.apply {
+            // Mengatur layout manager ke LinearLayoutManager (daftar vertikal)
             layoutManager = LinearLayoutManager(context)
+            // Mengatur adapter ke RecyclerView
             adapter = bookAdapter
         }
     }
 
-    // 👈 3. BUAT FUNGSI BARU UNTUK MENGAMBIL DATA ASLI
+    /**
+     * Mengambil daftar buku dari repositori, memfilter yang statusnya `isBookmarked = true`,
+     * dan memperbarui adapter RecyclerView.
+     */
     private fun loadBookmarkedBooks() {
         // Ambil semua buku dari repository, lalu filter yang statusnya isBookmarked = true
         val bookmarkedBooks = BookRepository.getAllBooks().filter { it.isBookmarked }
 
-        // Perbarui adapter dengan data yang sudah difilter
+        // Membuat adapter baru dengan data yang sudah difilter dan mengaturnya ke RecyclerView
         bookAdapter = BookAdapter(bookmarkedBooks) { }
         recyclerView.adapter = bookAdapter
     }

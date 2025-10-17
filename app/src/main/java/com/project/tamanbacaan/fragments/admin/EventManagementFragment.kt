@@ -12,63 +12,88 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.NotificationAdapter
-import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Kita akan tambah fungsi di sini nanti
-import com.caffeinatedr4t.tamanbacaan.models.EventNotification
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
+/**
+ * Fragment untuk manajemen Pengumuman/Kegiatan (Events) oleh Admin.
+ * Menyediakan form untuk membuat pengumuman baru dan menampilkan daftar pengumuman terkirim.
+ */
 class EventManagementFragment : Fragment() {
 
-    private lateinit var etEventTitle: EditText
-    private lateinit var etEventMessage: EditText
-    private lateinit var btnPostEvent: Button
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var adapter: NotificationAdapter
+    // UI: Form Pengumuman
+    private lateinit var etEventTitle: EditText // Input Judul Kegiatan
+    private lateinit var etEventMessage: EditText // Input Deskripsi/Pesan Kegiatan
+    private lateinit var btnPostEvent: Button // Tombol Kirim Pengumuman
 
+    // UI: Daftar Pengumuman
+    private lateinit var recyclerView: RecyclerView // RecyclerView untuk menampilkan daftar pengumuman
+    private lateinit var adapter: NotificationAdapter // Adapter yang digunakan kembali untuk menampilkan notifikasi event
+
+    /**
+     * Membuat dan mengembalikan hierarki tampilan fragmen.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_admin_event_management, container, false)
     }
 
+    /**
+     * Dipanggil setelah `onCreateView()`.
+     * Menginisialisasi semua View, menyiapkan RecyclerView, dan memuat data awal.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Inisialisasi View Form
         etEventTitle = view.findViewById(R.id.etEventTitle)
         etEventMessage = view.findViewById(R.id.etEventMessage)
         btnPostEvent = view.findViewById(R.id.btnPostEvent)
+        // Inisialisasi View RecyclerView
         recyclerView = view.findViewById(R.id.recyclerViewEvents)
 
         setupRecyclerView()
         loadEvents()
 
+        // Listener untuk tombol kirim pengumuman
         btnPostEvent.setOnClickListener {
             postNewEvent()
         }
     }
 
+    /**
+     * Menyiapkan RecyclerView untuk menampilkan daftar pengumuman.
+     */
     private fun setupRecyclerView() {
-        // Kita bisa gunakan ulang NotificationAdapter untuk menampilkan daftar event
-        // Kita hanya perlu mengisi list buku pinjaman dengan list kosong
+        // Menggunakan NotificationAdapter; list buku pinjaman diisi kosong
         adapter = NotificationAdapter(emptyList(), BookRepository.getAllEvents())
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
     }
 
+    /**
+     * Memuat daftar semua pengumuman dari BookRepository dan memperbarui adapter.
+     */
     private fun loadEvents() {
-        // Cukup buat ulang adapter dengan data terbaru
+        // Membuat ulang adapter dengan data terbaru dari repository
         adapter = NotificationAdapter(emptyList(), BookRepository.getAllEvents())
         recyclerView.adapter = adapter
     }
 
+    /**
+     * Mengambil input judul dan pesan, memvalidasi, dan menambahkan pengumuman baru ke repository.
+     */
     private fun postNewEvent() {
         val title = etEventTitle.text.toString().trim()
         val message = etEventMessage.text.toString().trim()
 
+        // Validasi input
         if (title.isEmpty() || message.isEmpty()) {
             Toast.makeText(context, "Judul dan deskripsi tidak boleh kosong.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Logika untuk menyimpan event (simulasi di BookRepository)
+        // Menyimpan event baru ke repository (simulasi)
         BookRepository.addEvent(title, message)
 
         Toast.makeText(context, "Pengumuman berhasil dikirim!", Toast.LENGTH_SHORT).show()

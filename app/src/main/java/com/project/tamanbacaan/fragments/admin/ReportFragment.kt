@@ -12,26 +12,39 @@ import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 
+/**
+ * Fragment untuk menampilkan Laporan dan Statistik (Reports) TBM bagi Admin.
+ * Menampilkan statistik kunci seperti jumlah anggota, permintaan pinjaman, buku dipinjam, dan buku terpopuler.
+ */
 class ReportFragment : Fragment() {
 
-    // Deklarasikan TextViews untuk statistik
-    private lateinit var tvTotalMembers: TextView
-    private lateinit var tvPendingRequests: TextView
-    private lateinit var tvBorrowedBooks: TextView
-    private lateinit var tvTotalBooks: TextView
+    // TextViews untuk statistik aktivitas TBM
+    private lateinit var tvTotalMembers: TextView // Jumlah total anggota aktif
+    private lateinit var tvPendingRequests: TextView // Jumlah permintaan pinjaman yang tertunda
+    private lateinit var tvBorrowedBooks: TextView // Jumlah total buku yang sedang dipinjam
+    private lateinit var tvTotalBooks: TextView // Jumlah total koleksi buku
 
 
+    /**
+     * Membuat dan mengembalikan hierarki tampilan fragmen.
+     * Menggunakan layout `fragment_admin_report`.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_admin_report, container, false)
     }
 
+    /**
+     * Dipanggil setelah `onCreateView()`.
+     * Menginisialisasi View dan memuat data statistik.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inisialisasi view untuk statistik buku terpopuler
+        // Inisialisasi container untuk Top Books
         val container = view.findViewById<LinearLayout>(R.id.containerTopBooks)
+        // Menampilkan visualisasi buku terpopuler
         displayTopBooks(container)
 
         // Inisialisasi TextViews untuk statistik TBM
@@ -40,11 +53,13 @@ class ReportFragment : Fragment() {
         tvBorrowedBooks = view.findViewById(R.id.tvBorrowedBooks)
         tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
 
-        // Muat data statistik
+        // Muat data statistik aktivitas
         loadActivityStats()
     }
 
-    // --- FUNGSI BARU UNTUK MEMUAT STATISTIK AKTIVITAS ---
+    /**
+     * Mengambil data statistik aktivitas TBM (Anggota, Pinjaman, Request) dari BookRepository dan menampilkannya di UI.
+     */
     private fun loadActivityStats() {
         // Ambil data dari repository
         val totalMembers = BookRepository.getAllMembers().size
@@ -58,14 +73,19 @@ class ReportFragment : Fragment() {
         tvBorrowedBooks.text = borrowedBooks.toString()
         tvTotalBooks.text = totalBooks.toString()
     }
-    // ---------------------------------------------------
 
+    /**
+     * Mengambil daftar buku terpopuler dan menampilkan visualisasi bar (grafik batang sederhana) di LinearLayout.
+     * @param container LinearLayout tempat bar visualisasi akan ditambahkan.
+     */
     private fun displayTopBooks(container: LinearLayout) {
-        // ... (kode displayTopBooks tetap sama)
+        // Mengambil dan mengurutkan buku terpopuler (Map<Judul, JumlahPinjaman>)
         val topBooks = BookRepository.getTopBooks().entries.sortedByDescending { it.value }
-        val maxCount = topBooks.firstOrNull()?.value ?: 1 // Untuk skala bar
+        // Menentukan jumlah pinjaman maksimum untuk skala visualisasi
+        val maxCount = topBooks.firstOrNull()?.value ?: 1
 
         topBooks.forEach { (title, count) ->
+            // Container horizontal untuk satu baris (Judul + Bar + Jumlah)
             val barContainer = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
@@ -74,7 +94,7 @@ class ReportFragment : Fragment() {
                 ).apply { bottomMargin = 8 }
             }
 
-            // Text Judul
+            // Text Judul Buku (menggunakan 40% lebar)
             val titleView = TextView(context).apply {
                 text = title
                 width = 0
@@ -89,13 +109,13 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(titleView)
 
-            // Bar Visualisasi
-            val barWidthWeight = count.toFloat() / maxCount.toFloat() * 0.6f // 60% sisa lebar
+            // Bar Visualisasi (menggunakan sisa lebar, diskalakan dengan maxCount)
+            val barWidthWeight = count.toFloat() / maxCount.toFloat() * 0.6f
             val barView = View(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     0,
-                    24,
-                    barWidthWeight
+                    24, // Tinggi bar
+                    barWidthWeight // Berat untuk menentukan lebar relatif
                 ).apply {
                     setMargins(16, 4, 0, 4)
                 }
@@ -103,7 +123,7 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(barView)
 
-            // Jumlah
+            // Jumlah (Pinjaman)
             val countView = TextView(context).apply {
                 text = count.toString()
                 layoutParams = LinearLayout.LayoutParams(
