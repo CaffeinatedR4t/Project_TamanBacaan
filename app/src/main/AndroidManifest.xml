@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Izin untuk mengakses internet (untuk Glide, Retrofit, dll.) -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Izin untuk memeriksa status koneksi jaringan -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
@@ -16,33 +18,51 @@
         android:theme="@style/Base.Theme.TamanBacaan"
         tools:targetApi="tiramisu">
 
-        <!-- LoginActivity is the LAUNCHER ACTIVITY -->
+        <!-- Activity Utama: Login menjadi titik masuk aplikasi -->
         <activity
             android:name=".activities.LoginActivity"
             android:exported="true"
             android:theme="@style/Base.Theme.TamanBacaan"
-            android:windowSoftInputMode="adjustPan"> <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+            android:windowSoftInputMode="adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
 
-        <activity android:name=".activities.RegisterActivity"
+        <!-- Activity untuk Pendaftaran Pengguna -->
+        <activity
+            android:name=".activities.RegisterActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan"
-            android:windowSoftInputMode="adjustPan"/> <activity
-        android:name=".activities.MainActivity"
-        android:exported="false"
-        android:theme="@style/Base.Theme.TamanBacaan"
-        android:windowSoftInputMode="adjustPan"> </activity>
+            android:windowSoftInputMode="adjustPan" />
 
-        <activity android:name=".activities.AdminActivity"
+        <!-- Activity untuk Dasbor Pengguna -->
+        <activity
+            android:name=".activities.MainActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan"
-            android:windowSoftInputMode="adjustPan"/>
-        <!-- BookDetailActivity -->
-        <activity android:name=".activities.BookDetailActivity"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- Activity untuk Dasbor Admin -->
+        <activity
+            android:name=".activities.AdminActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- Activity untuk Detail Buku -->
+        <activity
+            android:name=".activities.BookDetailActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan" />
+
+        <!-- [DITAMBAHKAN] Activity untuk Verifikasi Anggota oleh Admin -->
+        <activity
+            android:name=".activities.VerificationActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan" />
+
     </application>
+
 </manifest>
