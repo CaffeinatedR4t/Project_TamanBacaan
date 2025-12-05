@@ -5,7 +5,14 @@ import android.content.SharedPreferences
 
 /**
  * SessionManager utility class for managing JWT tokens and user session data.
- * This is a wrapper/alias for SharedPreferencesHelper to match the requested API.
+ * 
+ * NOTE: This class provides an alternative API for session management but uses the same
+ * SharedPreferences storage as SharedPreferencesHelper (key: "TamanBacaanPrefs").
+ * Both classes can be used interchangeably throughout the app.
+ * 
+ * For consistency, it's recommended to use SharedPreferencesHelper which is already
+ * used in LoginActivity and MainActivity. This class is provided as an additional
+ * utility that matches the SessionManager API pattern commonly used in Android apps.
  */
 class SessionManager(context: Context) {
     

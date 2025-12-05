@@ -92,15 +92,18 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         // Create register request
+        // Note: The registration form currently has a single address field for RT/RW/Kelurahan.
+        // For proper administrative division tracking, consider adding separate fields for
+        // Kelurahan and Kecamatan in activity_register.xml in future updates.
         val registerRequest = RegisterRequest(
             fullName = fullName,
             email = email,
             password = password,
             nik = nik,
             addressRtRw = address,
-            addressKelurahan = "Default", // Using default as layout doesn't have separate field
-            addressKecamatan = "Default", // Using default as layout doesn't have separate field
-            phoneNumber = null, // Optional field not in layout
+            addressKelurahan = "To be verified", // Will be updated during admin verification
+            addressKecamatan = "To be verified", // Will be updated during admin verification
+            phoneNumber = null, // Optional field not included in current form
             isChild = isChild,
             parentName = parentName
         )
