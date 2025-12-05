@@ -74,7 +74,7 @@ class HomeFragment : Fragment() {
         showLoading(true)
         hideError()
 
-        val apiService = ApiConfig.getApiService()
+        val apiService = ApiConfig.getApiService(requireContext())
         apiService.getAllBooks().enqueue(object : Callback<List<BookResponse>> {
             override fun onResponse(
                 call: Call<List<BookResponse>>,

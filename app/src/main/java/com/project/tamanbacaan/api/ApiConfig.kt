@@ -1,9 +1,10 @@
 package com.caffeinatedr4t.tamanbacaan.api
 
+import android.content.Context
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.gson. GsonConverterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiConfig {
@@ -16,6 +17,9 @@ object ApiConfig {
     // private const val BASE_URL = "http://192.168.1.100:3000/api/"
     // (Replace with YOUR IP from ipconfig)
 
+    /**
+     * Get API service without authentication (for login/register)
+     */
     fun getApiService(): ApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             setLevel(HttpLoggingInterceptor.Level.BODY)
@@ -23,9 +27,36 @@ object ApiConfig {
 
         val client = OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, TimeUnit. SECONDS)
-            .readTimeout(30, TimeUnit. SECONDS)
-            .writeTimeout(30, TimeUnit. SECONDS)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+
+        return retrofit.create(ApiService::class.java)
+    }
+
+    /**
+     * Get API service with authentication token (for authenticated requests)
+     */
+    fun getApiService(context: Context): ApiService {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            setLevel(HttpLoggingInterceptor.Level.BODY)
+        }
+
+        val authInterceptor = AuthInterceptor(context)
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor) // Add auth token to requests
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
 
         val retrofit = Retrofit.Builder()
