@@ -8,7 +8,7 @@
     android:padding="24dp"
     android:gravity="center">
 
-    <!-- BARU: Logo Aplikasi -->
+    <!-- Logo Aplikasi -->
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
@@ -58,11 +58,20 @@
         android:paddingVertical="12dp"
         android:layout_marginBottom="16dp"/>
 
-    <TextView
-        android:id="@+id/tvRegister"
+    <!-- Progress Bar (NEW!) -->
+    <ProgressBar
+        android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Belum punya akun? Daftar di sini."
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
+
+    <!-- Register Link (RENAMED from tvRegister to tvRegisterLink) -->
+    <TextView
+        android:id="@+id/tvRegisterLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Belum punya akun?  Daftar di sini."
         android:textColor="@color/primary_blue"
         android:textStyle="bold"
         android:padding="8dp"/>

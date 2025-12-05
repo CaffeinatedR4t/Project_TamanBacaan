@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan.activities
+package com.caffeinatedr4t.tamanbacaan.activities.auth
 
 import android.content.Intent
 import android.os.Bundle
