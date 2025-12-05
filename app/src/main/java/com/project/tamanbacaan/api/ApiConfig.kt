@@ -9,11 +9,11 @@ import java.util.concurrent.TimeUnit
 object ApiConfig {
     // CHANGE THIS TO YOUR COMPUTER'S IP ADDRESS
     // For emulator: use "10.0.2.2"
-    // For real device: use your computer's IP (e.g., "192.168. 1.100")
-    private const val BASE_URL = "http://10.0.2.2:3000/"
+    // For real device: use your computer's IP (e.g., "192.168.1.100")
+    private const val BASE_URL = "http://10.0.2.2:3000/api/"
 
     // If testing on real device, change to:
-    // private const val BASE_URL = "http://192.168.1.100:3000/"
+    // private const val BASE_URL = "http://192.168.1.100:3000/api/"
     // (Replace with YOUR IP from ipconfig)
 
     fun getApiService(): ApiService {

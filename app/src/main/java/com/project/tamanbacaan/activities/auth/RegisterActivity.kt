@@ -2,100 +2,231 @@ package com.caffeinatedr4t.tamanbacaan.activities.auth
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
+import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
+import com.caffeinatedr4t.tamanbacaan.api.model.RegisterResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 /**
- * Activity yang berfungsi sebagai halaman pendaftaran untuk anggota baru.
- * Pengguna dapat mendaftar sebagai anggota dewasa atau anggota anak-anak.
+ * Activity untuk pendaftaran anggota baru dengan integrasi backend API.
+ * Mendukung pendaftaran anggota dewasa dan anak-anak.
  */
 class RegisterActivity : AppCompatActivity() {
 
-    /**
-     * Fungsi yang dipanggil saat Activity pertama kali dibuat.
-     * Bertanggung jawab untuk inisialisasi UI, dan mengatur listener untuk interaksi pengguna.
-     */
+    private lateinit var etFullName: EditText
+    private lateinit var etNik: EditText
+    private lateinit var etEmail: EditText
+    private lateinit var etPassword: EditText
+    private lateinit var etAddressRtRw: EditText
+    private lateinit var cbIsChild: CheckBox
+    private lateinit var etParentName: EditText
+    private lateinit var btnRegister: Button
+    private lateinit var tvLogin: TextView
+    private var progressBar: ProgressBar? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // --- Inisialisasi Komponen UI dari Layout ---
-        val etFullName: EditText = findViewById(R.id.etFullName)
-        val etNik: EditText = findViewById(R.id.etNik)
-        val etEmail: EditText = findViewById(R.id.etEmail)
-        val etPassword: EditText = findViewById(R.id.etPassword)
-        val etAddressRtRw: EditText = findViewById(R.id.etAddressRtRw)
-        val cbIsChild: CheckBox = findViewById(R.id.cbIsChild)
-        val etParentName: EditText = findViewById(R.id.etParentName)
-        val btnRegister: Button = findViewById(R.id.btnRegister)
-        val tvLogin: TextView = findViewById(R.id.tvLogin)
+        initializeViews()
+        setupListeners()
+    }
 
-        // --- Logika untuk Menampilkan/Menyembunyikan Input Nama Orang Tua ---
-        // Mengatur listener pada checkbox 'Anggota Anak-anak'.
+    private fun initializeViews() {
+        etFullName = findViewById(R.id.etFullName)
+        etNik = findViewById(R.id.etNik)
+        etEmail = findViewById(R.id.etEmail)
+        etPassword = findViewById(R.id.etPassword)
+        etAddressRtRw = findViewById(R.id.etAddressRtRw)
+        cbIsChild = findViewById(R.id.cbIsChild)
+        etParentName = findViewById(R.id.etParentName)
+        btnRegister = findViewById(R.id.btnRegister)
+        tvLogin = findViewById(R.id.tvLogin)
+        progressBar = findViewById(R.id.progressBar)
+    }
+
+    private fun setupListeners() {
+        // Show/hide parent name field based on checkbox
         cbIsChild.setOnCheckedChangeListener { _, isChecked ->
-            // Jika checkbox dicentang (isChecked == true), tampilkan input nama orang tua.
-            // Jika tidak, sembunyikan.
             etParentName.visibility = if (isChecked) View.VISIBLE else View.GONE
-            // Jika checkbox tidak dicentang, kosongkan input nama orang tua untuk membersihkan data.
             if (!isChecked) {
                 etParentName.text.clear()
             }
         }
 
-        // --- Logika untuk Tombol Pendaftaran ---
+        // Register button click
         btnRegister.setOnClickListener {
-            // Mengambil semua nilai dari input field dan mengubahnya menjadi String.
-            val fullName = etFullName.text.toString().trim()
-            val nik = etNik.text.toString().trim()
-            val email = etEmail.text.toString().trim()
-            val password = etPassword.text.toString() // Password tidak perlu di-trim
-            val address = etAddressRtRw.text.toString().trim()
-            val isChild = cbIsChild.isChecked
-            // Jika mendaftar sebagai anak, ambil nama orang tua. Jika tidak, nilainya null.
-            val parentName = if (isChild) etParentName.text.toString().trim() else null
-
-            // --- Validasi Input Pengguna ---
-            // Memeriksa apakah field wajib sudah diisi dan NIK memiliki panjang 16 digit.
-            if (fullName.isEmpty() || nik.length != 16 || email.isEmpty() || password.isEmpty() || address.isEmpty()) {
-                Toast.makeText(this, "Lengkapi semua data dengan benar (NIK harus 16 digit).", Toast.LENGTH_LONG).show()
-                return@setOnClickListener // Menghentikan eksekusi jika validasi gagal.
-            }
-            // Validasi tambahan khusus jika yang mendaftar adalah anak.
-            if (isChild && parentName.isNullOrEmpty()) {
-                Toast.makeText(this, "Nama Orang Tua wajib diisi untuk anak.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener // Menghentikan eksekusi.
-            }
-
-            // --- Simulasi Proses Pendaftaran ---
-            // Di aplikasi nyata, di sinilah Anda akan memanggil API (misalnya dengan Retrofit)
-            // untuk mengirim data pendaftaran ke server untuk diverifikasi oleh admin.
-            Toast.makeText(this, "Pendaftaran sedang diproses dengan NIK: $nik. Mohon tunggu verifikasi oleh Pengelola TBM.", Toast.LENGTH_LONG).show()
-
-            // --- Mengirim Data ke LoginActivity ---
-            // Setelah pendaftaran, data pengguna dikirim ke LoginActivity agar pengguna
-            // bisa langsung login setelah akunnya diverifikasi.
-            val intent = Intent(this, LoginActivity::class.java).apply {
-                putExtra("REGISTERED_NAME", fullName)
-                putExtra("REGISTERED_EMAIL", email)
-                putExtra("REGISTERED_PASSWORD", password)
-                putExtra("REGISTERED_NIK", nik)
-                putExtra("REGISTERED_ADDRESS", address)
-            }
-            startActivity(intent) // Memulai LoginActivity.
-            finish() // Menutup RegisterActivity agar pengguna tidak bisa kembali ke halaman ini.
+            performRegistration()
         }
 
-        // --- Logika untuk Teks 'Sudah punya akun? Login' ---
+        // Login link click
         tvLogin.setOnClickListener {
-            // Jika pengguna sudah punya akun, arahkan kembali ke LoginActivity.
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish() // Menutup RegisterActivity.
+            navigateToLogin()
         }
+    }
+
+    private fun performRegistration() {
+        val fullName = etFullName.text.toString().trim()
+        val nik = etNik.text.toString().trim()
+        val email = etEmail.text.toString().trim()
+        val password = etPassword.text.toString()
+        val address = etAddressRtRw.text.toString().trim()
+        val isChild = cbIsChild.isChecked
+        val parentName = if (isChild) etParentName.text.toString().trim() else null
+
+        // Validate input
+        if (!validateInput(fullName, nik, email, password, address, isChild, parentName)) {
+            return
+        }
+
+        // Create register request
+        val registerRequest = RegisterRequest(
+            fullName = fullName,
+            email = email,
+            password = password,
+            nik = nik,
+            addressRtRw = address,
+            addressKelurahan = "Default", // Using default as layout doesn't have separate field
+            addressKecamatan = "Default", // Using default as layout doesn't have separate field
+            phoneNumber = null, // Optional field not in layout
+            isChild = isChild,
+            parentName = parentName
+        )
+
+        showLoading(true)
+
+        val apiService = ApiConfig.getApiService()
+        apiService.register(registerRequest).enqueue(object : Callback<RegisterResponse> {
+            override fun onResponse(
+                call: Call<RegisterResponse>,
+                response: Response<RegisterResponse>
+            ) {
+                showLoading(false)
+
+                if (response.isSuccessful) {
+                    val registerResponse = response.body()
+                    if (registerResponse != null) {
+                        Toast.makeText(
+                            this@RegisterActivity,
+                            registerResponse.message,
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        // Navigate to login with registered email
+                        navigateToLogin(email)
+                    }
+                } else {
+                    val errorMsg = when (response.code()) {
+                        400 -> "Data tidak valid. Periksa kembali input Anda."
+                        409 -> "Email atau NIK sudah terdaftar."
+                        else -> "Pendaftaran gagal. Silakan coba lagi."
+                    }
+                    Toast.makeText(this@RegisterActivity, errorMsg, Toast.LENGTH_LONG).show()
+                }
+            }
+
+            override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
+                showLoading(false)
+                Toast.makeText(
+                    this@RegisterActivity,
+                    "Kesalahan koneksi: ${t.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
+    }
+
+    private fun validateInput(
+        fullName: String,
+        nik: String,
+        email: String,
+        password: String,
+        address: String,
+        isChild: Boolean,
+        parentName: String?
+    ): Boolean {
+        if (fullName.isEmpty()) {
+            Toast.makeText(this, "Nama lengkap harus diisi", Toast.LENGTH_SHORT).show()
+            etFullName.requestFocus()
+            return false
+        }
+
+        if (nik.length != 16) {
+            Toast.makeText(this, "NIK harus 16 digit", Toast.LENGTH_SHORT).show()
+            etNik.requestFocus()
+            return false
+        }
+
+        if (email.isEmpty()) {
+            Toast.makeText(this, "Email harus diisi", Toast.LENGTH_SHORT).show()
+            etEmail.requestFocus()
+            return false
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Format email tidak valid", Toast.LENGTH_SHORT).show()
+            etEmail.requestFocus()
+            return false
+        }
+
+        if (password.isEmpty()) {
+            Toast.makeText(this, "Password harus diisi", Toast.LENGTH_SHORT).show()
+            etPassword.requestFocus()
+            return false
+        }
+
+        if (password.length < 6) {
+            Toast.makeText(this, "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+            etPassword.requestFocus()
+            return false
+        }
+
+        if (address.isEmpty()) {
+            Toast.makeText(this, "Alamat harus diisi", Toast.LENGTH_SHORT).show()
+            etAddressRtRw.requestFocus()
+            return false
+        }
+
+        if (isChild && parentName.isNullOrEmpty()) {
+            Toast.makeText(this, "Nama orang tua wajib diisi untuk anak", Toast.LENGTH_SHORT).show()
+            etParentName.requestFocus()
+            return false
+        }
+
+        return true
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        progressBar?.visibility = if (isLoading) View.VISIBLE else View.GONE
+        btnRegister.isEnabled = !isLoading
+        etFullName.isEnabled = !isLoading
+        etNik.isEnabled = !isLoading
+        etEmail.isEnabled = !isLoading
+        etPassword.isEnabled = !isLoading
+        etAddressRtRw.isEnabled = !isLoading
+        cbIsChild.isEnabled = !isLoading
+        etParentName.isEnabled = !isLoading
+        tvLogin.isEnabled = !isLoading
+    }
+
+    private fun navigateToLogin(email: String? = null) {
+        val intent = Intent(this, LoginActivity::class.java)
+        email?.let {
+            intent.putExtra("REGISTERED_EMAIL", it)
+        }
+        startActivity(intent)
+        finish()
     }
 }

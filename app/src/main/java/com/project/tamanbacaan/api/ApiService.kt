@@ -6,24 +6,24 @@ import retrofit2.http.*
 
 interface ApiService {
     // Authentication
-    @POST("api/auth/register")
+    @POST("auth/register")
     fun register(@Body request: RegisterRequest): Call<RegisterResponse>
 
-    @POST("api/auth/login")
+    @POST("auth/login")
     fun login(@Body request: LoginRequest): Call<LoginResponse>
 
     // Books
-    @GET("api/books")
+    @GET("books")
     fun getAllBooks(): Call<List<BookResponse>>
 
-    @GET("api/books/{id}")
+    @GET("books/{id}")
     fun getBookById(@Path("id") id: String): Call<BookResponse>
 
     // Users
-    @GET("api/users")
+    @GET("users")
     fun getAllUsers(): Call<List<UserResponse>>
 
     // Events
-    @GET("api/events")
+    @GET("events")
     fun getEvents(): Call<List<EventResponse>>
 }
