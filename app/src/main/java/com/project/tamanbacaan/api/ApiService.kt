@@ -26,4 +26,11 @@ interface ApiService {
     // Events
     @GET("events")
     fun getEvents(): Call<List<EventResponse>>
+    
+    @POST("events")
+    fun createEvent(@Body request: CreateEventRequest): Call<EventResponse>
+    
+    // Books POST endpoint for seeding
+    @POST("books")
+    fun createBook(@Body request: CreateBookRequest): Call<BookResponse>
 }
