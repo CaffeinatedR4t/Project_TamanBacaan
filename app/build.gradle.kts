@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.caffeinatedr4t.tamanbacaan"
-    compileSdk = 34
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.caffeinatedr4t.tamanbacaan"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
     }
