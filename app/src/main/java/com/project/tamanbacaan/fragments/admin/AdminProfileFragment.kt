@@ -10,7 +10,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan.activities.LoginActivity
+import com.caffeinatedr4t.tamanbacaan.activities.auth.LoginActivity
 
 /**
  * Fragment untuk halaman profil Pengelola (Admin).

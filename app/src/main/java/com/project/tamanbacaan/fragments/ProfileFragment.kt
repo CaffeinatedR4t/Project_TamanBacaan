@@ -9,7 +9,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan.activities.MainActivity
+import com.caffeinatedr4t.tamanbacaan.activities.main.MainActivity
 
 /**
  * Fragment untuk menampilkan profil pengguna (Anggota TBM).
