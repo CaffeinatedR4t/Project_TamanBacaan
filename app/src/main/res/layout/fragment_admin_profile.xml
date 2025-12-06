@@ -36,6 +36,15 @@
         android:layout_height="wrap_content" />
 
     <Button
+        android:id="@+id/btnSeedData"
+        android:text="Tambah Data Testing"
+        android:backgroundTint="@color/primary_blue"
+        android:textColor="@color/white"
+        android:layout_marginBottom="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
         android:id="@+id/btnAdminLogout"
         android:text="Logout"
         android:backgroundTint="@color/primary_blue"
