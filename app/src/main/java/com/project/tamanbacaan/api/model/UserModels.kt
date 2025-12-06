@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan. api.model
+package com.caffeinatedr4t.tamanbacaan.api.model
 
 import com.google.gson.annotations.SerializedName
 

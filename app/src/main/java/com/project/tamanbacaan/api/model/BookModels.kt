@@ -1,6 +1,6 @@
-package com.caffeinatedr4t. tamanbacaan.api.model
+package com.caffeinatedr4t.tamanbacaan.api.model
 
-import com.google.gson. annotations.SerializedName
+import com.google.gson.annotations.SerializedName
 
 data class BookResponse(
     @SerializedName("_id") val id: String,
