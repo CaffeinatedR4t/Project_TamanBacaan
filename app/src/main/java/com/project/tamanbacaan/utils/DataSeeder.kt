@@ -90,9 +90,10 @@ object DataSeeder {
     
     /**
      * Seed sample users ke backend
+     * Note: Uses non-authenticated API service because registration is a public endpoint
      */
     fun seedUsers(context: Context, callback: (String) -> Unit) {
-        val apiService = ApiConfig.getApiService()
+        val apiService = ApiConfig.getApiService() // No auth needed for registration
         val users = getSampleUsers()
         
         var successCount = 0
