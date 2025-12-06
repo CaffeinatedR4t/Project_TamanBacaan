@@ -8,9 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.auth.LoginActivity
+import com.caffeinatedr4t.tamanbacaan.utils.DataSeeder
 
 /**
  * Fragment untuk halaman profil Pengelola (Admin).
@@ -33,12 +35,36 @@ class AdminProfileFragment : Fragment() {
         val adminName = view.findViewById<TextView>(R.id.adminName) // TextView untuk Nama Admin
         val adminEmail = view.findViewById<TextView>(R.id.adminEmail) // TextView untuk Email Admin
         val adminRole = view.findViewById<TextView>(R.id.adminRole) // TextView untuk Role Admin
+        val btnSeedData = view.findViewById<Button>(R.id.btnSeedData) // Tombol untuk Seed Data Testing
         val btnLogout = view.findViewById<Button>(R.id.btnAdminLogout) // Tombol untuk Logout Admin
 
         // Mengisi data Admin (Data Dummy: admin@tbm.com/admin123)
         adminName.text = "Kevin Gunawan"
         adminEmail.text = "admin@tbm.com"
         adminRole.text = "Pengelola Taman Bacaan"
+
+        // Listener untuk tombol Seed Data
+        btnSeedData.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Seed Test Data")
+                .setMessage("Tambah data testing (buku, user, event) ke database MongoDB?\n\nPerhatian: Proses ini akan menambahkan 15 buku, 5 user, dan 5 event sample.")
+                .setPositiveButton("Ya") { _, _ ->
+                    // Tampilkan loading toast
+                    Toast.makeText(requireContext(), "Memproses... Mohon tunggu", Toast.LENGTH_SHORT).show()
+                    
+                    // Panggil DataSeeder
+                    DataSeeder.seedAllData(requireContext()) { result ->
+                        // Tampilkan hasil dalam dialog
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Hasil Seeding Data")
+                            .setMessage(result)
+                            .setPositiveButton("OK", null)
+                            .show()
+                    }
+                }
+                .setNegativeButton("Batal", null)
+                .show()
+        }
 
         // Listener untuk tombol Logout
         btnLogout.setOnClickListener {
