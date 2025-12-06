@@ -19,11 +19,20 @@ interface ApiService {
     @GET("books/{id}")
     fun getBookById(@Path("id") id: String): Call<BookResponse>
 
+    @POST("books")
+    fun createBook(@Body book: CreateBookRequest): Call<BookResponse>
+
     // Users
     @GET("users")
     fun getAllUsers(): Call<List<UserResponse>>
 
+    @POST("users")
+    fun createUser(@Body user: CreateUserRequest): Call<UserResponse>
+
     // Events
     @GET("events")
     fun getEvents(): Call<List<EventResponse>>
+
+    @POST("events")
+    fun createEvent(@Body event: CreateEventRequest): Call<EventResponse>
 }

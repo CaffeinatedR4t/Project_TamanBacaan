@@ -1,6 +1,7 @@
 package com.caffeinatedr4t.tamanbacaan.fragments.admin
 
 import android.app.AlertDialog
+import android.app.ProgressDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,15 +9,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.auth.LoginActivity
+import com.caffeinatedr4t.tamanbacaan.utils.DataSeeder
 
 /**
  * Fragment untuk halaman profil Pengelola (Admin).
  * Menampilkan informasi admin dan tombol untuk logout.
  */
 class AdminProfileFragment : Fragment() {
+
+    private var progressDialog: ProgressDialog? = null
 
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
@@ -33,12 +38,18 @@ class AdminProfileFragment : Fragment() {
         val adminName = view.findViewById<TextView>(R.id.adminName) // TextView untuk Nama Admin
         val adminEmail = view.findViewById<TextView>(R.id.adminEmail) // TextView untuk Email Admin
         val adminRole = view.findViewById<TextView>(R.id.adminRole) // TextView untuk Role Admin
+        val btnSeedData = view.findViewById<Button>(R.id.btnSeedData) // Tombol untuk Seed Data
         val btnLogout = view.findViewById<Button>(R.id.btnAdminLogout) // Tombol untuk Logout Admin
 
         // Mengisi data Admin (Data Dummy: admin@tbm.com/admin123)
         adminName.text = "Kevin Gunawan"
         adminEmail.text = "admin@tbm.com"
         adminRole.text = "Pengelola Taman Bacaan"
+
+        // Listener untuk tombol Seed Data
+        btnSeedData.setOnClickListener {
+            showSeedDataConfirmation()
+        }
 
         // Listener untuk tombol Logout
         btnLogout.setOnClickListener {
@@ -60,5 +71,56 @@ class AdminProfileFragment : Fragment() {
         }
 
         return view
+    }
+
+    /**
+     * Show confirmation dialog before seeding data
+     */
+    private fun showSeedDataConfirmation() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Tambah Data Testing")
+            .setMessage("Menambahkan 15 buku, 5 users, dan 3 events ke MongoDB. Lanjutkan?")
+            .setPositiveButton("Ya") { _, _ ->
+                startSeedingData()
+            }
+            .setNegativeButton("Batal") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    /**
+     * Start the seeding process
+     */
+    private fun startSeedingData() {
+        // Show progress dialog
+        progressDialog = ProgressDialog(requireContext()).apply {
+            setMessage("Menambahkan data...")
+            setCancelable(false)
+            show()
+        }
+
+        // Call DataSeeder
+        DataSeeder.seedAllData(requireContext(), object : DataSeeder.SeedCallback {
+            override fun onProgress(message: String) {
+                requireActivity().runOnUiThread {
+                    progressDialog?.setMessage(message)
+                }
+            }
+
+            override fun onComplete(success: Boolean, message: String) {
+                requireActivity().runOnUiThread {
+                    progressDialog?.dismiss()
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+                }
+            }
+        })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        progressDialog?.dismiss()
+        progressDialog = null
     }
 }

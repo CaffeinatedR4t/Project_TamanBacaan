@@ -2,22 +2,26 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_admin_books"
-        android:icon="@drawable/ic_explore"
+        android:icon="@drawable/ic_book"
         android:title="Buku" />
+    
     <item
         android:id="@+id/nav_admin_members"
-        android:icon="@drawable/ic_profile"
+        android:icon="@drawable/ic_people"
         android:title="Anggota" />
+    
     <item
         android:id="@+id/nav_admin_events"
-        android:icon="@drawable/ic_add"
-        android:title="Pengumuman" />
+        android:icon="@drawable/ic_event"
+        android:title="Kegiatan" />
+    
     <item
         android:id="@+id/nav_admin_requests"
-        android:icon="@drawable/ic_pinjamanbuku"
-        android:title="Pinjaman" />
+        android:icon="@drawable/ic_transaction"
+        android:title="Transaksi" />
+    
     <item
         android:id="@+id/nav_admin_reports"
-        android:icon="@drawable/ic_settings"
+        android:icon="@drawable/ic_report"
         android:title="Laporan" />
 </menu>
