@@ -13,10 +13,31 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        
+        // API Configuration - defined once for all build types
+        buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
+        buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+    }
+
+    buildTypes {
+        release {
+            // Disable logging in release builds for security
+            buildConfigField("boolean", "ENABLE_LOGGING", "false")
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            // Enable logging in debug builds for development
+            buildConfigField("boolean", "ENABLE_LOGGING", "true")
+        }
     }
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {

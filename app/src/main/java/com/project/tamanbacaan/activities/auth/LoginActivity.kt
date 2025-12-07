@@ -129,11 +129,22 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 showLoading(false)
-                Toast.makeText(
-                    this@LoginActivity,
-                    "Kesalahan koneksi: ${t.message}",
-                    Toast.LENGTH_LONG
-                ). show()
+                
+                // Enhanced error message based on exception type
+                val errorMsg = when {
+                    t is java.net.UnknownHostException -> 
+                        "Tidak dapat terhubung ke server. Pastikan backend berjalan dan URL sudah benar."
+                    t is java.net.SocketTimeoutException -> 
+                        "Koneksi timeout. Server mungkin tidak merespons."
+                    t is java.net.ConnectException -> 
+                        "Gagal terhubung ke server. Periksa apakah backend sudah berjalan."
+                    t.message?.contains("Failed to connect") == true -> 
+                        "Koneksi gagal. Pastikan backend berjalan dan dapat diakses."
+                    else -> "Kesalahan koneksi: ${t.message}"
+                }
+                
+                android.util.Log.e("LoginActivity", "Login failed", t)
+                Toast.makeText(this@LoginActivity, errorMsg, Toast.LENGTH_LONG).show()
             }
         })
     }
