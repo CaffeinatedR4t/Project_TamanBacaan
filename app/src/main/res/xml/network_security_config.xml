@@ -13,8 +13,16 @@
         <domain includeSubdomains="true">10.0.2.2</domain>
         <!-- Localhost -->
         <domain includeSubdomains="true">localhost</domain>
-        <!-- Local network testing (192.168.x.x range) -->
-        <domain includeSubdomains="true">192.168.0.0/16</domain>
+        <!-- 
+            Local network testing on physical device:
+            IMPORTANT: Add your computer's local IP address here when testing on physical device.
+            Example: If your computer IP is 192.168.1.100, add:
+            <domain includeSubdomains="true">192.168.1.100</domain>
+            
+            You can find your IP with:
+            - Windows: ipconfig
+            - Mac/Linux: ifconfig or ip addr
+        -->
     </domain-config>
     
     <!-- Production Configuration: HTTPS only -->

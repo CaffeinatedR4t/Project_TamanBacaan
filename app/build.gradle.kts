@@ -14,16 +14,14 @@ android {
         versionCode = 1
         versionName = "1.0"
         
-        // API Configuration
+        // API Configuration - defined once for all build types
         buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
         buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
-        buildConfigField("boolean", "ENABLE_LOGGING", "true")
     }
 
     buildTypes {
         release {
-            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
-            buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+            // Disable logging in release builds for security
             buildConfigField("boolean", "ENABLE_LOGGING", "false")
             isMinifyEnabled = false
             proguardFiles(
@@ -32,8 +30,7 @@ android {
             )
         }
         debug {
-            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
-            buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+            // Enable logging in debug builds for development
             buildConfigField("boolean", "ENABLE_LOGGING", "true")
         }
     }

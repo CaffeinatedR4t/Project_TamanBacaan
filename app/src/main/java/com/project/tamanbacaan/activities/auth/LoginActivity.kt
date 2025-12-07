@@ -137,7 +137,7 @@ class LoginActivity : AppCompatActivity() {
                     t is java.net.SocketTimeoutException -> 
                         "Koneksi timeout. Server mungkin tidak merespons."
                     t is java.net.ConnectException -> 
-                        "Gagal terhubung ke server. Periksa apakah backend sudah berjalan di localhost:3000"
+                        "Gagal terhubung ke server. Periksa apakah backend sudah berjalan."
                     t.message?.contains("Failed to connect") == true -> 
                         "Koneksi gagal. Pastikan backend berjalan dan dapat diakses."
                     else -> "Kesalahan koneksi: ${t.message}"

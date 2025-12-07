@@ -36,13 +36,12 @@ object ApiConfig {
         Log.i(TAG, "Base URL: $BASE_URL")
         Log.i(TAG, "Logging enabled: ${BuildConfig.ENABLE_LOGGING}")
     }
-
+    
     /**
-     * Get API service without authentication (for login/register)
+     * Create HTTP logging interceptor with custom logger
      */
-    fun getApiService(): ApiService {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            // Enhanced logging with custom logger
+    private fun createLoggingInterceptor(): HttpLoggingInterceptor {
+        return HttpLoggingInterceptor().apply {
             level = if (BuildConfig.ENABLE_LOGGING) {
                 HttpLoggingInterceptor.Level.BODY
             } else {
@@ -54,16 +53,31 @@ object ApiConfig {
                 }
             }
         }
+    }
+    
+    /**
+     * Create request/response logging interceptor
+     * Only logs if BuildConfig.ENABLE_LOGGING is true
+     */
+    private fun createRequestResponseInterceptor() = okhttp3.Interceptor { chain ->
+        val request = chain.request()
+        if (BuildConfig.ENABLE_LOGGING) {
+            Log.d(TAG, "→ ${request.method} ${request.url}")
+        }
+        val response = chain.proceed(request)
+        if (BuildConfig.ENABLE_LOGGING) {
+            Log.d(TAG, "← ${response.code} ${request.url}")
+        }
+        response
+    }
 
+    /**
+     * Get API service without authentication (for login/register)
+     */
+    fun getApiService(): ApiService {
         val client = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor { chain ->
-                val request = chain.request()
-                Log.d(TAG, "→ ${request.method} ${request.url}")
-                val response = chain.proceed(request)
-                Log.d(TAG, "← ${response.code} ${request.url}")
-                response
-            }
+            .addInterceptor(createLoggingInterceptor())
+            .addInterceptor(createRequestResponseInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -82,32 +96,12 @@ object ApiConfig {
      * Get API service with authentication token (for authenticated requests)
      */
     fun getApiService(context: Context): ApiService {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            // Enhanced logging with custom logger
-            level = if (BuildConfig.ENABLE_LOGGING) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
-            logger = object : HttpLoggingInterceptor.Logger {
-                override fun log(message: String) {
-                    Log.d("HTTP", message)
-                }
-            }
-        }
-
         val authInterceptor = AuthInterceptor(context)
 
         val client = OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
+            .addInterceptor(createLoggingInterceptor())
             .addInterceptor(authInterceptor) // Add auth token to requests
-            .addInterceptor { chain ->
-                val request = chain.request()
-                Log.d(TAG, "→ ${request.method} ${request.url}")
-                val response = chain.proceed(request)
-                Log.d(TAG, "← ${response.code} ${request.url}")
-                response
-            }
+            .addInterceptor(createRequestResponseInterceptor())
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
