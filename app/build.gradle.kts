@@ -13,10 +13,34 @@ android {
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
+        
+        // API Configuration
+        buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
+        buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+        buildConfigField("boolean", "ENABLE_LOGGING", "true")
+    }
+
+    buildTypes {
+        release {
+            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
+            buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+            buildConfigField("boolean", "ENABLE_LOGGING", "false")
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
+            buildConfigField("String", "BASE_URL_DEV", "\"http://10.0.2.2:3000/api/\"")
+            buildConfigField("String", "BASE_URL_PROD", "\"https://api.tamanbacaan.com/api/\"")
+            buildConfigField("boolean", "ENABLE_LOGGING", "true")
+        }
     }
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     compileOptions {

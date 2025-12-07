@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 
+        Network Security Configuration for Taman Bacaan App
+        
+        This configuration allows cleartext (HTTP) traffic for development
+        while being ready for production HTTPS deployment.
+    -->
+    
+    <!-- Development Configuration: Allow HTTP for local testing -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Android Emulator localhost -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Localhost -->
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- Local network testing (192.168.x.x range) -->
+        <domain includeSubdomains="true">192.168.0.0/16</domain>
+    </domain-config>
+    
+    <!-- Production Configuration: HTTPS only -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Production domain - change to your actual domain -->
+        <domain includeSubdomains="true">api.tamanbacaan.com</domain>
+        <domain includeSubdomains="true">tamanbacaan.com</domain>
+        
+        <!-- Optional: Certificate pinning for enhanced security
+        <pin-set expiration="2026-12-31">
+            <pin digest="SHA-256">base64 encoded hash of certificate</pin>
+        </pin-set>
+        -->
+    </domain-config>
+    
+    <!-- Base configuration: Prefer secure connections -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <!-- Trust system certificates (for HTTPS) -->
+            <certificates src="system" />
+            <!-- Trust user certificates (for debugging with proxy tools like Charles) -->
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- Debug overrides for development -->
+    <debug-overrides>
+        <!-- Allow cleartext for debugging -->
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
