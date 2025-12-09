@@ -11,4 +11,16 @@ object Constants {
 
     const val EXTRA_BOOK_ID = "book_id"
 
+    // ========== ADD THESE NEW LINES ==========
+    // API Configuration - For Android Emulator (API 33 Tiramisu)
+    const val BASE_URL = "http://10.0.2.2:3000/api/"
+
+    // SharedPreferences
+    const val PREFS_NAME = "TamanBacaanPrefs"
+    const val KEY_USER_ID = "user_id"
+    const val KEY_USER_TOKEN = "user_token"
+    const val KEY_USER_ROLE = "user_role"
+    const val KEY_USER_NAME = "user_name"
+    const val KEY_IS_LOGGED_IN = "is_logged_in"
+    // ==========================================
 }

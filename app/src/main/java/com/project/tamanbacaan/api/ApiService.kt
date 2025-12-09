@@ -2,33 +2,43 @@ package com.caffeinatedr4t.tamanbacaan.api
 
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginResponse
-import com.caffeinatedr4t.tamanbacaan.api.model.BookApi
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
+import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.models.EventNotification
+import com.caffeinatedr4t.tamanbacaan.models.Transaction
+import retrofit2.Response
+import retrofit2.http.*
 
 interface ApiService {
 
-    // --- Authentication Endpoints (Masih Internal/Simulasi) ---
+    // Authentication Endpoints
+    @POST("auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<LoginResponse>
+
     @POST("auth/login")
-    fun login(@Body request: LoginRequest): Call<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    @POST("transactions/return")
-    fun confirmReturn(@Body transactionId: String): Call<LoginResponse>
+    // Book Endpoints
+    @GET("books")
+    suspend fun getAllBooks(): Response<List<Book>>
 
-    // --- Public Book Endpoints (Menggunakan API yang diminta) ---
+    @GET("books/{id}")
+    suspend fun getBookById(@Path("id") id: String): Response<Book>
 
-    // Endpoint utama yang mengembalikan daftar buku (diasumsikan)
-    @GET("api")
-    fun getBookList(): Call<List<BookApi>>
+    // Event Endpoints
+    @GET("events")
+    suspend fun getAllEvents(): Response<List<EventNotification>>
 
-    // Endpoint untuk pencarian buku (Asumsi: API mendukung parameter query)
-    @GET("api/search")
-    fun searchBooks(@Query("query") query: String): Call<List<BookApi>>
+    @GET("events/{id}")
+    suspend fun getEventById(@Path("id") id: String): Response<EventNotification>
 
-    // Endpoint untuk mendapatkan detail buku
-    @GET("api/detail")
-    fun getBookDetail(@Query("id") id: String): Call<BookApi>
+    // Transaction Endpoints
+    @GET("transactions/user/{userId}")
+    suspend fun getUserTransactions(@Path("userId") userId: String): Response<List<Transaction>>
+
+    @POST("transactions")
+    suspend fun borrowBook(@Body transaction: Transaction): Response<Transaction>
+
+    @PUT("transactions/{id}/return")
+    suspend fun returnBook(@Path("id") transactionId: String): Response<Transaction>
 }

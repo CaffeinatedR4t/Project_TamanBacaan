@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.api
 
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -7,8 +8,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiConfig {
-    // FIX: Menggunakan BASE URL yang baru
-    private const val BASE_URL = "https://bukuacak.vercel.app/"
 
     fun getApiService(): ApiService {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -22,7 +21,7 @@ object ApiConfig {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(Constants.BASE_URL) // Use Constants instead of hardcoded URL
             .addConverterFactory(GsonConverterFactory.create())
             .client(client)
             .build()

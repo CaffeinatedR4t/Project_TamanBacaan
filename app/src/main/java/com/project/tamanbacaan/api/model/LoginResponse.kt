@@ -1,20 +1,18 @@
 package com.caffeinatedr4t.tamanbacaan.api.model
 
-import com.google.gson.annotations.SerializedName
+import com.caffeinatedr4t.tamanbacaan.models.User
+import com.google.gson.annotations. SerializedName
 
 data class LoginResponse(
-    @field:SerializedName("error")
-    val error: Boolean,
+    @field:SerializedName("success")
+    val success: Boolean,
 
     @field:SerializedName("message")
     val message: String,
 
-    @field:SerializedName("user_id")
-    val userId: String? = null,
+    @field: SerializedName("token")
+    val token: String?  = null,
 
-    @field:SerializedName("role")
-    val role: String? = null, // "member" atau "admin"
-
-    @field:SerializedName("token")
-    val token: String? = null
+    @field: SerializedName("user")
+    val user: User? = null
 )

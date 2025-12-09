@@ -131,5 +131,34 @@
             android:textStyle="bold"
             android:padding="8dp"/>
 
+        <EditText
+            android:id="@+id/etAddressKelurahan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Kelurahan"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/etAddressKecamatan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Kecamatan"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/etPhoneNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nomor Telepon"
+            android:inputType="phone" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:indeterminate="true" />
+
     </LinearLayout>
 </ScrollView>

@@ -1,10 +1,10 @@
 package com.caffeinatedr4t.tamanbacaan.api.model
 
-import com.google.gson.annotations.SerializedName
+import com.google.gson. annotations.SerializedName
 
 data class RegisterRequest(
-    @field:SerializedName("full_name")
-    val fullName: String, // Nama lengkap Anggota
+    @field:SerializedName("fullName")
+    val fullName: String,
 
     @field:SerializedName("email")
     val email: String,
@@ -13,14 +13,23 @@ data class RegisterRequest(
     val password: String,
 
     @field:SerializedName("nik")
-    val nik: String, // NIK KTP Anggota (atau NIK Orang Tua jika anak)
+    val nik: String,
 
-    @field:SerializedName("is_child")
+    @field:SerializedName("addressRtRw")
+    val addressRtRw: String,
+
+    @field:SerializedName("addressKelurahan")
+    val addressKelurahan: String,
+
+    @field:SerializedName("addressKecamatan")
+    val addressKecamatan: String,
+
+    @field:SerializedName("phoneNumber")
+    val phoneNumber:  String,
+
+    @field:SerializedName("isChild")
     val isChild: Boolean = false,
 
-    @field:SerializedName("parent_name")
-    val parentName: String? = null,
-
-    @field:SerializedName("address_rt_rw")
-    val addressRtRw: String // Informasi RT/RW/Kelurahan untuk verifikasi
+    @field:SerializedName("parentName")
+    val parentName: String? = null
 )
