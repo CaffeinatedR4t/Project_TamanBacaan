@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Allow cleartext (HTTP) traffic for localhost/development -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <!-- For production, you can add your backend domain with HTTPS -->
+    <!--
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">your-backend-domain.com</domain>
+    </domain-config>
+    -->
+</network-security-config>
