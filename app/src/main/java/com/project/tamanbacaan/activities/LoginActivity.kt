@@ -45,13 +45,13 @@ class LoginActivity : AppCompatActivity() {
         sharedPrefsManager = SharedPrefsManager(this)
 
         // Check if user is already logged in
-        if (sharedPrefsManager. isLoggedIn()) {
+        if (sharedPrefsManager.isLoggedIn()) {
             navigateBasedOnRole(sharedPrefsManager.getUserRole())
             return
         }
 
         // Login button click listener
-        btnLogin. setOnClickListener {
+        btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString()
 

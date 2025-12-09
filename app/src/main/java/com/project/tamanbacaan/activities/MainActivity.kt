@@ -16,6 +16,7 @@ import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
 import com.caffeinatedr4t.tamanbacaan.utils.NotificationHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.jvm.java
+import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 
 /**
  * Activity utama aplikasi yang menjadi host untuk semua fragment utama (Home, Search, Bookmark, Profile).
@@ -124,14 +125,13 @@ class MainActivity : AppCompatActivity() {
      * Fungsi publik yang dapat dipanggil dari fragment (misal: ProfileFragment) untuk memulai proses logout.
      */
     fun showLogoutConfirmation() {
+        val sharedPrefsManager = SharedPrefsManager(this)
+        sharedPrefsManager.clearSession()
         Toast.makeText(this, "Logout berhasil!", Toast.LENGTH_SHORT).show()
-        // Membuat intent untuk kembali ke LoginActivity.
         val intent = Intent(this, LoginActivity::class.java)
-        // Flags untuk membersihkan semua activity di atasnya dan membuat task baru.
-        // Ini mencegah pengguna kembali ke MainActivity dengan menekan tombol "back".
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
-        finish() // Menutup MainActivity secara permanen.
+        finish()
     }
 
     /**

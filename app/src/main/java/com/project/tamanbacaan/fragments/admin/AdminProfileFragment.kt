@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.LoginActivity
+import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 
 /**
  * Fragment untuk halaman profil Pengelola (Admin).
@@ -42,13 +43,16 @@ class AdminProfileFragment : Fragment() {
 
         // Listener untuk tombol Logout
         btnLogout.setOnClickListener {
-            // Tampilkan dialog konfirmasi sebelum logout
             AlertDialog.Builder(requireContext())
                 .setTitle("Konfirmasi Logout")
                 .setMessage("Apakah Anda yakin ingin keluar dari akun admin?")
                 .setPositiveButton("Ya") { _, _ ->
-                    // Navigasi kembali ke LoginActivity dan menghapus riwayat Activity
+
+                    val sharedPrefsManager = SharedPrefsManager(requireContext())
+                    sharedPrefsManager.clearSession()
+
                     val intent = Intent(requireContext(), LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     requireActivity().finish()
                 }
