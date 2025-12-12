@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.models.Book
@@ -40,6 +41,7 @@ class BookAdapter(
     // Kelas ViewHolder untuk satu item buku.
     inner class BookViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         // Inisialisasi view dari layout.
+        private val bookCover: ImageView = itemView.findViewById(R.id.bookCover)
         private val bookTitle: TextView = itemView.findViewById(R.id.bookTitle)
         private val bookAuthor: TextView = itemView.findViewById(R.id.bookAuthor)
         private val bookDescription: TextView = itemView.findViewById(R.id.bookDescription)
@@ -54,6 +56,13 @@ class BookAdapter(
             bookAuthor.text = book.author
             bookDescription.text = book.description
             bookCategory.text = book.category
+
+            // Load book cover image using Glide
+            Glide.with(itemView.context)
+                .load(book.coverUrl)
+                .placeholder(R.drawable.ic_explore)
+                .error(R.drawable.ic_explore)
+                .into(bookCover)
 
             // Mengatur teks dan warna status ketersediaan buku.
             statusText.text = book.getAvailabilityStatus()
@@ -107,17 +116,15 @@ class BookAdapter(
                 // Mengubah status bookmark melalui repository.
                 BookRepository.toggleBookmarkStatus(book.id)
 
-                // Memperbarui ikon bookmark secara langsung.
-                val updatedBook = BookRepository.getBookById(book.id) // Ambil status terbaru
-                if (updatedBook != null) {
-                    bookmarkButton.setImageResource(
-                        if (updatedBook.isBookmarked) R.drawable.ic_bookmark_filled
-                        else R.drawable.ic_bookmark
-                    )
-                }
+                // Toggle the bookmark icon directly
+                book.isBookmarked = !book.isBookmarked
+                bookmarkButton.setImageResource(
+                    if (book.isBookmarked) R.drawable.ic_bookmark_filled
+                    else R.drawable.ic_bookmark
+                )
 
                 // Menampilkan pesan toast.
-                val message = if (updatedBook?.isBookmarked == true) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
+                val message = if (book.isBookmarked) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
                 Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
