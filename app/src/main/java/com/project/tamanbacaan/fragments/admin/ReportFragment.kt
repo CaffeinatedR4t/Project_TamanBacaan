@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
@@ -78,7 +79,16 @@ class ReportFragment : Fragment() {
                 tvTotalBooks.text = totalBooks.toString()
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Handle error
+                Toast.makeText(
+                    context,
+                    "Gagal memuat statistik. Silakan coba lagi.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                // Set default values on error
+                tvTotalMembers.text = "0"
+                tvPendingRequests.text = "0"
+                tvBorrowedBooks.text = "0"
+                tvTotalBooks.text = "0"
             }
         }
     }

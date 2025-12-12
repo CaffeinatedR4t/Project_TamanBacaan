@@ -114,17 +114,18 @@ class BookAdapter(
             // Aksi saat tombol bookmark di-klik.
             bookmarkButton.setOnClickListener {
                 // Mengubah status bookmark melalui repository.
+                val wasBookmarked = book.isBookmarked
                 BookRepository.toggleBookmarkStatus(book.id)
 
-                // Toggle the bookmark icon directly
-                book.isBookmarked = !book.isBookmarked
+                // Toggle the bookmark icon based on previous state
+                val isNowBookmarked = !wasBookmarked
                 bookmarkButton.setImageResource(
-                    if (book.isBookmarked) R.drawable.ic_bookmark_filled
+                    if (isNowBookmarked) R.drawable.ic_bookmark_filled
                     else R.drawable.ic_bookmark
                 )
 
                 // Menampilkan pesan toast.
-                val message = if (book.isBookmarked) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
+                val message = if (isNowBookmarked) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
                 Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }

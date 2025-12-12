@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -78,12 +79,24 @@ class HomeFragment : Fragment() {
                 booksList.clear()
                 // Menggunakan BookRepository untuk mengambil semua data buku dari API
                 val books = BookRepository.getAllBooks()
-                booksList.addAll(books)
+                
+                if (books.isEmpty()) {
+                    // Could show an empty state view here
+                    Toast.makeText(context, "Tidak ada buku tersedia", Toast.LENGTH_SHORT).show()
+                } else {
+                    booksList.addAll(books)
+                }
+                
                 // Beri tahu adapter bahwa data telah berubah
                 bookAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Handle error (could show toast or error view)
+                // Show user-friendly error message
+                Toast.makeText(
+                    context, 
+                    "Gagal memuat buku. Silakan periksa koneksi internet Anda.", 
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }

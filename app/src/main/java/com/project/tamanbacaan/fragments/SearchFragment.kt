@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -94,10 +95,18 @@ class SearchFragment : Fragment() {
             try {
                 // Load books from API
                 allBooks = BookRepository.getAllBooks()
-                setupCategoryChips()
+                
+                if (allBooks.isEmpty()) {
+                    tvEmptySearch.text = "Tidak ada buku tersedia untuk pencarian."
+                    tvEmptySearch.visibility = View.VISIBLE
+                } else {
+                    setupCategoryChips()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Handle error
+                tvEmptySearch.text = "Gagal memuat data buku. Silakan coba lagi."
+                tvEmptySearch.visibility = View.VISIBLE
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
