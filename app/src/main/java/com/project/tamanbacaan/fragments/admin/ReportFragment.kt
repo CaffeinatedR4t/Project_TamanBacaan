@@ -8,9 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk menampilkan Laporan dan Statistik (Reports) TBM bagi Admin.
@@ -58,20 +61,36 @@ class ReportFragment : Fragment() {
     }
 
     /**
-     * Mengambil data statistik aktivitas TBM (Anggota, Pinjaman, Request) dari BookRepository dan menampilkannya di UI.
+     * Mengambil data statistik aktivitas TBM (Anggota, Pinjaman, Request) dari BookRepository (API) dan menampilkannya di UI.
      */
     private fun loadActivityStats() {
-        // Ambil data dari repository
-        val totalMembers = BookRepository.getAllMembers().size
-        val pendingRequests = BookRepository.getPendingRequests().size
-        val borrowedBooks = BookRepository.getAllBooks().count { it.isBorrowed }
-        val totalBooks = BookRepository.getAllBooks().size
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // Ambil data dari repository (API)
+                val totalMembers = BookRepository.getAllMembers().size
+                val pendingRequests = BookRepository.getPendingRequests().size
+                val borrowedBooks = BookRepository.getAllBooks().count { it.isBorrowed }
+                val totalBooks = BookRepository.getAllBooks().size
 
-        // Set teks ke TextViews
-        tvTotalMembers.text = totalMembers.toString()
-        tvPendingRequests.text = pendingRequests.toString()
-        tvBorrowedBooks.text = borrowedBooks.toString()
-        tvTotalBooks.text = totalBooks.toString()
+                // Set teks ke TextViews
+                tvTotalMembers.text = totalMembers.toString()
+                tvPendingRequests.text = pendingRequests.toString()
+                tvBorrowedBooks.text = borrowedBooks.toString()
+                tvTotalBooks.text = totalBooks.toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(
+                    context,
+                    "Gagal memuat statistik. Silakan coba lagi.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                // Set default values on error
+                tvTotalMembers.text = "0"
+                tvPendingRequests.text = "0"
+                tvBorrowedBooks.text = "0"
+                tvTotalBooks.text = "0"
+            }
+        }
     }
 
     /**

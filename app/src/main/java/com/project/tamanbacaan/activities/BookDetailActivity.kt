@@ -8,24 +8,19 @@ import android.widget.RatingBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.launch
 
 /**
  * Activity untuk menampilkan detail dari sebuah buku.
  * Halaman ini juga memungkinkan pengguna untuk memberikan rating dan ulasan.
  */
 class BookDetailActivity : AppCompatActivity() {
-
-    // Variabel ini berisi daftar buku dummy sebagai sumber data sementara.
-    // Idealnya, data ini akan diambil dari database atau API.
-    private val sampleBooks = listOf(
-        Book("1", "To Kill a Mockingbird", "Harper Lee", "A classic novel...", "", "Fiction", avgRating = 4.5f, totalReviews = 120, synopsis = "Di kota fiksi Maycomb, Alabama, selama Depresi Hebat, To Kill a Mockingbird bercerita tentang seorang pengacara bernama Atticus Finch yang membela seorang pria kulit hitam yang dituduh memperkosa seorang wanita kulit putih."),
-        Book("2", "1984", "George Orwell", "A dystopian social...", "", "Fiction", avgRating = 4.8f, totalReviews = 250, synopsis = "Dunia masa depan di mana masyarakat dimanipulasi oleh partai politik dan dipantau oleh Big Brother."),
-        Book("3", "The Great Gatsby", "F. Scott Fitzgerald", "The story of Jay Gatsby's...", "", "Classic", avgRating = 4.1f, totalReviews = 90, synopsis = "Kisah Jay Gatsby dan cintanya yang tak terbalas kepada Daisy Buchanan di tahun 1920-an.")
-    )
 
     /**
      * Fungsi yang dipanggil saat Activity pertama kali dibuat.
@@ -45,18 +40,22 @@ class BookDetailActivity : AppCompatActivity() {
             return
         }
 
-        // Mencari data buku di dalam daftar dummy berdasarkan bookId.
-        // Ini adalah simulasi pengambilan data dari sumber data.
-        val book = sampleBooks.find { it.id == bookId }
-
-        // Jika buku dengan ID yang sesuai ditemukan, tampilkan detailnya.
-        if (book != null) {
-            displayBookDetails(book)
-            setupReviewSubmission()
-        } else {
-            // Jika buku tidak ditemukan, tampilkan pesan error dan tutup activity.
-            Toast.makeText(this, "Buku tidak ditemukan.", Toast.LENGTH_SHORT).show()
-            finish()
+        // Fetch book data from API
+        lifecycleScope.launch {
+            try {
+                val book = BookRepository.getBookById(bookId)
+                if (book != null) {
+                    displayBookDetails(book)
+                    setupReviewSubmission()
+                } else {
+                    Toast.makeText(this@BookDetailActivity, "Buku tidak ditemukan.", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(this@BookDetailActivity, "Error loading book: ${e.message}", Toast.LENGTH_SHORT).show()
+                finish()
+            }
         }
     }
 
@@ -76,10 +75,11 @@ class BookDetailActivity : AppCompatActivity() {
         // Menemukan komponen ImageView untuk cover buku.
         val bookCover: ImageView = findViewById(R.id.bookCover)
 
-        // Menggunakan library Glide untuk memuat gambar cover buku.
+        // Menggunakan library Glide untuk memuat gambar cover buku dari MongoDB.
         Glide.with(this)
-            .load(R.drawable.ic_explore) // Placeholder, idealnya diganti dengan URL gambar dari `book.coverUrl`.
+            .load(book.coverUrl) // Load cover image from MongoDB
             .placeholder(R.drawable.ic_explore) // Gambar yang ditampilkan saat gambar asli sedang dimuat.
+            .error(R.drawable.ic_explore) // Gambar yang ditampilkan jika gagal memuat gambar
             .into(bookCover) // Target ImageView untuk menampilkan gambar.
     }
 

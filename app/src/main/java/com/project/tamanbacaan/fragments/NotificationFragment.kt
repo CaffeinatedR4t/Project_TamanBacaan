@@ -4,12 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.NotificationAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment yang menampilkan daftar notifikasi untuk pengguna.
@@ -42,17 +45,29 @@ class NotificationFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerNotifications)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        // 2. Ambil data buku yang sedang dipinjam (isBorrowed = true) dari Repository
-        val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
+        // Load data from API
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // 2. Ambil data buku yang sedang dipinjam (isBorrowed = true) dari Repository (API)
+                val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
 
-        // 3. Ambil data event/pengumuman dari Repository
-        val eventNotifications = BookRepository.getAllEvents()
+                // 3. Ambil data event/pengumuman dari Repository
+                val eventNotifications = BookRepository.getAllEvents()
 
-        // Set adapter dengan data yang sudah diambil dari Repository
-        adapter = NotificationAdapter(
-            borrowedBooks = borrowedBooks, // Daftar buku pinjaman
-            eventNotifications = eventNotifications // Daftar pengumuman event
-        )
-        recyclerView.adapter = adapter
+                // Set adapter dengan data yang sudah diambil dari Repository
+                adapter = NotificationAdapter(
+                    borrowedBooks = borrowedBooks, // Daftar buku pinjaman
+                    eventNotifications = eventNotifications // Daftar pengumuman event
+                )
+                recyclerView.adapter = adapter
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(
+                    context,
+                    "Gagal memuat notifikasi. Silakan coba lagi.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
     }
 }

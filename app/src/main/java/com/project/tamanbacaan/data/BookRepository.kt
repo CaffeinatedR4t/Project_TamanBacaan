@@ -1,22 +1,30 @@
 package com.caffeinatedr4t.tamanbacaan.data
 
+import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
 /**
- * Repository yang mensimulasikan database/API backend.
- * Data disimpan secara in-memory (hilang saat aplikasi ditutup).
- * Mendukung fungsi CRUD untuk manajemen buku dan anggota.
+ * Hybrid Repository: Fetches books from MongoDB API while maintaining local state for
+ * bookmarks, borrowed status, and pending requests.
  */
 object BookRepository {
+    // API Service instance
+    private val apiService = ApiConfig.getApiService()
     private val eventNotifications = mutableListOf<EventNotification>()
     private val nextEventId = AtomicLong(3) // Lanjutkan dari ID 2
-    private val bookList = mutableListOf<Book>()
+    
+    // Local state management for bookmarks and borrowed books
+    private val bookmarkedBookIds = mutableSetOf<String>()
+    private val borrowedBooksMap = mutableMapOf<String, Pair<String, String>>() // bookId -> (borrowedDate, dueDate)
+    
     private val pendingRequests = mutableListOf<PendingRequest>()
     // registrationRequests REMOVED (Diganti dengan aktivasi instan)
     private val activeMembers = mutableListOf<User>()
@@ -29,31 +37,21 @@ object BookRepository {
         // Data Sample untuk event
         eventNotifications.add(EventNotification("1", "Bedah Buku 'Laut Bercerita'", "Ikuti bedah buku bersama penulis Leila S. Chudori pada 10 Oktober 2025!", "05/10/2025"))
         eventNotifications.add(EventNotification("2", "Diskon Sewa Buku 50%", "Nikmati diskon 50% untuk semua kategori buku hingga 12 Oktober 2025!", "07/10/2025"))
-        // Data Sample Buku
-        bookList.add(Book(id = "1", title = "To Kill a Mockingbird", author = "Harper Lee", description = "A classic novel about racial injustice in the American South", coverUrl = "", category = "Fiction", isAvailable = true, isbn = "978-0-06-112008-4", avgRating = 4.5f, totalReviews = 120))
-        bookList.add(Book(id = "2", title = "1984", author = "George Orwell", description = "A dystopian social science fiction novel", coverUrl = "", category = "Fiction", isAvailable = false, isbn = "978-0-452-28423-4", avgRating = 4.8f, totalReviews = 250))
-        bookList.add(Book(id = "3", title = "The Great Gatsby", author = "F. Scott Fitzgerald", description = "The story of Jay Gatsby's pursuit of the American Dream", coverUrl = "", category = "Classic", isAvailable = true, isbn = "978-0-7432-7356-5", avgRating = 4.1f, totalReviews = 90))
-        bookList.add(Book(id = "4", title = "Pride and Prejudice", author = "Jane Austen", description = "A romantic novel of manners", coverUrl = "", category = "Romance", isAvailable = true, isbn = "978-0-14-143951-8", avgRating = 4.3f, totalReviews = 150))
-        bookList.add(Book(id = "5", title = "Atomic Habits", author = "James Clear", description = "Tiny changes, remarkable results.", coverUrl = "", category = "Self-Help", isBorrowed = true, isAvailable = false, borrowedDate = "01/10/2025", dueDate = "15/10/2025", avgRating = 4.7f, totalReviews = 300))
 
-        // Data Sample Pending Request Pinjaman
-        pendingRequests.add(PendingRequest(requestId = "1", book = bookList.first { it.id == "1" }.copy(isAvailable = false), memberName = "Budi Santoso", memberId = "M001", requestDate = "13/10/2025"))
-        pendingRequests.add(PendingRequest(requestId = "2", book = bookList.first { it.id == "3" }.copy(isAvailable = true), memberName = "Siti Aisyah", memberId = "M002", requestDate = "13/10/2025"))
-
-        // Data Anggota Aktif Default (isVerified disimulasikan)
+        // Data Sample Anggota Aktif Default (isVerified disimulasikan)
         activeMembers.add(User(id="M100", fullName="Budi Santoso", email="user@test.com", nik="32xxxxxxxxxxxxxx", addressRtRw = "RT 005/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = true)) // Sudah diverifikasi
         activeMembers.add(User(id="M101", fullName="Siti Aisyah", email="siti@test.com", nik="32xxxxxxxxxxxxxy", addressRtRw = "RT 004/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = false)) // Belum diverifikasi
         activeMembers.add(User(id="M102", fullName="Daffa Permana", email="daffa@test.com", nik="32xxxxxxxxxxxxzz", addressRtRw = "RT 002/RW 001, Kel. Demo", isChild = true, parentName = "Ayah Daffa", isVerified = false)) // Belum diverifikasi
     }
 
     fun toggleBookmarkStatus(bookId: String): Boolean {
-        val bookIndex = bookList.indexOfFirst { it.id == bookId }
-        if (bookIndex != -1) {
-            val book = bookList[bookIndex]
-            bookList[bookIndex] = book.copy(isBookmarked = !book.isBookmarked)
-            return true
+        return if (bookmarkedBookIds.contains(bookId)) {
+            bookmarkedBookIds.remove(bookId)
+            true
+        } else {
+            bookmarkedBookIds.add(bookId)
+            true
         }
-        return false
     }
 
     // Tambahkan fungsi-fungsi ini di dalam BookRepository
@@ -71,57 +69,121 @@ object BookRepository {
 
     // --- Book CRUD ---
     fun addBook(newBook: Book): Boolean {
-        val bookWithId = newBook.copy(id = nextBookId.getAndIncrement().toString());
-        bookList.add(0, bookWithId);
+        // For now, we can't add to MongoDB from here without proper API endpoint
+        // This would need to be implemented on the backend and called via API
+        // Placeholder for future implementation
         return true
     }
-    fun getAllBooks(): List<Book> = bookList.toList()
-    fun getBookById(id: String): Book? = bookList.find { it.id == id }
-    fun updateBook(updatedBook: Book): Boolean {
-        val index = bookList.indexOfFirst { it.id == updatedBook.id };
-        return if (index != -1) { bookList[index] = updatedBook; true } else { false }
+    
+    /**
+     * Fetch all books from MongoDB API
+     * Applies local state (bookmarks, borrowed status) to the fetched books
+     */
+    suspend fun getAllBooks(): List<Book> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getAllBooks()
+            if (response.isSuccessful) {
+                val books = response.body() ?: emptyList()
+                // Apply local state to books
+                books.map { book ->
+                    val borrowedData = borrowedBooksMap[book.id]
+                    book.copy(
+                        isBookmarked = bookmarkedBookIds.contains(book.id),
+                        isBorrowed = borrowedData != null,
+                        borrowedDate = borrowedData?.first,
+                        dueDate = borrowedData?.second,
+                        isAvailable = borrowedData == null && book.stock > 0
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
     }
+
+    /**
+     * Fetch a specific book by ID from MongoDB API
+     * Applies local state (bookmarks, borrowed status) to the fetched book
+     */
+    suspend fun getBookById(id: String): Book? = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getBookById(id)
+            if (response.isSuccessful) {
+                val book = response.body()
+                book?.let {
+                    val borrowedData = borrowedBooksMap[it.id]
+                    it.copy(
+                        isBookmarked = bookmarkedBookIds.contains(it.id),
+                        isBorrowed = borrowedData != null,
+                        borrowedDate = borrowedData?.first,
+                        dueDate = borrowedData?.second,
+                        isAvailable = borrowedData == null && it.stock > 0
+                    )
+                }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+    
+    fun updateBook(updatedBook: Book): Boolean {
+        // Update local borrowed state
+        if (updatedBook.isBorrowed && updatedBook.borrowedDate != null && updatedBook.dueDate != null) {
+            borrowedBooksMap[updatedBook.id] = Pair(updatedBook.borrowedDate!!, updatedBook.dueDate!!)
+        } else {
+            borrowedBooksMap.remove(updatedBook.id)
+        }
+        
+        // Update bookmark state
+        if (updatedBook.isBookmarked) {
+            bookmarkedBookIds.add(updatedBook.id)
+        } else {
+            bookmarkedBookIds.remove(updatedBook.id)
+        }
+        
+        return true
+    }
+    
     fun deleteBook(id: String): Boolean {
-        val iterator = bookList.iterator();
-        while (iterator.hasNext()) {
-            if (iterator.next().id == id) { iterator.remove(); return true }
-        };
-        return false
+        // For now, we can't delete from MongoDB from here without proper API endpoint
+        // This would need to be implemented on the backend and called via API
+        // Remove from local state
+        bookmarkedBookIds.remove(id)
+        borrowedBooksMap.remove(id)
+        return true
     }
 
     // --- Transaction Request Management (Tetap) ---
     fun addPendingRequest(book: Book, memberName: String, memberId: String): Boolean {
         if (book.isBorrowed || pendingRequests.any { it.book.id == book.id }) { return false }
-        val bookIndex = bookList.indexOfFirst { it.id == book.id }
-        if (bookIndex != -1) { bookList[bookIndex] = bookList[bookIndex].copy(isAvailable = false) }
+        // No longer updating bookList since it comes from API
         val request = PendingRequest(requestId = nextRequestId.getAndIncrement().toString(), book = book, memberName = memberName, memberId = memberId, requestDate = "Hari Ini")
         pendingRequests.add(request)
         return true
     }
+    
     fun getPendingRequests(): List<PendingRequest> = pendingRequests.toList()
+    
     fun approveRequest(requestId: String): Boolean {
         val request = pendingRequests.find { it.requestId == requestId } ?: return false
-        val bookIndex = bookList.indexOfFirst { it.id == request.book.id }
 
-        if (bookIndex != -1) {
-            // 1. Dapatkan tanggal hari ini
-            val calendar = Calendar.getInstance()
-            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-            val borrowedDate = dateFormat.format(calendar.time)
+        // 1. Dapatkan tanggal hari ini
+        val calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val borrowedDate = dateFormat.format(calendar.time)
 
-            // 2. Tambahkan 14 hari untuk jatuh tempo
-            calendar.add(Calendar.DAY_OF_YEAR, 14)
-            val dueDate = dateFormat.format(calendar.time)
+        // 2. Tambahkan 14 hari untuk jatuh tempo
+        calendar.add(Calendar.DAY_OF_YEAR, 14)
+        val dueDate = dateFormat.format(calendar.time)
 
-            // 3. Salin objek buku dengan menambahkan tanggal
-            val approvedBook = bookList[bookIndex].copy(
-                isAvailable = false,
-                isBorrowed = true,
-                borrowedDate = borrowedDate, // Set tanggal pinjam
-                dueDate = dueDate             // Set tanggal jatuh tempo
-            )
-            bookList[bookIndex] = approvedBook
-        }
+        // 3. Update local borrowed state
+        borrowedBooksMap[request.book.id] = Pair(borrowedDate, dueDate)
 
         // Hapus dari daftar permintaan
         val iterator = pendingRequests.iterator()
@@ -133,12 +195,17 @@ object BookRepository {
         }
         return false
     }
+    
     fun rejectRequest(requestId: String): Boolean {
-        val request = pendingRequests.find { it.requestId == requestId } ?: return false;
-        val bookIndex = bookList.indexOfFirst { it.id == request.book.id };
-        if (bookIndex != -1) { bookList[bookIndex] = bookList[bookIndex].copy(isAvailable = true) };
-        val iterator = pendingRequests.iterator();
-        while (iterator.hasNext()) { if (iterator.next().requestId == requestId) { iterator.remove(); return true } };
+        val request = pendingRequests.find { it.requestId == requestId } ?: return false
+        // No longer updating bookList since it comes from API
+        val iterator = pendingRequests.iterator()
+        while (iterator.hasNext()) { 
+            if (iterator.next().requestId == requestId) { 
+                iterator.remove() 
+                return true 
+            } 
+        }
         return false
     }
 

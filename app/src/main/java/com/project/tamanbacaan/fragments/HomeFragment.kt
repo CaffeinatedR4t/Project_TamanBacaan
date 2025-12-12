@@ -4,13 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk halaman utama (Home).
@@ -68,14 +71,34 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * Memuat semua data buku dari BookRepository dan memperbarui RecyclerView.
+     * Memuat semua data buku dari BookRepository (API) dan memperbarui RecyclerView.
      */
     private fun loadBooks() {
-        booksList.clear()
-        // Menggunakan BookRepository untuk mengambil semua data buku yang ada
-        booksList.addAll(BookRepository.getAllBooks())
-        // Beri tahu adapter bahwa data telah berubah
-        bookAdapter.notifyDataSetChanged()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                booksList.clear()
+                // Menggunakan BookRepository untuk mengambil semua data buku dari API
+                val books = BookRepository.getAllBooks()
+                
+                if (books.isEmpty()) {
+                    // Could show an empty state view here
+                    Toast.makeText(context, "Tidak ada buku tersedia", Toast.LENGTH_SHORT).show()
+                } else {
+                    booksList.addAll(books)
+                }
+                
+                // Beri tahu adapter bahwa data telah berubah
+                bookAdapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Show user-friendly error message
+                Toast.makeText(
+                    context, 
+                    "Gagal memuat buku. Silakan periksa koneksi internet Anda.", 
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     /**
@@ -83,7 +106,7 @@ class HomeFragment : Fragment() {
      * Fungsi ini digunakan oleh SearchFragment untuk mendapatkan data sumber yang lengkap.
      * @return List<Book> Daftar semua buku di perpustakaan.
      */
-    internal fun getSampleLibraryBooks(): List<Book> {
+    internal suspend fun getSampleLibraryBooks(): List<Book> {
         return BookRepository.getAllBooks()
     }
 }
