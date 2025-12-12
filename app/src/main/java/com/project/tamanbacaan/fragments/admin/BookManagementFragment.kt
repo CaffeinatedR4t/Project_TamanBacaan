@@ -12,12 +12,14 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.AdminBookAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk manajemen Buku (CRUD) oleh Admin.
@@ -106,12 +108,19 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Memuat daftar semua buku dari BookRepository dan memperbarui adapter.
+     * Memuat daftar semua buku dari BookRepository (API) dan memperbarui adapter.
      */
     private fun loadBooks() {
-        booksList.clear()
-        booksList.addAll(BookRepository.getAllBooks())
-        bookAdapter.notifyDataSetChanged()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                booksList.clear()
+                booksList.addAll(BookRepository.getAllBooks())
+                bookAdapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, "Error loading books: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /**
