@@ -7,13 +7,15 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.viewmodels.BookViewModel
-import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk halaman utama (Home).
@@ -111,7 +113,16 @@ class HomeFragment : Fragment() {
      * Fungsi ini digunakan oleh SearchFragment untuk mendapatkan data sumber yang lengkap.
      * @return List<Book> Daftar semua buku di perpustakaan.
      */
-    internal fun getSampleLibraryBooks(): List<Book> {
+    internal suspend fun getSampleLibraryBooks(): List<Book> {
         return BookRepository.getAllBooks()
+    }
+
+    fun getBooks(): List<Book> {
+        lifecycleScope.launch {
+            booksList.clear()
+            booksList.addAll(getSampleLibraryBooks())
+            bookAdapter.notifyDataSetChanged()
+        }
+        return booksList
     }
 }

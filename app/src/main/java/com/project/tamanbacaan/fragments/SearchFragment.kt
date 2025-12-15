@@ -9,13 +9,16 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk halaman Pencarian (Search).
@@ -31,8 +34,8 @@ class SearchFragment : Fragment() {
     private lateinit var chipGroupCategories: ChipGroup // Grup Chip untuk filter kategori
     private lateinit var bookAdapter: BookAdapter // Adapter untuk RecyclerView
 
-    // Daftar semua buku yang tersedia (diambil dari HomeFragment/Repository)
-    private val allBooks = HomeFragment().getSampleLibraryBooks()
+    // Daftar semua buku yang tersedia (diambil dari Repository)
+    private val allBooks = mutableListOf<Book>()
     // Daftar hasil pencarian yang akan ditampilkan
     private val searchResults = mutableListOf<Book>()
     // Kategori yang sedang dipilih untuk filter. Null jika "Semua" dipilih.
@@ -63,8 +66,16 @@ class SearchFragment : Fragment() {
         chipGroupCategories = view.findViewById(R.id.chipGroupCategories)
 
         setupRecyclerView()
-        setupCategoryChips()
         setupSearchListener()
+
+        lifecycleScope.launch {
+            val books = BookRepository.getAllBooks()
+            allBooks.clear()
+            allBooks.addAll(books)
+
+            setupCategoryChips()
+            filterBooks(etSearch.text.toString())
+        }
     }
 
     /**
@@ -87,6 +98,7 @@ class SearchFragment : Fragment() {
      * Membuat dan menambahkan Chip untuk setiap kategori unik yang tersedia.
      */
     private fun setupCategoryChips() {
+        chipGroupCategories.removeAllViews()
         // Ambil daftar kategori unik, lalu tambahkan "Semua" di awal
         val categories = allBooks.map { it.category }.distinct().toMutableList()
         categories.add(0, "Semua")
