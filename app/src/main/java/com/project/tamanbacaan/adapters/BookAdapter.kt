@@ -105,11 +105,11 @@ class BookAdapter(
             // Aksi saat tombol bookmark di-klik.
             bookmarkButton.setOnClickListener {
                 // Mengubah status bookmark melalui repository (local state only).
+                val wasBookmarked = book.isBookmarked
                 BookRepository.toggleBookmarkStatus(book.id)
                 
-                // Toggle UI immediately
-                val isNowBookmarked = !book.isBookmarked
-                book.isBookmarked = isNowBookmarked
+                // Toggle UI immediately based on previous state
+                val isNowBookmarked = !wasBookmarked
                 
                 bookmarkButton.setImageResource(
                     if (isNowBookmarked) R.drawable.ic_bookmark_filled
@@ -130,8 +130,6 @@ class BookAdapter(
                     Toast.makeText(itemView.context, "Mengirim konfirmasi pengembalian buku '${book.title}' ke server...", Toast.LENGTH_SHORT).show()
                     // Update local state only (actual API call would be in transaction management)
                     BookRepository.updateBookLocalState(book.id, isAvailable = true, isBorrowed = false)
-                    book.isBorrowed = false
-                    book.isAvailable = true
                     Toast.makeText(itemView.context, "Pengembalian berhasil dikonfirmasi secara online!", Toast.LENGTH_SHORT).show()
                     notifyItemChanged(adapterPosition)
                 }
