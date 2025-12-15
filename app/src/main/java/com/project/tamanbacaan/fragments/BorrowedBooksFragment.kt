@@ -5,12 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment yang menampilkan daftar buku yang sedang dipinjam (Borrowed Books) oleh pengguna.
@@ -105,11 +107,14 @@ class BorrowedBooksFragment : Fragment() {
      * dan memperbarui adapter RecyclerView.
      */
     private fun loadBorrowedBooks() {
-        // Mengambil semua buku dari repository, lalu memfilter yang sedang dipinjam
-        val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
+        // Use lifecycleScope to call suspend function
+        lifecycleScope.launch {
+            // Mengambil semua buku dari repository, lalu memfilter yang sedang dipinjam
+            val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
 
-        // Membuat ulang dan mengatur adapter dengan data pinjaman yang sudah difilter
-        bookAdapter = BookAdapter(borrowedBooks) { }
-        recyclerView.adapter = bookAdapter
+            // Membuat ulang dan mengatur adapter dengan data pinjaman yang sudah difilter
+            bookAdapter = BookAdapter(borrowedBooks) { }
+            recyclerView.adapter = bookAdapter
+        }
     }
 }

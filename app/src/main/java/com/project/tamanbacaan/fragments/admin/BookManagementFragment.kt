@@ -12,12 +12,15 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.AdminBookAdapter
+import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk manajemen Buku (CRUD) oleh Admin.
@@ -106,12 +109,23 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Memuat daftar semua buku dari BookRepository dan memperbarui adapter.
+     * Memuat daftar semua buku dari API dan memperbarui adapter.
      */
     private fun loadBooks() {
-        booksList.clear()
-        booksList.addAll(BookRepository.getAllBooks())
-        bookAdapter.notifyDataSetChanged()
+        lifecycleScope.launch {
+            try {
+                val response = ApiConfig.getApiService().getAllBooks()
+                if (response.isSuccessful) {
+                    booksList.clear()
+                    booksList.addAll(response.body() ?: emptyList())
+                    bookAdapter.notifyDataSetChanged()
+                } else {
+                    Toast.makeText(context, "Error loading books: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /**
@@ -142,7 +156,7 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Mengambil data dari form, memvalidasi, membuat objek Book baru, dan menyimpannya ke repository.
+     * Mengambil data dari form, memvalidasi, membuat objek Book baru, dan menyimpannya ke API.
      */
     private fun saveNewBook() {
         val title = etTitle.text.toString().trim()
@@ -161,7 +175,7 @@ class BookManagementFragment : Fragment() {
             return
         }
 
-        // Membuat objek Book baru (ID akan diisi oleh Repository)
+        // Membuat objek Book baru (ID akan diisi oleh backend)
         val newBook = Book(
             id = "",
             title = title,
@@ -169,16 +183,27 @@ class BookManagementFragment : Fragment() {
             category = category.ifEmpty { "Uncategorized" },
             isAvailable = stock > 0, // Ketersediaan ditentukan oleh stok
             description = "Deskripsi buku akan diisi melalui halaman edit.",
-            coverUrl = ""
+            coverUrl = "",
+            stock = stock,
+            totalCopies = stock
         )
 
-        // Menyimpan buku ke repository
-        BookRepository.addBook(newBook)
-        Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
-
-        // Reset UI dan muat ulang daftar
-        loadBooks()
-        resetForm()
+        // Menyimpan buku ke API
+        lifecycleScope.launch {
+            try {
+                val response = ApiConfig.getApiService().createBook(newBook)
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
+                    // Reset UI dan muat ulang daftar
+                    loadBooks()
+                    resetForm()
+                } else {
+                    Toast.makeText(context, "Gagal menambahkan buku: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     /**
@@ -194,15 +219,22 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Menghapus buku dari repository.
+     * Menghapus buku dari API.
      * @param book Objek Book yang akan dihapus.
      */
     private fun deleteBook(book: Book) {
-        if (BookRepository.deleteBook(book.id)) {
-            Toast.makeText(context, "'${book.title}' berhasil dihapus.", Toast.LENGTH_SHORT).show()
-            loadBooks() // Muat ulang daftar
-        } else {
-            Toast.makeText(context, "Gagal menghapus buku.", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            try {
+                val response = ApiConfig.getApiService().deleteBook(book.id)
+                if (response.isSuccessful) {
+                    Toast.makeText(context, "'${book.title}' berhasil dihapus.", Toast.LENGTH_SHORT).show()
+                    loadBooks() // Muat ulang daftar
+                } else {
+                    Toast.makeText(context, "Gagal menghapus buku: ${response.code()}", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

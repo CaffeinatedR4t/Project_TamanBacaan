@@ -5,12 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment yang menampilkan daftar buku yang telah ditandai (bookmarked) oleh pengguna.
@@ -78,11 +80,14 @@ class BookmarkedFragment : Fragment() {
      * dan memperbarui adapter RecyclerView.
      */
     private fun loadBookmarkedBooks() {
-        // Ambil semua buku dari repository, lalu filter yang statusnya isBookmarked = true
-        val bookmarkedBooks = BookRepository.getAllBooks().filter { it.isBookmarked }
+        // Use lifecycleScope to call suspend function
+        lifecycleScope.launch {
+            // Ambil semua buku dari repository, lalu filter yang statusnya isBookmarked = true
+            val bookmarkedBooks = BookRepository.getAllBooks().filter { it.isBookmarked }
 
-        // Membuat adapter baru dengan data yang sudah difilter dan mengaturnya ke RecyclerView
-        bookAdapter = BookAdapter(bookmarkedBooks) { }
-        recyclerView.adapter = bookAdapter
+            // Membuat adapter baru dengan data yang sudah difilter dan mengaturnya ke RecyclerView
+            bookAdapter = BookAdapter(bookmarkedBooks) { }
+            recyclerView.adapter = bookAdapter
+        }
     }
 }

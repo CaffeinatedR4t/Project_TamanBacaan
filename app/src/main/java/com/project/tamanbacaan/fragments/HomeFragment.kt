@@ -4,12 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.viewmodels.BookViewModel
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
 
 /**
@@ -24,6 +27,8 @@ class HomeFragment : Fragment() {
     private lateinit var bookAdapter: BookAdapter
     // MutableList untuk menampung data buku yang akan ditampilkan
     private val booksList = mutableListOf<Book>()
+    // ViewModel untuk mengambil data buku dari API
+    private lateinit var bookViewModel: BookViewModel
 
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
@@ -44,6 +49,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView(view)
+        setupViewModel()
         loadBooks()
     }
 
@@ -68,14 +74,36 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * Memuat semua data buku dari BookRepository dan memperbarui RecyclerView.
+     * Menyiapkan ViewModel dan observers untuk mengambil data buku dari API.
+     */
+    private fun setupViewModel() {
+        bookViewModel = ViewModelProvider(this)[BookViewModel::class.java]
+
+        // Observe books data
+        bookViewModel.books.observe(viewLifecycleOwner) { books ->
+            booksList.clear()
+            booksList.addAll(books)
+            bookAdapter.notifyDataSetChanged()
+        }
+
+        // Observe loading state (optional - could show progress bar)
+        bookViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // Could show/hide progress bar here
+        }
+
+        // Observe errors
+        bookViewModel.error.observe(viewLifecycleOwner) { error ->
+            error?.let {
+                Toast.makeText(context, "Error loading books: $it", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /**
+     * Memuat semua data buku dari API melalui ViewModel.
      */
     private fun loadBooks() {
-        booksList.clear()
-        // Menggunakan BookRepository untuk mengambil semua data buku yang ada
-        booksList.addAll(BookRepository.getAllBooks())
-        // Beri tahu adapter bahwa data telah berubah
-        bookAdapter.notifyDataSetChanged()
+        bookViewModel.fetchBooks()
     }
 
     /**

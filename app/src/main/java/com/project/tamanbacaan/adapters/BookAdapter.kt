@@ -104,20 +104,20 @@ class BookAdapter(
 
             // Aksi saat tombol bookmark di-klik.
             bookmarkButton.setOnClickListener {
-                // Mengubah status bookmark melalui repository.
+                // Mengubah status bookmark melalui repository (local state only).
                 BookRepository.toggleBookmarkStatus(book.id)
-
-                // Memperbarui ikon bookmark secara langsung.
-                val updatedBook = BookRepository.getBookById(book.id) // Ambil status terbaru
-                if (updatedBook != null) {
-                    bookmarkButton.setImageResource(
-                        if (updatedBook.isBookmarked) R.drawable.ic_bookmark_filled
-                        else R.drawable.ic_bookmark
-                    )
-                }
+                
+                // Toggle UI immediately
+                val isNowBookmarked = !book.isBookmarked
+                book.isBookmarked = isNowBookmarked
+                
+                bookmarkButton.setImageResource(
+                    if (isNowBookmarked) R.drawable.ic_bookmark_filled
+                    else R.drawable.ic_bookmark
+                )
 
                 // Menampilkan pesan toast.
-                val message = if (updatedBook?.isBookmarked == true) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
+                val message = if (isNowBookmarked) "Ditambahkan ke bookmark" else "Dihapus dari bookmark"
                 Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
             }
         }
@@ -128,8 +128,10 @@ class BookAdapter(
                 // Jika mengembalikan buku.
                 book.isBorrowed -> {
                     Toast.makeText(itemView.context, "Mengirim konfirmasi pengembalian buku '${book.title}' ke server...", Toast.LENGTH_SHORT).show()
-                    // Simulasi pengembalian berhasil.
-                    BookRepository.updateBook(book.copy(isBorrowed = false, isAvailable = true))
+                    // Update local state only (actual API call would be in transaction management)
+                    BookRepository.updateBookLocalState(book.id, isAvailable = true, isBorrowed = false)
+                    book.isBorrowed = false
+                    book.isAvailable = true
                     Toast.makeText(itemView.context, "Pengembalian berhasil dikonfirmasi secara online!", Toast.LENGTH_SHORT).show()
                     notifyItemChanged(adapterPosition)
                 }

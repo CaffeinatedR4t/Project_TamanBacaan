@@ -6,10 +6,12 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
+import kotlinx.coroutines.launch
 
 /**
  * Activity untuk Admin/Pengelola dalam mengedit detail buku yang ada.
@@ -98,32 +100,34 @@ class EditBookActivity : AppCompatActivity() {
             return
         }
 
-        // Cari buku di Repository berdasarkan ID yang ditemukan
-        currentBook = BookRepository.getBookById(bookId!!)
+        // Cari buku di Repository berdasarkan ID yang ditemukan (using suspend function)
+        lifecycleScope.launch {
+            currentBook = BookRepository.getBookById(bookId!!)
 
-        // Validasi: Cek apakah buku ditemukan
-        if (currentBook == null) {
-            Toast.makeText(this, "Buku tidak ditemukan", Toast.LENGTH_SHORT).show()
-            finish()
-            return
-        }
+            // Validasi: Cek apakah buku ditemukan
+            if (currentBook == null) {
+                Toast.makeText(this@EditBookActivity, "Buku tidak ditemukan", Toast.LENGTH_SHORT).show()
+                finish()
+                return@launch
+            }
 
-        // Isi form dengan data buku yang dimuat
-        currentBook?.let { book ->
-            etTitle.setText(book.title)
-            etAuthor.setText(book.author)
-            etDescription.setText(book.description)
-            etCategory.setText(book.category)
-            etIsbn.setText(book.isbn)
-            // Tampilkan tahun publikasi jika valid
-            etPublicationYear.setText(if (book.publicationYear > 0) book.publicationYear.toString() else "")
-            etCoverUrl.setText(book.coverUrl)
-            cbIsAvailable.isChecked = book.isAvailable
-            cbIsBorrowed.isChecked = book.isBorrowed
+            // Isi form dengan data buku yang dimuat
+            currentBook?.let { book ->
+                etTitle.setText(book.title)
+                etAuthor.setText(book.author)
+                etDescription.setText(book.description)
+                etCategory.setText(book.category)
+                etIsbn.setText(book.isbn)
+                // Tampilkan tahun publikasi jika valid
+                etPublicationYear.setText(if (book.publicationYear > 0) book.publicationYear.toString() else "")
+                etCoverUrl.setText(book.coverUrl)
+                cbIsAvailable.isChecked = book.isAvailable
+                cbIsBorrowed.isChecked = book.isBorrowed
 
-            // Terapkan logika nonaktifkan checkbox ketersediaan jika buku sedang dipinjam
-            if (book.isBorrowed) {
-                cbIsAvailable.isEnabled = false
+                // Terapkan logika nonaktifkan checkbox ketersediaan jika buku sedang dipinjam
+                if (book.isBorrowed) {
+                    cbIsAvailable.isEnabled = false
+                }
             }
         }
     }
@@ -178,16 +182,18 @@ class EditBookActivity : AppCompatActivity() {
             isBorrowed = isBorrowed
         )
 
-        // Memanggil fungsi update di Repository
-        val success = BookRepository.updateBook(updatedBook)
+        // Memanggil fungsi update di Repository (using suspend function)
+        lifecycleScope.launch {
+            val success = BookRepository.updateBook(updatedBook)
 
-        // Memberikan feedback dan menutup Activity
-        if (success) {
-            Toast.makeText(this, "Buku berhasil diupdate!", Toast.LENGTH_SHORT).show()
-            setResult(RESULT_OK) // Menandai bahwa operasi berhasil
-            finish()
-        } else {
-            Toast.makeText(this, "Gagal mengupdate buku", Toast.LENGTH_SHORT).show()
+            // Memberikan feedback dan menutup Activity
+            if (success) {
+                Toast.makeText(this@EditBookActivity, "Buku berhasil diupdate!", Toast.LENGTH_SHORT).show()
+                setResult(RESULT_OK) // Menandai bahwa operasi berhasil
+                finish()
+            } else {
+                Toast.makeText(this@EditBookActivity, "Gagal mengupdate buku", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
