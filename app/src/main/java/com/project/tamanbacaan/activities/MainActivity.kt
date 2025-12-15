@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.fragments.BookmarkFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.HomeFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.NotificationFragment
@@ -17,6 +19,7 @@ import com.caffeinatedr4t.tamanbacaan.utils.NotificationHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.jvm.java
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
+import kotlinx.coroutines.launch
 
 /**
  * Activity utama aplikasi yang menjadi host untuk semua fragment utama (Home, Search, Bookmark, Profile).
@@ -30,6 +33,34 @@ class MainActivity : AppCompatActivity() {
     private var userEmail: String? = null
     private var userNik: String? = null
     private var userAddress: String? = null
+
+    override fun onResume() {
+        super.onResume()
+        checkAccountStatus()
+    }
+
+    private fun checkAccountStatus() {
+        val sharedPrefsManager = SharedPrefsManager(this)
+        val userId = sharedPrefsManager.getUserId()
+
+        if (!userId.isNullOrEmpty()) {
+            lifecycleScope.launch {
+                // Panggil repository untuk cek status terbaru
+                val isValid = BookRepository.checkUserStatus(userId)
+
+                if (!isValid) {
+                    // Jika tidak valid (Unverified/Deleted), Force Logout
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Sesi berakhir atau akun belum diverifikasi. Silakan login kembali.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                    showLogoutConfirmation() // Panggil fungsi logout yang sudah ada
+                }
+            }
+        }
+    }
 
     /**
      * Fungsi yang dipanggil saat Activity pertama kali dibuat.

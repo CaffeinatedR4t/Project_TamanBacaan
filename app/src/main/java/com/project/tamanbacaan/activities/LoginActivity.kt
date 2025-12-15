@@ -75,43 +75,48 @@ class LoginActivity : AppCompatActivity() {
      * Function to call login API
      */
     private fun loginUser(email: String, password: String) {
-        // Show loading
         setLoading(true)
-
-        // Create login request
         val loginRequest = LoginRequest(email, password)
 
-        // Call API using coroutine
         lifecycleScope.launch {
             try {
                 val apiService = ApiConfig.getApiService()
-                val response = apiService. login(loginRequest)
-
-                // Hide loading
+                val response = apiService.login(loginRequest)
                 setLoading(false)
 
                 if (response.isSuccessful) {
                     val loginResponse = response.body()
 
-                    if (loginResponse?.success == true && loginResponse.user != null) {
-                        // Login successful
+                    // [PERBAIKAN] Gunakan ?.user karena loginResponse bisa null
+                    val user = loginResponse?.user
+
+                    if (loginResponse?.success == true && user != null) {
+
+                        // [LOGIKA BARU] Cek Verifikasi
+                        if (!user.isVerified && user.role == "MEMBER") {
+                            Toast.makeText(
+                                this@LoginActivity,
+                                "Akun Anda belum diverifikasi oleh Admin. Silakan hubungi pengelola TBM.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                            return@launch
+                        }
+
                         Toast.makeText(
                             this@LoginActivity,
-                            "Login Berhasil!  Selamat datang ${loginResponse.user.fullName}",
+                            "Login Berhasil! Selamat datang ${user.fullName}",
                             Toast.LENGTH_SHORT
                         ).show()
 
-                        // Save user session
+                        // Simpan sesi
                         sharedPrefsManager.saveUserSession(
-                            loginResponse.user,
+                            user,
                             loginResponse.token ?: ""
                         )
 
-                        // Navigate based on user role
-                        navigateBasedOnRole(loginResponse.user.role)
+                        navigateBasedOnRole(user.role)
 
                     } else {
-                        // Login failed - wrong credentials
                         Toast.makeText(
                             this@LoginActivity,
                             loginResponse?.message ?: "Email atau Password salah",
@@ -119,7 +124,6 @@ class LoginActivity : AppCompatActivity() {
                         ).show()
                     }
                 } else {
-                    // HTTP error
                     Toast.makeText(
                         this@LoginActivity,
                         "Gagal login: ${response.message()}",
@@ -128,11 +132,10 @@ class LoginActivity : AppCompatActivity() {
                 }
 
             } catch (e: Exception) {
-                // Network error or other exceptions
                 setLoading(false)
                 Toast.makeText(
                     this@LoginActivity,
-                    "Error: ${e.message}\nPastikan backend sudah berjalan! ",
+                    "Error: ${e.message}\nPastikan backend sudah berjalan!",
                     Toast.LENGTH_LONG
                 ).show()
                 e.printStackTrace()

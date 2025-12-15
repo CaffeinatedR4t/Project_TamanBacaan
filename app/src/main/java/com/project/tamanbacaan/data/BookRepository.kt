@@ -248,18 +248,26 @@ object BookRepository {
     }
 
     // --- Member Management (CRUD + Verification Status) ---
-    fun getAllMembers(): List<User> = activeMembers.toList()
+    suspend fun getAllMembers(): List<User> {
+        return try {
+            val response = ApiConfig.getApiService().getAllMembers()
+            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 
     /**
      * Fungsi yang digunakan Admin untuk memverifikasi status RT/RW (Verifikasi Warga).
      */
-    fun toggleVerificationStatus(userId: String): Boolean {
-        val index = activeMembers.indexOfFirst { it.id == userId }
-        return if (index != -1) {
-            val user = activeMembers[index]
-            activeMembers[index] = user.copy(isVerified = !user.isVerified)
-            true
-        } else {
+    suspend fun toggleVerificationStatus(userId: String, currentStatus: Boolean): Boolean {
+        return try {
+            // Mengirim status kebalikan dari saat ini
+            val newStatus = !currentStatus
+            val body = mapOf("isVerified" to newStatus)
+            val response = ApiConfig.getApiService().updateUserStatus(userId, body)
+            response.isSuccessful
+        } catch (e: Exception) {
             false
         }
     }
@@ -269,12 +277,47 @@ object BookRepository {
         return if (index != -1) { activeMembers[index] = updatedUser; true } else { false }
     }
 
-    fun deleteMember(id: String): Boolean {
-        val iterator = activeMembers.iterator();
-        while (iterator.hasNext()) { if (iterator.next().id == id) { iterator.remove(); return true } };
-        return false
+    suspend fun deleteMember(userId: String): Boolean {
+        return try {
+            val response = ApiConfig.getApiService().deleteUser(userId)
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
     }
 
+    suspend fun checkUserStatus(userId: String): Boolean {
+        return try {
+            val response = ApiConfig.getApiService().getUserById(userId)
+            if (response.isSuccessful) {
+                val user = response.body()
+                // Return true jika user ada DAN sudah diverifikasi
+                user != null && user.isVerified
+            } else {
+                false // User tidak ditemukan atau error (anggap invalid untuk keamanan)
+            }
+        } catch (e: Exception) {
+            true // Jika error jaringan, jangan logout user (opsional, tergantung kebijakan)
+        }
+    }
+
+    // [BARU] Fungsi Get Profile untuk Member & Admin
+    suspend fun getUserProfile(token: String): User? {
+        return try {
+            // Backend butuh format "Bearer <token>"
+            val authHeader = "Bearer $token"
+            val response = ApiConfig.getApiService().getProfile(authHeader)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                response.body()?.user
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
     // --- Admin Data (Tetap) ---
     fun getTopBooks(): Map<String, Int> { return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19) }
     fun findMemberByNik(nik: String): User? { return activeMembers.find { it.nik == nik } }

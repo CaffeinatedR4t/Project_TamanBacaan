@@ -7,57 +7,81 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.MainActivity
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
+import kotlinx.coroutines.launch
 
-/**
- * Fragment untuk menampilkan profil pengguna (Anggota TBM).
- * Menyediakan informasi dasar pengguna dan fungsi untuk logout.
- */
 class ProfileFragment : Fragment() {
 
-    /**
-     * Dipanggil untuk membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.
-     * @param inflater Digunakan untuk meng-inflate layout.
-     * @param container Grup tampilan induk tempat fragmen akan dilampirkan.
-     * @param savedInstanceState Data yang sebelumnya disimpan (jika ada).
-     * @return Tampilan (View) root fragmen.
-     */
+    private lateinit var userName: TextView
+    private lateinit var userEmail: TextView
+    private lateinit var userNik: TextView
+    private lateinit var userAddress: TextView
+    private lateinit var sharedPrefsManager: SharedPrefsManager
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Menginflate layout XML untuk fragment profil
         val view = inflater.inflate(R.layout.fragment_profile, container, false)
 
-        // Variabel untuk elemen UI (TextViews) di layout fragment_profile.xml
-        val userName = view.findViewById<TextView>(R.id.userName) // TextView untuk Nama Pengguna
-        val userEmail = view.findViewById<TextView>(R.id.userEmail) // TextView untuk Email Pengguna
-        val userNik = view.findViewById<TextView>(R.id.userNik) // TextView untuk NIK Pengguna
-        val userAddress = view.findViewById<TextView>(R.id.userAddress) // TextView untuk Alamat Pengguna
-        val btnLogout = view.findViewById<Button>(R.id.btnLogout) // Tombol untuk Logout
+        // Init View
+        userName = view.findViewById(R.id.userName)
+        userEmail = view.findViewById(R.id.userEmail)
+        userNik = view.findViewById(R.id.userNik)
+        userAddress = view.findViewById(R.id.userAddress)
+        val btnLogout = view.findViewById<Button>(R.id.btnLogout)
 
-        // Ambil data user dari arguments (dikirim dari LoginActivity/MainActivity) dan set ke TextView
-        userName.text = arguments?.getString("USER_NAME") ?: "Nama Tidak Diketahui"
-        userEmail.text = arguments?.getString("USER_EMAIL") ?: "Email Tidak Diketahui"
-        userNik.text = "NIK: " + (arguments?.getString("USER_NIK") ?: "NIK Tidak Diketahui")
-        userAddress.text = "Alamat: " + (arguments?.getString("USER_ADDRESS") ?: "Alamat Tidak Diketahui")
+        // Init Prefs
+        sharedPrefsManager = SharedPrefsManager(requireContext())
 
-        // Listener untuk Tombol Logout dengan dialog konfirmasi
+        // [BARU] Load Data Profil dari Server
+        loadUserProfile()
+
         btnLogout.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Konfirmasi Logout")
-                .setMessage("Apakah Anda yakin ingin keluar?")
-                .setPositiveButton("Ya") { _, _ ->
-                    // Memanggil fungsi showLogoutConfirmation() di MainActivity untuk menyelesaikan proses logout
-                    (requireActivity() as? MainActivity)?.showLogoutConfirmation()
-                }
-                .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
-                .create()
-                .show()
+            showLogoutDialog()
         }
 
         return view
+    }
+
+    private fun loadUserProfile() {
+        val token = sharedPrefsManager.getUserToken()
+
+        if (!token.isNullOrEmpty()) {
+            lifecycleScope.launch {
+                // Panggil Repository
+                val user = BookRepository.getUserProfile(token)
+
+                if (user != null) {
+                    // Tampilkan data asli dari database
+                    userName.text = user.fullName
+                    userEmail.text = user.email
+                    userNik.text = "NIK: ${user.nik}"
+
+                    val fullAddress = "${user.addressRtRw}, ${user.addressKelurahan}, ${user.addressKecamatan}"
+                    userAddress.text = "Alamat: $fullAddress"
+                } else {
+                    Toast.makeText(context, "Gagal memuat profil terbaru", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun showLogoutDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Konfirmasi Logout")
+            .setMessage("Apakah Anda yakin ingin keluar?")
+            .setPositiveButton("Ya") { _, _ ->
+                (requireActivity() as? MainActivity)?.showLogoutConfirmation()
+            }
+            .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
+            .create()
+            .show()
     }
 }

@@ -1,6 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.api.model
 
-import com.google.gson. annotations.SerializedName
+import com.google.gson.annotations.SerializedName
 
 data class RegisterRequest(
     @field:SerializedName("fullName")
@@ -17,6 +17,16 @@ data class RegisterRequest(
 
     @field:SerializedName("addressRtRw")
     val addressRtRw: String,
+
+    // [BARU] Tambahkan Phone Number
+    @field:SerializedName("phoneNumber")
+    val phoneNumber: String,
+
+    @field:SerializedName("addressKelurahan")
+    val addressKelurahan: String = "Kelurahan Cipete",
+
+    @field:SerializedName("addressKecamatan")
+    val addressKecamatan: String = "Kecamatan Cilandak",
 
     @field:SerializedName("isChild")
     val isChild: Boolean = false,

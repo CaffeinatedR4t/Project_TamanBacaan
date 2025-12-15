@@ -6,6 +6,7 @@ import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.Transaction
+import com.caffeinatedr4t.tamanbacaan.models.User
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -50,4 +51,21 @@ interface ApiService {
 
     @PUT("transactions/{id}/return")
     suspend fun returnBook(@Path("id") transactionId: String): Response<Transaction>
+
+    @GET("users")
+    suspend fun getAllMembers(): Response<List<User>>
+
+    @PUT("users/{id}/status")
+    suspend fun updateUserStatus(@Path("id") id: String, @Body statusUpdate: Map<String, Boolean>): Response<User>
+
+    @DELETE("users/{id}")
+    suspend fun deleteUser(@Path("id") id: String): Response<Unit>
+
+    // [BARU] Endpoint untuk Cek Status User (Force Logout)
+    @GET("users/{id}")
+    suspend fun getUserById(@Path("id") id: String): Response<User>
+
+    // [BARU] Ambil profil user yang sedang login (butuh Token)
+    @GET("auth/me")
+    suspend fun getProfile(@Header("Authorization") token: String): Response<LoginResponse>
 }

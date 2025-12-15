@@ -7,12 +7,14 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.MemberAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.User
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk Manajemen Anggota (Verifikasi Warga dan Hapus) oleh Admin.
@@ -75,11 +77,16 @@ class MemberManagementFragment : Fragment() {
      * Juga memperbarui judul daftar dengan jumlah anggota.
      */
     private fun loadMembers() {
-        val allMembers = BookRepository.getAllMembers()
-        memberAdapter.updateData(allMembers)
+        // [PERBAIKAN] Bungkus pemanggilan suspend function dengan lifecycleScope.launch
+        lifecycleScope.launch {
+            // Karena ini di dalam coroutine, UI tidak akan macet saat menunggu data
+            val allMembers = BookRepository.getAllMembers()
 
-        // Update Title dengan jumlah anggota
-        tvListTitle.text = "Daftar Anggota Aktif (${allMembers.size} Pengguna)"
+            memberAdapter.updateData(allMembers)
+
+            // Update Title dengan jumlah anggota
+            tvListTitle.text = "Daftar Anggota Aktif (${allMembers.size} Pengguna)"
+        }
     }
 
     /**
@@ -87,16 +94,19 @@ class MemberManagementFragment : Fragment() {
      * @param user Objek User yang status verifikasinya akan diubah.
      */
     private fun handleVerifyToggle(user: User) {
-        val newStatus = !user.isVerified
+        // Gunakan coroutine scope fragment
+        lifecycleScope.launch {
+            // Panggil Repository (kirim ID dan status saat ini)
+            val success = BookRepository.toggleVerificationStatus(user.id, user.isVerified)
 
-        // Panggil Repository untuk mengubah status verifikasi
-        if (BookRepository.toggleVerificationStatus(user.id)) {
-            val action = if (newStatus) "Diverifikasi" else "Dibatalkan verifikasi"
-            Toast.makeText(context, "${user.fullName} telah ${action} sebagai warga RT/RW.", Toast.LENGTH_LONG).show()
-        } else {
-            Toast.makeText(context, "Gagal mengubah status verifikasi.", Toast.LENGTH_SHORT).show()
+            if (success) {
+                val statusMsg = if (!user.isVerified) "Diverifikasi" else "Dibatalkan verifikasi"
+                Toast.makeText(context, "Sukses: ${user.fullName} $statusMsg", Toast.LENGTH_SHORT).show()
+                loadMembers() // Refresh list
+            } else {
+                Toast.makeText(context, "Gagal mengubah status.", Toast.LENGTH_SHORT).show()
+            }
         }
-        loadMembers() // Refresh list untuk menampilkan perubahan status
     }
 
     /**
@@ -104,11 +114,14 @@ class MemberManagementFragment : Fragment() {
      * @param user Objek User yang akan dihapus.
      */
     private fun handleRemove(user: User) {
-        if (BookRepository.deleteMember(user.id)) {
-            Toast.makeText(context, "Anggota ${user.fullName} berhasil dihapus permanen.", Toast.LENGTH_LONG).show()
-            loadMembers() // Refresh list
-        } else {
-            Toast.makeText(context, "Gagal menghapus anggota.", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val success = BookRepository.deleteMember(user.id)
+            if (success) {
+                Toast.makeText(context, "Anggota berhasil dihapus.", Toast.LENGTH_SHORT).show()
+                loadMembers()
+            } else {
+                Toast.makeText(context, "Gagal menghapus anggota.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

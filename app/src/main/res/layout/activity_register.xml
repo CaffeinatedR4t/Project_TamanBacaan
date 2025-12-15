@@ -90,6 +90,18 @@
             android:background="@drawable/category_background"
             android:textColor="@color/text_primary"/>
 
+        <EditText
+            android:id="@+id/etPhoneNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nomor HP / WhatsApp"
+            android:inputType="phone"
+            android:maxLength="13"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/category_background"
+            android:textColor="@color/text_primary"/>
+
         <!-- CHECKBOX: Pendaftaran Anak -->
         <CheckBox
             android:id="@+id/cbIsChild"

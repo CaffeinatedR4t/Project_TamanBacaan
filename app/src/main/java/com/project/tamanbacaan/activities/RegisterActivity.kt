@@ -30,6 +30,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etAddressRtRw: EditText
     private lateinit var cbIsChild: CheckBox
     private lateinit var etParentName: EditText
+    private lateinit var etPhoneNumber: EditText
     private lateinit var btnRegister:  Button
     private lateinit var tvLogin: TextView
     private lateinit var progressBar:  ProgressBar
@@ -44,6 +45,7 @@ class RegisterActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         etAddressRtRw = findViewById(R.id.etAddressRtRw)
+        etPhoneNumber = findViewById(R.id.etPhoneNumber)
         // Add these fields to your XML layout if not exist:
         cbIsChild = findViewById(R.id.cbIsChild)
         etParentName = findViewById(R.id.etParentName)
@@ -81,6 +83,7 @@ class RegisterActivity : AppCompatActivity() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val addressRtRw = etAddressRtRw.text.toString().trim()
+        val phoneNumber = etPhoneNumber.text.toString().trim()
         val isChild = cbIsChild.isChecked
         val parentName = if (isChild) etParentName.text.toString().trim() else null
 
@@ -106,6 +109,10 @@ class RegisterActivity : AppCompatActivity() {
                 Toast.makeText(this, "Alamat RT/RW tidak boleh kosong", Toast.LENGTH_SHORT).show()
                 return
             }
+            phoneNumber.isEmpty() -> {
+                Toast.makeText(this, "Nomor HP tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                return
+            }
             isChild && parentName. isNullOrEmpty() -> {
                 Toast.makeText(this, "Nama orang tua wajib diisi untuk anak", Toast.LENGTH_SHORT).show()
                 return
@@ -119,6 +126,7 @@ class RegisterActivity : AppCompatActivity() {
             password = password,
             nik = nik,
             addressRtRw = addressRtRw,
+            phoneNumber = phoneNumber,
             isChild = isChild,
             parentName = parentName
         )
@@ -147,18 +155,17 @@ class RegisterActivity : AppCompatActivity() {
                     val registerResponse = response.body()
 
                     if (registerResponse?.success == true) {
-                        // Registration successful
+                        // [MODIFIKASI] Pesan sukses yang jelas
                         Toast.makeText(
                             this@RegisterActivity,
-                            "Pendaftaran berhasil! Silakan login dengan akun Anda.",
-                            Toast. LENGTH_LONG
+                            "Pendaftaran berhasil! Mohon tunggu Admin memverifikasi akun Anda agar bisa Login.",
+                            Toast.LENGTH_LONG
                         ).show()
 
-                        // Navigate to login
+                        // Arahkan ke Login
                         val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                         startActivity(intent)
                         finish()
-
                     } else {
                         // Registration failed
                         Toast. makeText(
