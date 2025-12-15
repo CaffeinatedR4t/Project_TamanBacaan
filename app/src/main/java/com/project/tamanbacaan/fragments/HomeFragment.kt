@@ -4,13 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
-import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk halaman utama (Home).
@@ -24,6 +28,8 @@ class HomeFragment : Fragment() {
     private lateinit var bookAdapter: BookAdapter
     // MutableList untuk menampung data buku yang akan ditampilkan
     private val booksList = mutableListOf<Book>()
+    // Loading indicator
+    private var progressBar: ProgressBar? = null
 
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
@@ -43,6 +49,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        progressBar = view.findViewById(R.id.progressBar)
         setupRecyclerView(view)
         loadBooks()
     }
@@ -68,14 +75,22 @@ class HomeFragment : Fragment() {
     }
 
     /**
-     * Memuat semua data buku dari BookRepository dan memperbarui RecyclerView.
+     * Memuat semua data buku dari API via BookRepository dan memperbarui RecyclerView.
      */
     private fun loadBooks() {
-        booksList.clear()
-        // Menggunakan BookRepository untuk mengambil semua data buku yang ada
-        booksList.addAll(BookRepository.getAllBooks())
-        // Beri tahu adapter bahwa data telah berubah
-        bookAdapter.notifyDataSetChanged()
+        viewLifecycleOwner.lifecycleScope.launch {
+            progressBar?.visibility = View.VISIBLE
+            try {
+                val books = BookRepository.getAllBooks()
+                booksList.clear()
+                booksList.addAll(books)
+                bookAdapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error loading books: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                progressBar?.visibility = View.GONE
+            }
+        }
     }
 
     /**
@@ -84,6 +99,6 @@ class HomeFragment : Fragment() {
      * @return List<Book> Daftar semua buku di perpustakaan.
      */
     internal fun getSampleLibraryBooks(): List<Book> {
-        return BookRepository.getAllBooks()
+        return booksList.toList()
     }
 }

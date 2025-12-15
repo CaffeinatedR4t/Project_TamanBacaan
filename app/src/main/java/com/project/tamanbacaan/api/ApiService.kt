@@ -25,6 +25,15 @@ interface ApiService {
     @GET("books/{id}")
     suspend fun getBookById(@Path("id") id: String): Response<Book>
 
+    @POST("books")
+    suspend fun createBook(@Body book: Book): Response<Book>
+
+    @PUT("books/{id}")
+    suspend fun updateBook(@Path("id") id: String, @Body book: Book): Response<Book>
+
+    @DELETE("books/{id}")
+    suspend fun deleteBook(@Path("id") id: String): Response<Unit>
+
     // Event Endpoints
     @GET("events")
     suspend fun getAllEvents(): Response<List<EventNotification>>
