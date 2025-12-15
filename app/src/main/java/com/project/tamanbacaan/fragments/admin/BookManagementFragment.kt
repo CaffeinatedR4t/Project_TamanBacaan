@@ -7,17 +7,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.AdminBookAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk manajemen Buku (CRUD) oleh Admin.
@@ -26,21 +29,21 @@ import com.caffeinatedr4t.tamanbacaan.models.Book
 class BookManagementFragment : Fragment() {
 
     // UI: Daftar Buku
-    private lateinit var recyclerView: RecyclerView // RecyclerView untuk menampilkan daftar buku
-    private lateinit var bookAdapter: AdminBookAdapter // Adapter untuk daftar buku admin
-    private val booksList = mutableListOf<Book>() // Daftar buku yang ditampilkan
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var bookAdapter: AdminBookAdapter
+    private val booksList = mutableListOf<Book>()
 
     // UI: Form Tambah Buku
-    private lateinit var formTitle: TextView // Judul form (Tambah Buku Baru)
-    private lateinit var etTitle: EditText // Input Judul Buku
-    private lateinit var etAuthor: EditText // Input Penulis
-    private lateinit var etCategory: EditText // Input Kategori
-    private lateinit var etStock: EditText // Input Stok (Jumlah)
-    private lateinit var btnSaveBook: Button // Tombol Simpan Buku
+    private lateinit var formTitle: TextView
+    private lateinit var etTitle: EditText
+    private lateinit var etAuthor: EditText
+    private lateinit var etCategory: EditText
+    private lateinit var etStock: EditText
+    private lateinit var btnSaveBook: Button
+    private var progressBar: ProgressBar? = null
 
     /**
      * Activity Result Launcher untuk memproses hasil dari EditBookActivity.
-     * Digunakan untuk me-refresh daftar buku jika edit berhasil (RESULT_OK).
      */
     private val editBookLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -50,19 +53,12 @@ class BookManagementFragment : Fragment() {
         }
     }
 
-    /**
-     * Membuat dan mengembalikan hierarki tampilan fragmen.
-     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_admin_book_management, container, false)
     }
 
-    /**
-     * Dipanggil setelah `onCreateView()`.
-     * Menginisialisasi semua View, menyiapkan RecyclerView, dan memuat data awal.
-     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -74,29 +70,22 @@ class BookManagementFragment : Fragment() {
         etStock = view.findViewById(R.id.etStock)
         btnSaveBook = view.findViewById(R.id.btnSaveBook)
         recyclerView = view.findViewById(R.id.recyclerViewAdminBooks)
+        progressBar = view.findViewById(R.id.progressBar)
 
         setupRecyclerView()
         loadBooks()
         setupFormListeners()
     }
 
-    /**
-     * Dipanggil ketika fragment kembali ke latar depan (visible).
-     * Memastikan daftar buku selalu diperbarui.
-     */
     override fun onResume() {
         super.onResume()
         loadBooks()
     }
 
-    /**
-     * Menyiapkan RecyclerView dengan adapter dan callback untuk aksi delete.
-     */
     private fun setupRecyclerView() {
-        // Menggunakan AdminBookAdapter dengan callback untuk Delete
         bookAdapter = AdminBookAdapter(
             books = booksList,
-            onDeleteClick = { book -> showDeleteConfirmation(book) } // Callback saat tombol Delete diklik
+            onDeleteClick = { book -> showDeleteConfirmation(book) }
         )
 
         recyclerView.apply {
@@ -106,27 +95,30 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Memuat daftar semua buku dari BookRepository dan memperbarui adapter.
+     * Load books from API via Repository
      */
     private fun loadBooks() {
-        booksList.clear()
-        booksList.addAll(BookRepository.getAllBooks())
-        bookAdapter.notifyDataSetChanged()
+        viewLifecycleOwner.lifecycleScope.launch {
+            progressBar?.visibility = View.VISIBLE
+            try {
+                val books = BookRepository.getAllBooks()
+                booksList.clear()
+                booksList.addAll(books)
+                bookAdapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error loading books: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                progressBar?.visibility = View.GONE
+            }
+        }
     }
 
-    /**
-     * Menyiapkan listener untuk tombol simpan buku.
-     */
     private fun setupFormListeners() {
         btnSaveBook.setOnClickListener {
             saveNewBook()
         }
     }
 
-    /**
-     * Menampilkan dialog konfirmasi sebelum menghapus buku.
-     * @param book Objek Book yang akan dihapus.
-     */
     private fun showDeleteConfirmation(book: Book) {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Buku")
@@ -142,13 +134,13 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Mengambil data dari form, memvalidasi, membuat objek Book baru, dan menyimpannya ke repository.
+     * Save new book via API
      */
     private fun saveNewBook() {
         val title = etTitle.text.toString().trim()
         val author = etAuthor.text.toString().trim()
         val category = etCategory.text.toString().trim()
-        val stock = etStock.text.toString().toIntOrNull() ?: 0 // Mengambil stok, default 0
+        val stock = etStock.text.toString().toIntOrNull() ?: 0
 
         // Validasi input
         if (title.isEmpty() || author.isEmpty()) {
@@ -161,29 +153,39 @@ class BookManagementFragment : Fragment() {
             return
         }
 
-        // Membuat objek Book baru (ID akan diisi oleh Repository)
+        // Create new Book object
         val newBook = Book(
-            id = "",
+            id = "", // Will be generated by backend
             title = title,
             author = author,
             category = category.ifEmpty { "Uncategorized" },
-            isAvailable = stock > 0, // Ketersediaan ditentukan oleh stok
+            isAvailable = stock > 0,
             description = "Deskripsi buku akan diisi melalui halaman edit.",
-            coverUrl = ""
+            coverUrl = "",
+            stock = stock,
+            totalCopies = stock
         )
 
-        // Menyimpan buku ke repository
-        BookRepository.addBook(newBook)
-        Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
-
-        // Reset UI dan muat ulang daftar
-        loadBooks()
-        resetForm()
+        // Save via API
+        viewLifecycleOwner.lifecycleScope.launch {
+            progressBar?.visibility = View.VISIBLE
+            try {
+                val success = BookRepository.addBook(newBook)
+                if (success) {
+                    Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
+                    loadBooks()
+                    resetForm()
+                } else {
+                    Toast.makeText(context, "Gagal menambahkan buku. Silakan coba lagi.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                progressBar?.visibility = View.GONE
+            }
+        }
     }
 
-    /**
-     * Mengatur ulang teks pada elemen form ke keadaan awal (untuk input buku baru).
-     */
     private fun resetForm() {
         formTitle.text = "Tambah Buku Baru"
         etTitle.text.clear()
@@ -194,15 +196,24 @@ class BookManagementFragment : Fragment() {
     }
 
     /**
-     * Menghapus buku dari repository.
-     * @param book Objek Book yang akan dihapus.
+     * Delete book via API
      */
     private fun deleteBook(book: Book) {
-        if (BookRepository.deleteBook(book.id)) {
-            Toast.makeText(context, "'${book.title}' berhasil dihapus.", Toast.LENGTH_SHORT).show()
-            loadBooks() // Muat ulang daftar
-        } else {
-            Toast.makeText(context, "Gagal menghapus buku.", Toast.LENGTH_SHORT).show()
+        viewLifecycleOwner.lifecycleScope.launch {
+            progressBar?.visibility = View.VISIBLE
+            try {
+                val success = BookRepository.deleteBook(book.id)
+                if (success) {
+                    Toast.makeText(context, "'${book.title}' berhasil dihapus.", Toast.LENGTH_SHORT).show()
+                    loadBooks()
+                } else {
+                    Toast.makeText(context, "Gagal menghapus buku.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                progressBar?.visibility = View.GONE
+            }
         }
     }
 }

@@ -1,102 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@color/background_light">
 
-    <!-- Form Tambah/Edit Buku -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardBookForm"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="@color/card_background">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/formTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tambah Buku Baru"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="12dp"/>
-
-            <EditText
-                android:id="@+id/etTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Judul Buku"
-                android:padding="10dp"
-                android:background="@drawable/category_background"
-                android:layout_marginBottom="8dp"/>
-
-            <EditText
-                android:id="@+id/etAuthor"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Penulis"
-                android:padding="10dp"
-                android:background="@drawable/category_background"
-                android:layout_marginBottom="8dp"/>
-
-            <EditText
-                android:id="@+id/etCategory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Kategori (e.g., Fiction, Sejarah)"
-                android:padding="10dp"
-                android:background="@drawable/category_background"
-                android:layout_marginBottom="8dp"/>
-
-            <EditText
-                android:id="@+id/etStock"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Stok (Jumlah)"
-                android:inputType="number"
-                android:padding="10dp"
-                android:background="@drawable/category_background"
-                android:layout_marginBottom="8dp"/>
-
-            <Button
-                android:id="@+id/btnSaveBook"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="SIMPAN BUKU BARU"
-                android:background="@drawable/button_primary"
-                android:textColor="@color/white"
-                android:layout_marginTop="8dp"/>
-
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Daftar Koleksi Buku"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/text_primary"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"/>
-
-    <!-- Daftar Buku dengan opsi Edit/Delete -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewAdminBooks"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingHorizontal="8dp"
-        android:clipToPadding="false" />
+        android:orientation="vertical">
 
-</LinearLayout>
+        <!-- Form Tambah/Edit Buku -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardBookForm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/card_background">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/formTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Tambah Buku Baru"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="12dp"/>
+
+                <EditText
+                    android:id="@+id/etTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Judul Buku"
+                    android:padding="10dp"
+                    android:background="@drawable/category_background"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/etAuthor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Penulis"
+                    android:padding="10dp"
+                    android:background="@drawable/category_background"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/etCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Kategori (e.g., Fiction, Sejarah)"
+                    android:padding="10dp"
+                    android:background="@drawable/category_background"
+                    android:layout_marginBottom="8dp"/>
+
+                <EditText
+                    android:id="@+id/etStock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Stok (Jumlah)"
+                    android:inputType="number"
+                    android:padding="10dp"
+                    android:background="@drawable/category_background"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/btnSaveBook"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SIMPAN BUKU BARU"
+                    android:background="@drawable/button_primary"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Daftar Koleksi Buku"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"/>
+
+        <!-- Daftar Buku dengan opsi Edit/Delete -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewAdminBooks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false" />
+
+    </LinearLayout>
+
+    <!-- Loading indicator -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+</FrameLayout>
