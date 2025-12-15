@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.activities
 
+import android.R.attr.phoneNumber
 import android.content. Intent
 import android.os.Bundle
 import android.view.View
@@ -27,9 +28,6 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
     private lateinit var etAddressRtRw: EditText
-    private lateinit var etAddressKelurahan: EditText
-    private lateinit var etAddressKecamatan: EditText
-    private lateinit var etPhoneNumber: EditText
     private lateinit var cbIsChild: CheckBox
     private lateinit var etParentName: EditText
     private lateinit var btnRegister:  Button
@@ -47,9 +45,6 @@ class RegisterActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         etAddressRtRw = findViewById(R.id.etAddressRtRw)
         // Add these fields to your XML layout if not exist:
-        etAddressKelurahan = findViewById(R.id.etAddressKelurahan)
-        etAddressKecamatan = findViewById(R.id.etAddressKecamatan)
-        etPhoneNumber = findViewById(R. id.etPhoneNumber)
         cbIsChild = findViewById(R.id.cbIsChild)
         etParentName = findViewById(R.id.etParentName)
         btnRegister = findViewById(R.id.btnRegister)
@@ -86,9 +81,6 @@ class RegisterActivity : AppCompatActivity() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val addressRtRw = etAddressRtRw.text.toString().trim()
-        val addressKelurahan = etAddressKelurahan.text.toString().trim()
-        val addressKecamatan = etAddressKecamatan.text.toString().trim()
-        val phoneNumber = etPhoneNumber.text.toString().trim()
         val isChild = cbIsChild.isChecked
         val parentName = if (isChild) etParentName.text.toString().trim() else null
 
@@ -114,18 +106,6 @@ class RegisterActivity : AppCompatActivity() {
                 Toast.makeText(this, "Alamat RT/RW tidak boleh kosong", Toast.LENGTH_SHORT).show()
                 return
             }
-            addressKelurahan.isEmpty() -> {
-                Toast.makeText(this, "Kelurahan tidak boleh kosong", Toast.LENGTH_SHORT).show()
-                return
-            }
-            addressKecamatan.isEmpty() -> {
-                Toast.makeText(this, "Kecamatan tidak boleh kosong", Toast.LENGTH_SHORT).show()
-                return
-            }
-            phoneNumber.isEmpty() -> {
-                Toast.makeText(this, "Nomor telepon tidak boleh kosong", Toast.LENGTH_SHORT).show()
-                return
-            }
             isChild && parentName. isNullOrEmpty() -> {
                 Toast.makeText(this, "Nama orang tua wajib diisi untuk anak", Toast.LENGTH_SHORT).show()
                 return
@@ -139,9 +119,6 @@ class RegisterActivity : AppCompatActivity() {
             password = password,
             nik = nik,
             addressRtRw = addressRtRw,
-            addressKelurahan = addressKelurahan,
-            addressKecamatan = addressKecamatan,
-            phoneNumber = phoneNumber,
             isChild = isChild,
             parentName = parentName
         )

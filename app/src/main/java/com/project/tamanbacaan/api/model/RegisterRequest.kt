@@ -18,15 +18,6 @@ data class RegisterRequest(
     @field:SerializedName("addressRtRw")
     val addressRtRw: String,
 
-    @field:SerializedName("addressKelurahan")
-    val addressKelurahan: String,
-
-    @field:SerializedName("addressKecamatan")
-    val addressKecamatan: String,
-
-    @field:SerializedName("phoneNumber")
-    val phoneNumber:  String,
-
     @field:SerializedName("isChild")
     val isChild: Boolean = false,
 
