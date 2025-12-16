@@ -37,7 +37,7 @@
             android:hint="Nama Lengkap Anggota"
             android:inputType="textPersonName|textCapWords"
             android:padding="12dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/category_background"
             android:textColor="@color/text_primary"/>
 
@@ -50,7 +50,7 @@
             android:inputType="number"
             android:maxLength="16"
             android:padding="12dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/category_background"
             android:textColor="@color/text_primary"/>
 
@@ -62,7 +62,7 @@
             android:hint="Email"
             android:inputType="textEmailAddress"
             android:padding="12dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/category_background"
             android:textColor="@color/text_primary"/>
 
@@ -74,21 +74,57 @@
             android:hint="Password"
             android:inputType="textPassword"
             android:padding="12dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/category_background"
             android:textColor="@color/text_primary"/>
 
-        <!-- Alamat RT/RW/Kelurahan -->
-        <EditText
-            android:id="@+id/etAddressRtRw"
+        <!-- Alamat RT / RW -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Alamat RT/RW/Kelurahan"
-            android:inputType="text"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/category_background"
-            android:textColor="@color/text_primary"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/etAddressRtRw"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="RT / RW"
+                android:padding="10dp"
+                android:background="@drawable/category_background"
+                android:textColor="@color/text_primary"/>
+
+        </LinearLayout>
+
+        <!-- Kelurahan & Kecamatan -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/etAddressKelurahan"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Kelurahan"
+                android:padding="10dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/category_background"
+                android:textColor="@color/text_primary"/>
+
+            <EditText
+                android:id="@+id/etAddressKecamatan"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Kecamatan"
+                android:padding="10dp"
+                android:background="@drawable/category_background"
+                android:textColor="@color/text_primary"/>
+        </LinearLayout>
 
         <EditText
             android:id="@+id/etPhoneNumber"

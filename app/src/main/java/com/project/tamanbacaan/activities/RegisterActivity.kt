@@ -1,6 +1,5 @@
 package com.caffeinatedr4t.tamanbacaan.activities
 
-import android.R.attr.phoneNumber
 import android.content. Intent
 import android.os.Bundle
 import android.view.View
@@ -28,9 +27,11 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
     private lateinit var etAddressRtRw: EditText
+    private lateinit var etAddressKelurahan: EditText
+    private lateinit var etAddressKecamatan: EditText
+    private lateinit var etPhoneNumber: EditText
     private lateinit var cbIsChild: CheckBox
     private lateinit var etParentName: EditText
-    private lateinit var etPhoneNumber: EditText
     private lateinit var btnRegister:  Button
     private lateinit var tvLogin: TextView
     private lateinit var progressBar:  ProgressBar
@@ -45,8 +46,10 @@ class RegisterActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         etAddressRtRw = findViewById(R.id.etAddressRtRw)
-        etPhoneNumber = findViewById(R.id.etPhoneNumber)
+        etAddressKelurahan = findViewById(R.id.etAddressKelurahan)
+        etAddressKecamatan = findViewById(R.id.etAddressKecamatan)
         // Add these fields to your XML layout if not exist:
+        etPhoneNumber = findViewById(R. id.etPhoneNumber)
         cbIsChild = findViewById(R.id.cbIsChild)
         etParentName = findViewById(R.id.etParentName)
         btnRegister = findViewById(R.id.btnRegister)
@@ -83,6 +86,8 @@ class RegisterActivity : AppCompatActivity() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val addressRtRw = etAddressRtRw.text.toString().trim()
+        val addressKelurahan = etAddressKelurahan.text.toString().trim()
+        val addressKecamatan = etAddressKecamatan.text.toString().trim()
         val phoneNumber = etPhoneNumber.text.toString().trim()
         val isChild = cbIsChild.isChecked
         val parentName = if (isChild) etParentName.text.toString().trim() else null
@@ -109,8 +114,16 @@ class RegisterActivity : AppCompatActivity() {
                 Toast.makeText(this, "Alamat RT/RW tidak boleh kosong", Toast.LENGTH_SHORT).show()
                 return
             }
+            addressKelurahan.isEmpty() -> {
+                Toast.makeText(this, "Kelurahan tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                return
+            }
+            addressKecamatan.isEmpty() -> {
+                Toast.makeText(this, "Kecamatan tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                return
+            }
             phoneNumber.isEmpty() -> {
-                Toast.makeText(this, "Nomor HP tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Nomor telepon tidak boleh kosong", Toast.LENGTH_SHORT).show()
                 return
             }
             isChild && parentName. isNullOrEmpty() -> {
@@ -126,6 +139,8 @@ class RegisterActivity : AppCompatActivity() {
             password = password,
             nik = nik,
             addressRtRw = addressRtRw,
+            addressKelurahan = addressKelurahan,
+            addressKecamatan = addressKecamatan,
             phoneNumber = phoneNumber,
             isChild = isChild,
             parentName = parentName
@@ -155,17 +170,18 @@ class RegisterActivity : AppCompatActivity() {
                     val registerResponse = response.body()
 
                     if (registerResponse?.success == true) {
-                        // [MODIFIKASI] Pesan sukses yang jelas
+                        // Registration successful
                         Toast.makeText(
                             this@RegisterActivity,
-                            "Pendaftaran berhasil! Mohon tunggu Admin memverifikasi akun Anda agar bisa Login.",
-                            Toast.LENGTH_LONG
+                            "Pendaftaran berhasil! Silakan login dengan akun Anda.",
+                            Toast. LENGTH_LONG
                         ).show()
 
-                        // Arahkan ke Login
+                        // Navigate to login
                         val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
                         startActivity(intent)
                         finish()
+
                     } else {
                         // Registration failed
                         Toast. makeText(

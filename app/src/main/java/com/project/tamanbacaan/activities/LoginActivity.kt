@@ -46,8 +46,14 @@ class LoginActivity : AppCompatActivity() {
 
         // Check if user is already logged in
         if (sharedPrefsManager.isLoggedIn()) {
-            navigateBasedOnRole(sharedPrefsManager.getUserRole())
-            return
+            val user = sharedPrefsManager.getUser()
+
+            if (user != null && user.isVerified) {
+                navigateBasedOnRole(user.role)
+                return
+            } else {
+                sharedPrefsManager.clearSession()
+            }
         }
 
         // Login button click listener
@@ -76,54 +82,55 @@ class LoginActivity : AppCompatActivity() {
      */
     private fun loginUser(email: String, password: String) {
         setLoading(true)
+
         val loginRequest = LoginRequest(email, password)
 
         lifecycleScope.launch {
             try {
                 val apiService = ApiConfig.getApiService()
                 val response = apiService.login(loginRequest)
+
                 setLoading(false)
 
                 if (response.isSuccessful) {
+
                     val loginResponse = response.body()
 
-                    // [PERBAIKAN] Gunakan ?.user karena loginResponse bisa null
-                    val user = loginResponse?.user
-
-                    if (loginResponse?.success == true && user != null) {
-
-                        // [LOGIKA BARU] Cek Verifikasi
-                        if (!user.isVerified && user.role == "MEMBER") {
-                            Toast.makeText(
-                                this@LoginActivity,
-                                "Akun Anda belum diverifikasi oleh Admin. Silakan hubungi pengelola TBM.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            return@launch
-                        }
-
+                    if (loginResponse == null) {
                         Toast.makeText(
                             this@LoginActivity,
-                            "Login Berhasil! Selamat datang ${user.fullName}",
+                            "Login gagal: response kosong",
                             Toast.LENGTH_SHORT
                         ).show()
-
-                        // Simpan sesi
-                        sharedPrefsManager.saveUserSession(
-                            user,
-                            loginResponse.token ?: ""
-                        )
-
-                        navigateBasedOnRole(user.role)
-
-                    } else {
-                        Toast.makeText(
-                            this@LoginActivity,
-                            loginResponse?.message ?: "Email atau Password salah",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        return@launch
                     }
+
+                    // 🔒 CEK VERIFIKASI USER
+                    if (!loginResponse.user.isVerified) {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "Akun Anda belum diverifikasi oleh admin.\nSilakan tunggu proses verifikasi.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        return@launch
+                    }
+
+                    // ✅ LOGIN SAH
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Login Berhasil! Selamat datang ${loginResponse.user.fullName}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    sharedPrefsManager.saveUserSession(
+                        loginResponse.user,
+                        loginResponse.token
+                    )
+
+                    navigateBasedOnRole(loginResponse.user.role)
+
                 } else {
+                    // ❌ HTTP ERROR (401, 403, dll)
                     Toast.makeText(
                         this@LoginActivity,
                         "Gagal login: ${response.message()}",
@@ -142,7 +149,6 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-
     /**
      * Navigate to appropriate screen based on user role
      */

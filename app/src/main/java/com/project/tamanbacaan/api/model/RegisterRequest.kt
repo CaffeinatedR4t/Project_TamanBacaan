@@ -23,10 +23,10 @@ data class RegisterRequest(
     val phoneNumber: String,
 
     @field:SerializedName("addressKelurahan")
-    val addressKelurahan: String = "Kelurahan Cipete",
+    val addressKelurahan: String,
 
     @field:SerializedName("addressKecamatan")
-    val addressKecamatan: String = "Kecamatan Cilandak",
+    val addressKecamatan: String,
 
     @field:SerializedName("isChild")
     val isChild: Boolean = false,

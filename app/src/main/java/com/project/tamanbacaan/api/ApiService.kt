@@ -3,18 +3,19 @@ package com.caffeinatedr4t.tamanbacaan.api
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginResponse
 import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
+import com.caffeinatedr4t.tamanbacaan.data.UpdateProfileRequest
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.Transaction
 import com.caffeinatedr4t.tamanbacaan.models.User
+import com.project.tamanbacaan.api.model.RegisterResponse
 import retrofit2.Response
 import retrofit2.http.*
 
 interface ApiService {
-
     // Authentication Endpoints
     @POST("auth/register")
-    suspend fun register(@Body request: RegisterRequest): Response<LoginResponse>
+    suspend fun register(@Body request: RegisterRequest): Response<RegisterResponse>
 
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
@@ -68,4 +69,11 @@ interface ApiService {
     // [BARU] Ambil profil user yang sedang login (butuh Token)
     @GET("auth/me")
     suspend fun getProfile(@Header("Authorization") token: String): Response<LoginResponse>
+
+    @PUT("auth/me")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Body request: UpdateProfileRequest
+    ): Response<LoginResponse>
+
 }

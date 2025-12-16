@@ -4,15 +4,12 @@ import com.caffeinatedr4t.tamanbacaan.models.User
 import com.google.gson.annotations. SerializedName
 
 data class LoginResponse(
-    @field:SerializedName("success")
-    val success: Boolean,
+    @SerializedName("token")
+    val token: String,
 
-    @field:SerializedName("message")
+    val success: Boolean,
     val message: String,
 
-    @field: SerializedName("token")
-    val token: String?  = null,
-
-    @field: SerializedName("user")
-    val user: User? = null
+    @SerializedName("user")
+    val user: User
 )

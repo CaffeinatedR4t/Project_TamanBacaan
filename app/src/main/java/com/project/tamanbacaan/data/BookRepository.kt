@@ -318,6 +318,26 @@ object BookRepository {
             null
         }
     }
+
+    suspend fun updateMyProfile(
+        token: String,
+        request: UpdateProfileRequest
+    ): User? {
+        return try {
+            val response = ApiConfig.getApiService()
+                .updateProfile("Bearer $token", request)
+
+            if (response.isSuccessful && response.body()?.success == true) {
+                response.body()?.user
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     // --- Admin Data (Tetap) ---
     fun getTopBooks(): Map<String, Int> { return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19) }
     fun findMemberByNik(nik: String): User? { return activeMembers.find { it.nik == nik } }

@@ -37,7 +37,7 @@
             android:name=".activities.RegisterActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize" />
 
         <!-- Activity untuk Dasbor Pengguna -->
         <activity
@@ -49,6 +49,13 @@
         <!-- Activity untuk Dasbor Admin -->
         <activity
             android:name=".activities.AdminActivity"
+            android:exported="false"
+            android:theme="@style/Base.Theme.TamanBacaan"
+            android:windowSoftInputMode="adjustPan" />
+
+        <!-- Activity untuk Dasbor Admin -->
+        <activity
+            android:name=".activities.EditBookActivity"
             android:exported="false"
             android:theme="@style/Base.Theme.TamanBacaan"
             android:windowSoftInputMode="adjustPan" />

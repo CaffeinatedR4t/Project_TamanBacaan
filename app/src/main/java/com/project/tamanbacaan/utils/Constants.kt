@@ -8,7 +8,7 @@ object Constants {
     const val FRAGMENT_HOME = "fragment_home"
     const val FRAGMENT_SEARCH = "fragment_search"
     const val FRAGMENT_BOOKMARK = "fragment_bookmark"
-
+    const val KEY_USER = "key_user"
     const val EXTRA_BOOK_ID = "book_id"
 
     // ========== ADD THESE NEW LINES ==========
