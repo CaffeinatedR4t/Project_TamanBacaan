@@ -5,12 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.NotificationAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.viewmodel.EventViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -23,7 +25,7 @@ class NotificationFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     // Adapter untuk mengelola data notifikasi (buku pinjaman dan event)
     private lateinit var adapter: NotificationAdapter
-
+    private lateinit var viewModel: EventViewModel
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
      */
@@ -40,23 +42,27 @@ class NotificationFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inisialisasi RecyclerView dan set layout manager
+        viewModel = ViewModelProvider(this)[EventViewModel::class.java]
+
         recyclerView = view.findViewById(R.id.recyclerNotifications)
         recyclerView.layoutManager = LinearLayoutManager(context)
 
-        lifecycleScope.launch {
-            // 2. Ambil data buku yang sedang dipinjam (isBorrowed = true) dari Repository
-            val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
+        viewModel.events.observe(viewLifecycleOwner) { events ->
 
-            // 3. Ambil data event/pengumuman dari Repository
-            val eventNotifications = BookRepository.getAllEvents()
+            // ✅ panggil suspend function dengan coroutine
+            viewLifecycleOwner.lifecycleScope.launch {
+                val borrowedBooks =
+                    BookRepository.getAllBooks().filter { it.isBorrowed }
 
-            // Set adapter dengan data yang sudah diambil dari Repository
-            adapter = NotificationAdapter(
-                borrowedBooks = borrowedBooks, // Daftar buku pinjaman
-                eventNotifications = eventNotifications // Daftar pengumuman event
-            )
-            recyclerView.adapter = adapter
+                adapter = NotificationAdapter(
+                    borrowedBooks = borrowedBooks,
+                    eventNotifications = events
+                )
+                recyclerView.adapter = adapter
+            }
         }
+
+        // ✅ event load lewat ViewModel
+        viewModel.loadEvents()
     }
 }

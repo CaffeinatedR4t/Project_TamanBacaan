@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -19,7 +20,10 @@ import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.AdminBookAdapter
 import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.data.CreateBookRequest
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
+import com.caffeinatedr4t.tamanbacaan.viewmodel.EventViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -40,6 +44,8 @@ class BookManagementFragment : Fragment() {
     private lateinit var etCategory: EditText // Input Kategori
     private lateinit var etStock: EditText // Input Stok (Jumlah)
     private lateinit var btnSaveBook: Button // Tombol Simpan Buku
+    private lateinit var eventViewModel: EventViewModel
+
 
     /**
      * Activity Result Launcher untuk memproses hasil dari EditBookActivity.
@@ -77,6 +83,8 @@ class BookManagementFragment : Fragment() {
         etStock = view.findViewById(R.id.etStock)
         btnSaveBook = view.findViewById(R.id.btnSaveBook)
         recyclerView = view.findViewById(R.id.recyclerViewAdminBooks)
+        eventViewModel = ViewModelProvider(this)[EventViewModel::class.java]
+
 
         setupRecyclerView()
         loadBooks()
@@ -114,7 +122,7 @@ class BookManagementFragment : Fragment() {
     private fun loadBooks() {
         lifecycleScope.launch {
             try {
-                val response = ApiConfig.getApiService().getAllBooks()
+                val response = ApiConfig.getApiService().getBooks()
                 if (response.isSuccessful) {
                     booksList.clear()
                     booksList.addAll(response.body() ?: emptyList())
@@ -162,9 +170,8 @@ class BookManagementFragment : Fragment() {
         val title = etTitle.text.toString().trim()
         val author = etAuthor.text.toString().trim()
         val category = etCategory.text.toString().trim()
-        val stock = etStock.text.toString().toIntOrNull() ?: 0 // Mengambil stok, default 0
+        val stock = etStock.text.toString().toIntOrNull() ?: 0
 
-        // Validasi input
         if (title.isEmpty() || author.isEmpty()) {
             Toast.makeText(context, "Judul dan Penulis harus diisi.", Toast.LENGTH_SHORT).show()
             return
@@ -175,33 +182,47 @@ class BookManagementFragment : Fragment() {
             return
         }
 
-        // Membuat objek Book baru (ID akan diisi oleh backend)
-        val newBook = Book(
-            id = "",
+        val request = CreateBookRequest(
             title = title,
             author = author,
             category = category.ifEmpty { "Uncategorized" },
-            isAvailable = stock > 0, // Ketersediaan ditentukan oleh stok
-            description = "Deskripsi buku akan diisi melalui halaman edit.",
-            coverUrl = "",
+            publisher = null,
+            year = null,
+            isbn = null,
             stock = stock,
-            totalCopies = stock
+            totalCopies = stock,
+            description = "Deskripsi buku",
+            coverImage = null
         )
 
-        // Menyimpan buku ke API
         lifecycleScope.launch {
             try {
-                val response = ApiConfig.getApiService().createBook(newBook)
+                val response = ApiConfig.getApiService().createBook(request)
                 if (response.isSuccessful) {
-                    Toast.makeText(context, "Buku baru '$title' berhasil ditambahkan!", Toast.LENGTH_SHORT).show()
-                    // Reset UI dan muat ulang daftar
+                    Toast.makeText(
+                        context,
+                        "Buku '$title' berhasil ditambahkan!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val token = SharedPrefsManager(requireContext()).getUserToken()
+                    if (token != null) {
+                        eventViewModel.notifyNewBookAdded(token, title)
+                    }
+
                     loadBooks()
                     resetForm()
                 } else {
-                    Toast.makeText(context, "Gagal menambahkan buku: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Gagal menambahkan buku", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                // ✅ INI YANG HILANG
+                e.printStackTrace()
+                Toast.makeText(
+                    context,
+                    "Terjadi kesalahan: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

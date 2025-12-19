@@ -28,6 +28,8 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvRegister: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var sharedPrefsManager: SharedPrefsManager
+    private var isLoggingIn = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

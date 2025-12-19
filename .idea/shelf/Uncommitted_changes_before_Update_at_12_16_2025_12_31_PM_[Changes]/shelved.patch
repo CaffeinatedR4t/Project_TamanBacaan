@@ -1,0 +1,1357 @@
+Index: app/src/main/java/com/project/tamanbacaan/fragments/ProfileFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.caffeinatedr4t.tamanbacaan.fragments\r\n\r\nimport android.app.AlertDialog\r\nimport android.os.Bundle\r\nimport android.view.LayoutInflater\r\nimport android.view.View\r\nimport android.view.ViewGroup\r\nimport android.widget.Button\r\nimport android.widget.TextView\r\nimport androidx.fragment.app.Fragment\r\nimport com.caffeinatedr4t.tamanbacaan.R\r\nimport com.caffeinatedr4t.tamanbacaan.activities.MainActivity\r\n\r\n/**\r\n * Fragment untuk menampilkan profil pengguna (Anggota TBM).\r\n * Menyediakan informasi dasar pengguna dan fungsi untuk logout.\r\n */\r\nclass ProfileFragment : Fragment() {\r\n\r\n    /**\r\n     * Dipanggil untuk membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.\r\n     * @param inflater Digunakan untuk meng-inflate layout.\r\n     * @param container Grup tampilan induk tempat fragmen akan dilampirkan.\r\n     * @param savedInstanceState Data yang sebelumnya disimpan (jika ada).\r\n     * @return Tampilan (View) root fragmen.\r\n     */\r\n    override fun onCreateView(\r\n        inflater: LayoutInflater, container: ViewGroup?,\r\n        savedInstanceState: Bundle?\r\n    ): View? {\r\n        // Menginflate layout XML untuk fragment profil\r\n        val view = inflater.inflate(R.layout.fragment_profile, container, false)\r\n\r\n        // Variabel untuk elemen UI (TextViews) di layout fragment_profile.xml\r\n        val userName = view.findViewById<TextView>(R.id.userName) // TextView untuk Nama Pengguna\r\n        val userEmail = view.findViewById<TextView>(R.id.userEmail) // TextView untuk Email Pengguna\r\n        val userNik = view.findViewById<TextView>(R.id.userNik) // TextView untuk NIK Pengguna\r\n        val userAddress = view.findViewById<TextView>(R.id.userAddress) // TextView untuk Alamat Pengguna\r\n        val btnLogout = view.findViewById<Button>(R.id.btnLogout) // Tombol untuk Logout\r\n\r\n        // Ambil data user dari arguments (dikirim dari LoginActivity/MainActivity) dan set ke TextView\r\n        userName.text = arguments?.getString(\"USER_NAME\") ?: \"Nama Tidak Diketahui\"\r\n        userEmail.text = arguments?.getString(\"USER_EMAIL\") ?: \"Email Tidak Diketahui\"\r\n        userNik.text = \"NIK: \" + (arguments?.getString(\"USER_NIK\") ?: \"NIK Tidak Diketahui\")\r\n        userAddress.text = \"Alamat: \" + (arguments?.getString(\"USER_ADDRESS\") ?: \"Alamat Tidak Diketahui\")\r\n\r\n        // Listener untuk Tombol Logout dengan dialog konfirmasi\r\n        btnLogout.setOnClickListener {\r\n            AlertDialog.Builder(requireContext())\r\n                .setTitle(\"Konfirmasi Logout\")\r\n                .setMessage(\"Apakah Anda yakin ingin keluar?\")\r\n                .setPositiveButton(\"Ya\") { _, _ ->\r\n                    // Memanggil fungsi showLogoutConfirmation() di MainActivity untuk menyelesaikan proses logout\r\n                    (requireActivity() as? MainActivity)?.showLogoutConfirmation()\r\n                }\r\n                .setNegativeButton(\"Batal\") { dialog, _ -> dialog.dismiss() }\r\n                .create()\r\n                .show()\r\n        }\r\n\r\n        return view\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/tamanbacaan/fragments/ProfileFragment.kt b/app/src/main/java/com/project/tamanbacaan/fragments/ProfileFragment.kt
+--- a/app/src/main/java/com/project/tamanbacaan/fragments/ProfileFragment.kt	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/java/com/project/tamanbacaan/fragments/ProfileFragment.kt	(date 1765708858311)
+@@ -6,58 +6,214 @@
+ import android.view.View
+ import android.view.ViewGroup
+ import android.widget.Button
++import android.widget.ImageView
+ import android.widget.TextView
++import android.widget.Toast
++import androidx.cardview.widget.CardView
+ import androidx.fragment.app.Fragment
+ import com.caffeinatedr4t.tamanbacaan.R
+ import com.caffeinatedr4t.tamanbacaan.activities.MainActivity
++import com.caffeinatedr4t.tamanbacaan.data.BookRepository
++import com.google.android.material.textfield.TextInputEditText
+ 
+ /**
+- * Fragment untuk menampilkan profil pengguna (Anggota TBM).
+- * Menyediakan informasi dasar pengguna dan fungsi untuk logout.
++ * Fragment untuk menampilkan dan mengedit profil pengguna (Anggota TBM).
++ * Menyediakan informasi dasar pengguna dan fungsi untuk edit profile dan logout.
+  */
+ class ProfileFragment : Fragment() {
+ 
+-    /**
+-     * Dipanggil untuk membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.
+-     * @param inflater Digunakan untuk meng-inflate layout.
+-     * @param container Grup tampilan induk tempat fragmen akan dilampirkan.
+-     * @param savedInstanceState Data yang sebelumnya disimpan (jika ada).
+-     * @return Tampilan (View) root fragmen.
+-     */
++    // UI Components
++    private lateinit var ivProfilePicture: ImageView
++    private lateinit var tvUserName: TextView
++    private lateinit var tvUserEmail: TextView
++    private lateinit var cardProfileInfo: CardView
++    private lateinit var tvProfileNik: TextView
++    private lateinit var tvProfileAddress: TextView
++    private lateinit var tvProfileType: TextView
++    private lateinit var tvVerificationStatus: TextView
++    private lateinit var btnEditProfile: Button
++    private lateinit var btnLogout: Button
++
++    // User data variables
++    private var userName: String? = null
++    private var userEmail: String? = null
++    private var userNik: String? = null
++    private var userAddress: String? = null
++
+     override fun onCreateView(
+         inflater: LayoutInflater, container: ViewGroup?,
+         savedInstanceState: Bundle?
+     ): View? {
+-        // Menginflate layout XML untuk fragment profil
+         val view = inflater.inflate(R.layout.fragment_profile, container, false)
+ 
+-        // Variabel untuk elemen UI (TextViews) di layout fragment_profile.xml
+-        val userName = view.findViewById<TextView>(R.id.userName) // TextView untuk Nama Pengguna
+-        val userEmail = view.findViewById<TextView>(R.id.userEmail) // TextView untuk Email Pengguna
+-        val userNik = view.findViewById<TextView>(R.id.userNik) // TextView untuk NIK Pengguna
+-        val userAddress = view.findViewById<TextView>(R.id.userAddress) // TextView untuk Alamat Pengguna
+-        val btnLogout = view.findViewById<Button>(R.id.btnLogout) // Tombol untuk Logout
++        // Initialize views
++        initializeViews(view)
++
++        // Load user data
++        loadUserData()
++
++        // Setup button listeners
++        setupListeners()
++
++        return view
++    }
++
++    /**
++     * Inisialisasi semua view components
++     */
++    private fun initializeViews(view: View) {
++        ivProfilePicture = view.findViewById(R.id.ivProfilePicture)
++        tvUserName = view.findViewById(R.id.tvUserName)
++        tvUserEmail = view.findViewById(R.id.tvUserEmail)
++        cardProfileInfo = view.findViewById(R.id.cardProfileInfo)
++        tvProfileNik = view.findViewById(R.id.tvProfileNik)
++        tvProfileAddress = view.findViewById(R.id.tvProfileAddress)
++        tvProfileType = view.findViewById(R.id.tvProfileType)
++        tvVerificationStatus = view.findViewById(R.id.tvVerificationStatus)
++        btnEditProfile = view.findViewById(R.id.btnEditProfile)
++        btnLogout = view.findViewById(R.id.btnLogout)
++    }
++
++    /**
++     * Load dan display user data dari arguments
++     */
++    private fun loadUserData() {
++        // Get data from arguments
++        userName = arguments?.getString("USER_NAME") ?: "Nama Tidak Diketahui"
++        userEmail = arguments?.getString("USER_EMAIL") ?: "Email Tidak Diketahui"
++        userNik = arguments?.getString("USER_NIK") ?: "NIK Tidak Diketahui"
++        userAddress = arguments?.getString("USER_ADDRESS") ?: "Alamat Tidak Diketahui"
++
++        // Display data
++        tvUserName.text = userName
++        tvUserEmail.text = userEmail
++        tvProfileNik.text = userNik
++        tvProfileAddress.text = userAddress
++
++        // Check if user exists in repository and get verification status
++        val user = BookRepository.findMemberByNik(userNik!!)
++        if (user != null) {
++            // Display member type
++            if (user.isChild) {
++                tvProfileType.text = "Anggota Anak-anak"
++                if (!user.parentName.isNullOrEmpty()) {
++                    tvProfileType.text = "${tvProfileType.text}\nOrang Tua: ${user.parentName}"
++                }
++            } else {
++                tvProfileType.text = "Anggota Dewasa"
++            }
+ 
+-        // Ambil data user dari arguments (dikirim dari LoginActivity/MainActivity) dan set ke TextView
+-        userName.text = arguments?.getString("USER_NAME") ?: "Nama Tidak Diketahui"
+-        userEmail.text = arguments?.getString("USER_EMAIL") ?: "Email Tidak Diketahui"
+-        userNik.text = "NIK: " + (arguments?.getString("USER_NIK") ?: "NIK Tidak Diketahui")
+-        userAddress.text = "Alamat: " + (arguments?.getString("USER_ADDRESS") ?: "Alamat Tidak Diketahui")
++            // Display verification status
++            if (user.isVerified) {
++                tvVerificationStatus.text = "Status: Terverifikasi ✓"
++                tvVerificationStatus.setTextColor(resources.getColor(R.color.success_green))
++            } else {
++                tvVerificationStatus.text = "Status: Belum Diverifikasi"
++                tvVerificationStatus.setTextColor(resources.getColor(R.color.warning_orange))
++            }
++        } else {
++            tvProfileType.text = "Anggota Baru"
++            tvVerificationStatus.text = "Status: Belum Diverifikasi"
++            tvVerificationStatus.setTextColor(resources.getColor(R.color.warning_orange))
++        }
++    }
+ 
+-        // Listener untuk Tombol Logout dengan dialog konfirmasi
++    /**
++     * Setup button click listeners
++     */
++    private fun setupListeners() {
++        // Edit Profile button
++        btnEditProfile.setOnClickListener {
++            showEditProfileDialog()
++        }
++
++        // Logout button
+         btnLogout.setOnClickListener {
+-            AlertDialog.Builder(requireContext())
+-                .setTitle("Konfirmasi Logout")
+-                .setMessage("Apakah Anda yakin ingin keluar?")
+-                .setPositiveButton("Ya") { _, _ ->
+-                    // Memanggil fungsi showLogoutConfirmation() di MainActivity untuk menyelesaikan proses logout
+-                    (requireActivity() as? MainActivity)?.showLogoutConfirmation()
+-                }
+-                .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
+-                .create()
+-                .show()
+-        }
+-
+-        return view
++            showLogoutConfirmation()
++        }
++    }
++
++    /**
++     * Show dialog untuk edit profile
++     */
++    private fun showEditProfileDialog() {
++        val dialogView = LayoutInflater.from(requireContext())
++            .inflate(R.layout.dialog_edit_profile, null)
++
++        // Initialize dialog views
++        val etEditName = dialogView.findViewById<TextInputEditText>(R.id.etEditName)
++        val etEditEmail = dialogView.findViewById<TextInputEditText>(R.id.etEditEmail)
++        val etEditAddress = dialogView.findViewById<TextInputEditText>(R.id.etEditAddress)
++
++        // Pre-fill with current data
++        etEditName.setText(userName)
++        etEditEmail.setText(userEmail)
++        etEditAddress.setText(userAddress)
++
++        AlertDialog.Builder(requireContext())
++            .setTitle("Edit Profile")
++            .setView(dialogView)
++            .setPositiveButton("Simpan") { _, _ ->
++                val newName = etEditName.text.toString().trim()
++                val newEmail = etEditEmail.text.toString().trim()
++                val newAddress = etEditAddress.text.toString().trim()
++
++                // Validate inputs
++                if (newName.isEmpty() || newEmail.isEmpty() || newAddress.isEmpty()) {
++                    Toast.makeText(requireContext(), "Semua field harus diisi!", Toast.LENGTH_SHORT).show()
++                    return@setPositiveButton
++                }
++
++                // Validate email format
++                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
++                    Toast.makeText(requireContext(), "Format email tidak valid!", Toast.LENGTH_SHORT).show()
++                    return@setPositiveButton
++                }
++
++                // Update local data
++                userName = newName
++                userEmail = newEmail
++                userAddress = newAddress
++
++                // Update UI
++                tvUserName.text = userName
++                tvUserEmail.text = userEmail
++                tvProfileAddress.text = userAddress
++
++                // Update in repository if user exists
++                val user = BookRepository.findMemberByNik(userNik!!)
++                if (user != null) {
++                    val updatedUser = user.copy(
++                        fullName = newName,
++                        email = newEmail,
++                        addressRtRw = newAddress
++                    )
++                    BookRepository.updateMember(updatedUser)
++                }
++
++                Toast.makeText(requireContext(), "Profile berhasil diperbarui!", Toast.LENGTH_SHORT).show()
++            }
++            .setNegativeButton("Batal") { dialog, _ ->
++                dialog.dismiss()
++            }
++            .create()
++            .show()
++    }
++
++    /**
++     * Show logout confirmation dialog
++     */
++    private fun showLogoutConfirmation() {
++        AlertDialog.Builder(requireContext())
++            .setTitle("Konfirmasi Logout")
++            .setMessage("Apakah Anda yakin ingin keluar?")
++            .setPositiveButton("Ya") { _, _ ->
++                (requireActivity() as? MainActivity)?.showLogoutConfirmation()
++            }
++            .setNegativeButton("Batal") { dialog, _ ->
++                dialog.dismiss()
++            }
++            .create()
++            .show()
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:tools=\"http://schemas.android.com/tools\">\r\n\r\n    <!-- Izin untuk mengakses internet (untuk Glide, Retrofit, dll.) -->\r\n    <uses-permission android:name=\"android.permission.INTERNET\" />\r\n    <!-- Izin untuk memeriksa status koneksi jaringan -->\r\n    <uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />\r\n\r\n    <application\r\n        android:allowBackup=\"true\"\r\n        android:dataExtractionRules=\"@xml/data_extraction_rules\"\r\n        android:fullBackupContent=\"@xml/backup_rules\"\r\n        android:icon=\"@mipmap/ic_launcher\"\r\n        android:label=\"@string/app_name\"\r\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\r\n        android:supportsRtl=\"true\"\r\n        android:theme=\"@style/Base.Theme.TamanBacaan\"\r\n        tools:targetApi=\"tiramisu\"\r\n        android:networkSecurityConfig=\"@xml/network_security_config\"\r\n        android:usesCleartextTraffic=\"true\">\r\n\r\n        <!-- Activity Utama: Login menjadi titik masuk aplikasi -->\r\n        <activity\r\n            android:name=\".activities.LoginActivity\"\r\n            android:exported=\"true\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\"\r\n            android:windowSoftInputMode=\"adjustPan\">\r\n            <intent-filter>\r\n                <action android:name=\"android.intent.action.MAIN\" />\r\n                <category android:name=\"android.intent.category.LAUNCHER\" />\r\n            </intent-filter>\r\n        </activity>\r\n\r\n        <!-- Activity untuk Pendaftaran Pengguna -->\r\n        <activity\r\n            android:name=\".activities.RegisterActivity\"\r\n            android:exported=\"false\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\"\r\n            android:windowSoftInputMode=\"adjustPan\" />\r\n\r\n        <!-- Activity untuk Dasbor Pengguna -->\r\n        <activity\r\n            android:name=\".activities.MainActivity\"\r\n            android:exported=\"false\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\"\r\n            android:windowSoftInputMode=\"adjustPan\" />\r\n\r\n        <!-- Activity untuk Dasbor Admin -->\r\n        <activity\r\n            android:name=\".activities.AdminActivity\"\r\n            android:exported=\"false\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\"\r\n            android:windowSoftInputMode=\"adjustPan\" />\r\n\r\n        <!-- Activity untuk Detail Buku -->\r\n        <activity\r\n            android:name=\".activities.BookDetailActivity\"\r\n            android:exported=\"false\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\" />\r\n\r\n        <!-- [DITAMBAHKAN] Activity untuk Verifikasi Anggota oleh Admin -->\r\n        <activity\r\n            android:name=\".activities.VerificationActivity\"\r\n            android:exported=\"false\"\r\n            android:theme=\"@style/Base.Theme.TamanBacaan\" />\r\n\r\n    </application>\r\n\r\n</manifest>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/AndroidManifest.xml	(date 1765331089186)
+@@ -53,6 +53,13 @@
+             android:theme="@style/Base.Theme.TamanBacaan"
+             android:windowSoftInputMode="adjustPan" />
+ 
++        <!-- Activity untuk Dasbor Admin -->
++        <activity
++            android:name=".activities.EditBookActivity"
++            android:exported="false"
++            android:theme="@style/Base.Theme.TamanBacaan"
++            android:windowSoftInputMode="adjustPan" />
++
+         <!-- Activity untuk Detail Buku -->
+         <activity
+             android:name=".activities.BookDetailActivity"
+Index: app/src/main/java/com/project/tamanbacaan/activities/LoginActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.caffeinatedr4t.tamanbacaan.activities\r\n\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.view.View\r\nimport android.widget.Button\r\nimport android.widget.EditText\r\nimport android.widget.ProgressBar\r\nimport android.widget.TextView\r\nimport android.widget.Toast\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.lifecycle.lifecycleScope\r\nimport com.caffeinatedr4t.tamanbacaan.R\r\nimport com.caffeinatedr4t.tamanbacaan.api.ApiConfig\r\nimport com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest\r\nimport com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager\r\nimport kotlinx.coroutines.launch\r\n\r\n/**\r\n * Activity untuk login pengguna dan admin dengan koneksi ke Backend API.\r\n * Mendukung login untuk role MEMBER dan ADMIN.\r\n */\r\nclass LoginActivity : AppCompatActivity() {\r\n\r\n    private lateinit var etEmail:  EditText\r\n    private lateinit var etPassword: EditText\r\n    private lateinit var btnLogin: Button\r\n    private lateinit var tvRegister: TextView\r\n    private lateinit var progressBar: ProgressBar\r\n    private lateinit var sharedPrefsManager: SharedPrefsManager\r\n\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        setContentView(R.layout.activity_login)\r\n\r\n        // Initialize UI components\r\n        etEmail = findViewById(R.id.etEmail)\r\n        etPassword = findViewById(R.id.etPassword)\r\n        btnLogin = findViewById(R.id.btnLogin)\r\n        tvRegister = findViewById(R.id. tvRegister)\r\n        // Add ProgressBar to your layout XML:  <ProgressBar android:id=\"@+id/progressBar\" ...  />\r\n        progressBar = findViewById(R.id.progressBar) // You need to add this to your XML\r\n\r\n        // Initialize SharedPreferences\r\n        sharedPrefsManager = SharedPrefsManager(this)\r\n\r\n        // Check if user is already logged in\r\n        if (sharedPrefsManager.isLoggedIn()) {\r\n            navigateBasedOnRole(sharedPrefsManager.getUserRole())\r\n            return\r\n        }\r\n\r\n        // Login button click listener\r\n        btnLogin.setOnClickListener {\r\n            val email = etEmail.text.toString().trim()\r\n            val password = etPassword.text.toString()\r\n\r\n            // Validate input\r\n            if (email.isEmpty() || password.isEmpty()) {\r\n                Toast.makeText(this, \"Email dan Password tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return@setOnClickListener\r\n            }\r\n\r\n            // Call login API\r\n            loginUser(email, password)\r\n        }\r\n\r\n        // Register text click listener\r\n        tvRegister.setOnClickListener {\r\n            startActivity(Intent(this, RegisterActivity:: class.java))\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Function to call login API\r\n     */\r\n    private fun loginUser(email: String, password: String) {\r\n        // Show loading\r\n        setLoading(true)\r\n\r\n        // Create login request\r\n        val loginRequest = LoginRequest(email, password)\r\n\r\n        // Call API using coroutine\r\n        lifecycleScope.launch {\r\n            try {\r\n                val apiService = ApiConfig.getApiService()\r\n                val response = apiService. login(loginRequest)\r\n\r\n                // Hide loading\r\n                setLoading(false)\r\n\r\n                if (response.isSuccessful) {\r\n                    val loginResponse = response.body()\r\n\r\n                    if (loginResponse?.success == true && loginResponse.user != null) {\r\n                        // Login successful\r\n                        Toast.makeText(\r\n                            this@LoginActivity,\r\n                            \"Login Berhasil!  Selamat datang ${loginResponse.user.fullName}\",\r\n                            Toast.LENGTH_SHORT\r\n                        ).show()\r\n\r\n                        // Save user session\r\n                        sharedPrefsManager.saveUserSession(\r\n                            loginResponse.user,\r\n                            loginResponse.token ?: \"\"\r\n                        )\r\n\r\n                        // Navigate based on user role\r\n                        navigateBasedOnRole(loginResponse.user.role)\r\n\r\n                    } else {\r\n                        // Login failed - wrong credentials\r\n                        Toast.makeText(\r\n                            this@LoginActivity,\r\n                            loginResponse?.message ?: \"Email atau Password salah\",\r\n                            Toast.LENGTH_SHORT\r\n                        ).show()\r\n                    }\r\n                } else {\r\n                    // HTTP error\r\n                    Toast.makeText(\r\n                        this@LoginActivity,\r\n                        \"Gagal login: ${response.message()}\",\r\n                        Toast.LENGTH_SHORT\r\n                    ).show()\r\n                }\r\n\r\n            } catch (e: Exception) {\r\n                // Network error or other exceptions\r\n                setLoading(false)\r\n                Toast.makeText(\r\n                    this@LoginActivity,\r\n                    \"Error: ${e.message}\\nPastikan backend sudah berjalan! \",\r\n                    Toast.LENGTH_LONG\r\n                ).show()\r\n                e.printStackTrace()\r\n            }\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Navigate to appropriate screen based on user role\r\n     */\r\n    private fun navigateBasedOnRole(role: String?) {\r\n        val intent = when (role) {\r\n            \"ADMIN\" -> Intent(this, AdminActivity::class.java)\r\n            \"MEMBER\" -> Intent(this, MainActivity::class.java)\r\n            else -> {\r\n                Toast.makeText(this, \"Role tidak valid\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n        }\r\n        startActivity(intent)\r\n        finish()\r\n    }\r\n\r\n    /**\r\n     * Show/hide loading indicator\r\n     */\r\n    private fun setLoading(isLoading: Boolean) {\r\n        if (isLoading) {\r\n            progressBar.visibility = View. VISIBLE\r\n            btnLogin.isEnabled = false\r\n        } else {\r\n            progressBar. visibility = View.GONE\r\n            btnLogin.isEnabled = true\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/tamanbacaan/activities/LoginActivity.kt b/app/src/main/java/com/project/tamanbacaan/activities/LoginActivity.kt
+--- a/app/src/main/java/com/project/tamanbacaan/activities/LoginActivity.kt	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/java/com/project/tamanbacaan/activities/LoginActivity.kt	(date 1765709755715)
+@@ -93,28 +93,25 @@
+                 if (response.isSuccessful) {
+                     val loginResponse = response.body()
+ 
+-                    if (loginResponse?.success == true && loginResponse.user != null) {
+-                        // Login successful
++                    if (loginResponse != null) {
++
+                         Toast.makeText(
+                             this@LoginActivity,
+-                            "Login Berhasil!  Selamat datang ${loginResponse.user.fullName}",
++                            "Login Berhasil! Selamat datang ${loginResponse.user.fullName}",
+                             Toast.LENGTH_SHORT
+                         ).show()
+ 
+-                        // Save user session
+                         sharedPrefsManager.saveUserSession(
+                             loginResponse.user,
+-                            loginResponse.token ?: ""
++                            loginResponse.token
+                         )
+ 
+-                        // Navigate based on user role
+                         navigateBasedOnRole(loginResponse.user.role)
+ 
+                     } else {
+-                        // Login failed - wrong credentials
+                         Toast.makeText(
+                             this@LoginActivity,
+-                            loginResponse?.message ?: "Email atau Password salah",
++                            "Login gagal",
+                             Toast.LENGTH_SHORT
+                         ).show()
+                     }
+Index: app/src/main/java/com/project/tamanbacaan/activities/RegisterActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.caffeinatedr4t.tamanbacaan.activities\r\n\r\nimport android.content. Intent\r\nimport android.os.Bundle\r\nimport android.view.View\r\nimport android.widget.Button\r\nimport android.widget.CheckBox\r\nimport android.widget.EditText\r\nimport android.widget. ProgressBar\r\nimport android.widget. TextView\r\nimport android.widget.Toast\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.lifecycle.lifecycleScope\r\nimport com.caffeinatedr4t.tamanbacaan.R\r\nimport com.caffeinatedr4t.tamanbacaan. api.ApiConfig\r\nimport com. caffeinatedr4t.tamanbacaan.api.model. RegisterRequest\r\nimport kotlinx.coroutines.launch\r\n\r\n/**\r\n * Activity untuk registrasi anggota baru dengan koneksi ke Backend API.\r\n * Mendukung registrasi untuk anggota dewasa dan anak-anak.\r\n */\r\nclass RegisterActivity : AppCompatActivity() {\r\n\r\n    private lateinit var etFullName: EditText\r\n    private lateinit var etNik: EditText\r\n    private lateinit var etEmail: EditText\r\n    private lateinit var etPassword: EditText\r\n    private lateinit var etAddressRtRw: EditText\r\n    private lateinit var etAddressKelurahan: EditText\r\n    private lateinit var etAddressKecamatan: EditText\r\n    private lateinit var etPhoneNumber: EditText\r\n    private lateinit var cbIsChild: CheckBox\r\n    private lateinit var etParentName: EditText\r\n    private lateinit var btnRegister:  Button\r\n    private lateinit var tvLogin: TextView\r\n    private lateinit var progressBar:  ProgressBar\r\n\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        setContentView(R.layout. activity_register)\r\n\r\n        // Initialize UI components\r\n        etFullName = findViewById(R.id.etFullName)\r\n        etNik = findViewById(R.id.etNik)\r\n        etEmail = findViewById(R.id.etEmail)\r\n        etPassword = findViewById(R.id.etPassword)\r\n        etAddressRtRw = findViewById(R.id.etAddressRtRw)\r\n        // Add these fields to your XML layout if not exist:\r\n        etAddressKelurahan = findViewById(R.id.etAddressKelurahan)\r\n        etAddressKecamatan = findViewById(R.id.etAddressKecamatan)\r\n        etPhoneNumber = findViewById(R. id.etPhoneNumber)\r\n        cbIsChild = findViewById(R.id.cbIsChild)\r\n        etParentName = findViewById(R.id.etParentName)\r\n        btnRegister = findViewById(R.id.btnRegister)\r\n        tvLogin = findViewById(R.id.tvLogin)\r\n        progressBar = findViewById(R. id.progressBar) // Add to XML\r\n\r\n        // Show/hide parent name field based on checkbox\r\n        cbIsChild.setOnCheckedChangeListener { _, isChecked ->\r\n            etParentName.visibility = if (isChecked) View.VISIBLE else View.GONE\r\n            if (!isChecked) {\r\n                etParentName.text. clear()\r\n            }\r\n        }\r\n\r\n        // Register button click listener\r\n        btnRegister.setOnClickListener {\r\n            validateAndRegister()\r\n        }\r\n\r\n        // Login text click listener\r\n        tvLogin.setOnClickListener {\r\n            startActivity(Intent(this, LoginActivity::class.java))\r\n            finish()\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Validate input and call register API\r\n     */\r\n    private fun validateAndRegister() {\r\n        // Get input values\r\n        val fullName = etFullName.text.toString().trim()\r\n        val nik = etNik.text.toString().trim()\r\n        val email = etEmail.text.toString().trim()\r\n        val password = etPassword.text.toString()\r\n        val addressRtRw = etAddressRtRw.text.toString().trim()\r\n        val addressKelurahan = etAddressKelurahan.text.toString().trim()\r\n        val addressKecamatan = etAddressKecamatan.text.toString().trim()\r\n        val phoneNumber = etPhoneNumber.text.toString().trim()\r\n        val isChild = cbIsChild.isChecked\r\n        val parentName = if (isChild) etParentName.text.toString().trim() else null\r\n\r\n        // Validate required fields\r\n        when {\r\n            fullName.isEmpty() -> {\r\n                Toast.makeText(this, \"Nama lengkap tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            nik.length != 16 -> {\r\n                Toast.makeText(this, \"NIK harus 16 digit\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            email.isEmpty() || !android.util.Patterns. EMAIL_ADDRESS.matcher(email).matches() -> {\r\n                Toast. makeText(this, \"Email tidak valid\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            password.length < 6 -> {\r\n                Toast.makeText(this, \"Password minimal 6 karakter\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            addressRtRw.isEmpty() -> {\r\n                Toast.makeText(this, \"Alamat RT/RW tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            addressKelurahan.isEmpty() -> {\r\n                Toast.makeText(this, \"Kelurahan tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            addressKecamatan.isEmpty() -> {\r\n                Toast.makeText(this, \"Kecamatan tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            phoneNumber.isEmpty() -> {\r\n                Toast.makeText(this, \"Nomor telepon tidak boleh kosong\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n            isChild && parentName. isNullOrEmpty() -> {\r\n                Toast.makeText(this, \"Nama orang tua wajib diisi untuk anak\", Toast.LENGTH_SHORT).show()\r\n                return\r\n            }\r\n        }\r\n\r\n        // Create register request\r\n        val registerRequest = RegisterRequest(\r\n            fullName = fullName,\r\n            email = email,\r\n            password = password,\r\n            nik = nik,\r\n            addressRtRw = addressRtRw,\r\n            addressKelurahan = addressKelurahan,\r\n            addressKecamatan = addressKecamatan,\r\n            phoneNumber = phoneNumber,\r\n            isChild = isChild,\r\n            parentName = parentName\r\n        )\r\n\r\n        // Call register API\r\n        registerUser(registerRequest)\r\n    }\r\n\r\n    /**\r\n     * Function to call register API\r\n     */\r\n    private fun registerUser(registerRequest: RegisterRequest) {\r\n        // Show loading\r\n        setLoading(true)\r\n\r\n        // Call API using coroutine\r\n        lifecycleScope.launch {\r\n            try {\r\n                val apiService = ApiConfig.getApiService()\r\n                val response = apiService.register(registerRequest)\r\n\r\n                // Hide loading\r\n                setLoading(false)\r\n\r\n                if (response.isSuccessful) {\r\n                    val registerResponse = response.body()\r\n\r\n                    if (registerResponse?.success == true) {\r\n                        // Registration successful\r\n                        Toast.makeText(\r\n                            this@RegisterActivity,\r\n                            \"Pendaftaran berhasil! Silakan login dengan akun Anda.\",\r\n                            Toast. LENGTH_LONG\r\n                        ).show()\r\n\r\n                        // Navigate to login\r\n                        val intent = Intent(this@RegisterActivity, LoginActivity::class.java)\r\n                        startActivity(intent)\r\n                        finish()\r\n\r\n                    } else {\r\n                        // Registration failed\r\n                        Toast. makeText(\r\n                            this@RegisterActivity,\r\n                            registerResponse?.message ?: \"Pendaftaran gagal\",\r\n                            Toast.LENGTH_SHORT\r\n                        ).show()\r\n                    }\r\n                } else {\r\n                    // HTTP error\r\n                    Toast.makeText(\r\n                        this@RegisterActivity,\r\n                        \"Gagal mendaftar: ${response.message()}\",\r\n                        Toast.LENGTH_SHORT\r\n                    ).show()\r\n                }\r\n\r\n            } catch (e:  Exception) {\r\n                // Network error or other exceptions\r\n                setLoading(false)\r\n                Toast.makeText(\r\n                    this@RegisterActivity,\r\n                    \"Error:  ${e.message}\\nPastikan backend sudah berjalan! \",\r\n                    Toast.LENGTH_LONG\r\n                ).show()\r\n                e.printStackTrace()\r\n            }\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Show/hide loading indicator\r\n     */\r\n    private fun setLoading(isLoading:  Boolean) {\r\n        if (isLoading) {\r\n            progressBar.visibility = View.VISIBLE\r\n            btnRegister.isEnabled = false\r\n        } else {\r\n            progressBar.visibility = View. GONE\r\n            btnRegister.isEnabled = true\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/tamanbacaan/activities/RegisterActivity.kt b/app/src/main/java/com/project/tamanbacaan/activities/RegisterActivity.kt
+--- a/app/src/main/java/com/project/tamanbacaan/activities/RegisterActivity.kt	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/java/com/project/tamanbacaan/activities/RegisterActivity.kt	(date 1765710078821)
+@@ -47,9 +47,6 @@
+         etPassword = findViewById(R.id.etPassword)
+         etAddressRtRw = findViewById(R.id.etAddressRtRw)
+         // Add these fields to your XML layout if not exist:
+-        etAddressKelurahan = findViewById(R.id.etAddressKelurahan)
+-        etAddressKecamatan = findViewById(R.id.etAddressKecamatan)
+-        etPhoneNumber = findViewById(R. id.etPhoneNumber)
+         cbIsChild = findViewById(R.id.cbIsChild)
+         etParentName = findViewById(R.id.etParentName)
+         btnRegister = findViewById(R.id.btnRegister)
+@@ -154,57 +151,39 @@
+      * Function to call register API
+      */
+     private fun registerUser(registerRequest: RegisterRequest) {
+-        // Show loading
+         setLoading(true)
+ 
+-        // Call API using coroutine
+         lifecycleScope.launch {
+             try {
+-                val apiService = ApiConfig.getApiService()
+-                val response = apiService.register(registerRequest)
+-
+-                // Hide loading
++                val response = ApiConfig.getApiService().register(registerRequest)
+                 setLoading(false)
+ 
+-                if (response.isSuccessful) {
+-                    val registerResponse = response.body()
+-
+-                    if (registerResponse?.success == true) {
+-                        // Registration successful
+-                        Toast.makeText(
+-                            this@RegisterActivity,
+-                            "Pendaftaran berhasil! Silakan login dengan akun Anda.",
+-                            Toast. LENGTH_LONG
+-                        ).show()
+-
+-                        // Navigate to login
+-                        val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
+-                        startActivity(intent)
+-                        finish()
+-
+-                    } else {
+-                        // Registration failed
+-                        Toast. makeText(
+-                            this@RegisterActivity,
+-                            registerResponse?.message ?: "Pendaftaran gagal",
+-                            Toast.LENGTH_SHORT
+-                        ).show()
+-                    }
+-                } else {
+-                    // HTTP error
+-                    Toast.makeText(
+-                        this@RegisterActivity,
+-                        "Gagal mendaftar: ${response.message()}",
+-                        Toast.LENGTH_SHORT
+-                    ).show()
+-                }
++                if (!response.isSuccessful) {
++                    Toast.makeText(
++                        this@RegisterActivity,
++                        "Gagal mendaftar: ${response.message()}",
++                        Toast.LENGTH_SHORT
++                    ).show()
++                    return@launch
++                }
++
++                // ==== REGISTER BERHASIL ====
++                Toast.makeText(
++                    this@RegisterActivity,
++                    "Pendaftaran berhasil! Silakan login dengan akun Anda.",
++                    Toast.LENGTH_LONG
++                ).show()
++
++                startActivity(
++                    Intent(this@RegisterActivity, LoginActivity::class.java)
++                )
++                finish()
+ 
+-            } catch (e:  Exception) {
+-                // Network error or other exceptions
++            } catch (e: Exception) {
+                 setLoading(false)
+                 Toast.makeText(
+                     this@RegisterActivity,
+-                    "Error:  ${e.message}\nPastikan backend sudah berjalan! ",
++                    "Error koneksi: ${e.localizedMessage}",
+                     Toast.LENGTH_LONG
+                 ).show()
+                 e.printStackTrace()
+@@ -212,6 +191,7 @@
+         }
+     }
+ 
++
+     /**
+      * Show/hide loading indicator
+      */
+Index: app/src/main/res/layout/activity_register.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<ScrollView xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\r\n    android:layout_width=\"match_parent\"\r\n    android:layout_height=\"match_parent\"\r\n    android:background=\"@color/background_light\">\r\n\r\n    <LinearLayout\r\n        android:layout_width=\"match_parent\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:orientation=\"vertical\"\r\n        android:padding=\"24dp\"\r\n        android:gravity=\"center_horizontal\">\r\n\r\n        <ImageView\r\n            android:layout_width=\"64dp\"\r\n            android:layout_height=\"64dp\"\r\n            android:src=\"@drawable/ic_logo_tbm\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            app:tint=\"@color/primary_blue\"\r\n            android:contentDescription=\"Taman Bacaan Logo\" />\r\n\r\n        <TextView\r\n            android:layout_width=\"wrap_content\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:text=\"Pendaftaran Anggota Baru\"\r\n            android:textSize=\"24sp\"\r\n            android:textStyle=\"bold\"\r\n            android:textColor=\"@color/primary_blue\"\r\n            android:layout_marginBottom=\"24dp\"/>\r\n\r\n        <!-- Nama Lengkap -->\r\n        <EditText\r\n            android:id=\"@+id/etFullName\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Nama Lengkap Anggota\"\r\n            android:inputType=\"textPersonName|textCapWords\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_primary\"/>\r\n\r\n        <!-- NIK (Wajib) -->\r\n        <EditText\r\n            android:id=\"@+id/etNik\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"NIK KTP (16 Digit)\"\r\n            android:inputType=\"number\"\r\n            android:maxLength=\"16\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_primary\"/>\r\n\r\n        <!-- Email -->\r\n        <EditText\r\n            android:id=\"@+id/etEmail\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Email\"\r\n            android:inputType=\"textEmailAddress\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_primary\"/>\r\n\r\n        <!-- Password -->\r\n        <EditText\r\n            android:id=\"@+id/etPassword\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Password\"\r\n            android:inputType=\"textPassword\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_primary\"/>\r\n\r\n        <!-- Alamat RT/RW/Kelurahan -->\r\n        <EditText\r\n            android:id=\"@+id/etAddressRtRw\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Alamat RT/RW/Kelurahan\"\r\n            android:inputType=\"text\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_primary\"/>\r\n\r\n        <!-- CHECKBOX: Pendaftaran Anak -->\r\n        <CheckBox\r\n            android:id=\"@+id/cbIsChild\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:text=\"Anggota ini adalah Anak-anak\"\r\n            android:textColor=\"@color/text_primary\"\r\n            android:layout_marginBottom=\"8dp\"/>\r\n\r\n        <!-- Input NAMA ORANG TUA (Tampil jika isChild dicentang) -->\r\n        <EditText\r\n            android:id=\"@+id/etParentName\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Nama Lengkap Orang Tua\"\r\n            android:inputType=\"textPersonName|textCapWords\"\r\n            android:padding=\"12dp\"\r\n            android:layout_marginBottom=\"24dp\"\r\n            android:background=\"@drawable/category_background\"\r\n            android:textColor=\"@color/text_secondary\"\r\n            android:visibility=\"gone\"/>\r\n\r\n        <Button\r\n            android:id=\"@+id/btnRegister\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:text=\"Daftar Sekarang\"\r\n            android:background=\"@drawable/button_primary\"\r\n            android:textColor=\"@color/white\"\r\n            android:paddingVertical=\"12dp\"\r\n            android:layout_marginBottom=\"16dp\"/>\r\n\r\n        <TextView\r\n            android:id=\"@+id/tvLogin\"\r\n            android:layout_width=\"wrap_content\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:text=\"Sudah punya akun? Masuk di sini.\"\r\n            android:textColor=\"@color/primary_blue\"\r\n            android:textStyle=\"bold\"\r\n            android:padding=\"8dp\"/>\r\n\r\n        <EditText\r\n            android:id=\"@+id/etAddressKelurahan\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Kelurahan\"\r\n            android:inputType=\"text\" />\r\n\r\n        <EditText\r\n            android:id=\"@+id/etAddressKecamatan\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Kecamatan\"\r\n            android:inputType=\"text\" />\r\n\r\n        <EditText\r\n            android:id=\"@+id/etPhoneNumber\"\r\n            android:layout_width=\"match_parent\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:hint=\"Nomor Telepon\"\r\n            android:inputType=\"phone\" />\r\n\r\n        <ProgressBar\r\n            android:id=\"@+id/progressBar\"\r\n            android:layout_width=\"wrap_content\"\r\n            android:layout_height=\"wrap_content\"\r\n            android:layout_gravity=\"center\"\r\n            android:visibility=\"gone\"\r\n            android:indeterminate=\"true\" />\r\n\r\n    </LinearLayout>\r\n</ScrollView>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/activity_register.xml b/app/src/main/res/layout/activity_register.xml
+--- a/app/src/main/res/layout/activity_register.xml	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/res/layout/activity_register.xml	(date 1765330679365)
+@@ -131,27 +131,6 @@
+             android:textStyle="bold"
+             android:padding="8dp"/>
+ 
+-        <EditText
+-            android:id="@+id/etAddressKelurahan"
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            android:hint="Kelurahan"
+-            android:inputType="text" />
+-
+-        <EditText
+-            android:id="@+id/etAddressKecamatan"
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            android:hint="Kecamatan"
+-            android:inputType="text" />
+-
+-        <EditText
+-            android:id="@+id/etPhoneNumber"
+-            android:layout_width="match_parent"
+-            android:layout_height="wrap_content"
+-            android:hint="Nomor Telepon"
+-            android:inputType="phone" />
+-
+         <ProgressBar
+             android:id="@+id/progressBar"
+             android:layout_width="wrap_content"
+Index: app/src/main/java/com/project/tamanbacaan/api/model/LoginResponse.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.caffeinatedr4t.tamanbacaan.api.model\r\n\r\nimport com.caffeinatedr4t.tamanbacaan.models.User\r\nimport com.google.gson.annotations. SerializedName\r\n\r\ndata class LoginResponse(\r\n    @field:SerializedName(\"success\")\r\n    val success: Boolean,\r\n\r\n    @field:SerializedName(\"message\")\r\n    val message: String,\r\n\r\n    @field: SerializedName(\"token\")\r\n    val token: String?  = null,\r\n\r\n    @field: SerializedName(\"user\")\r\n    val user: User? = null\r\n)
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/tamanbacaan/api/model/LoginResponse.kt b/app/src/main/java/com/project/tamanbacaan/api/model/LoginResponse.kt
+--- a/app/src/main/java/com/project/tamanbacaan/api/model/LoginResponse.kt	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/java/com/project/tamanbacaan/api/model/LoginResponse.kt	(date 1765709934240)
+@@ -4,15 +4,9 @@
+ import com.google.gson.annotations. SerializedName
+ 
+ data class LoginResponse(
+-    @field:SerializedName("success")
+-    val success: Boolean,
+-
+-    @field:SerializedName("message")
+-    val message: String,
++    @SerializedName("token")
++    val token: String,
+ 
+-    @field: SerializedName("token")
+-    val token: String?  = null,
+-
+-    @field: SerializedName("user")
+-    val user: User? = null
+-)
+\ No newline at end of file
++    @SerializedName("user")
++    val user: User
++)
+Index: app/src/main/res/layout/fragment_admin_profile.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    android:orientation=\"vertical\"\r\n    android:gravity=\"center_horizontal\"\r\n    android:padding=\"24dp\"\r\n    android:layout_width=\"match_parent\"\r\n    android:layout_height=\"match_parent\"\r\n    android:background=\"@color/white\">\r\n\r\n    <TextView\r\n        android:id=\"@+id/adminName\"\r\n        android:text=\"Nama Admin\"\r\n        android:textSize=\"20sp\"\r\n        android:textStyle=\"bold\"\r\n        android:textColor=\"@color/black\"\r\n        android:layout_marginBottom=\"8dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <TextView\r\n        android:id=\"@+id/adminEmail\"\r\n        android:text=\"admin@example.com\"\r\n        android:textSize=\"16sp\"\r\n        android:textColor=\"@color/text_secondary\"\r\n        android:layout_marginBottom=\"8dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <TextView\r\n        android:id=\"@+id/adminRole\"\r\n        android:text=\"Role: Pengelola\"\r\n        android:textSize=\"16sp\"\r\n        android:textColor=\"@color/text_secondary\"\r\n        android:layout_marginBottom=\"24dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <Button\r\n        android:id=\"@+id/btnAdminLogout\"\r\n        android:text=\"Logout\"\r\n        android:backgroundTint=\"@color/primary_blue\"\r\n        android:textColor=\"@color/white\"\r\n        android:layout_width=\"match_parent\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n</LinearLayout>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/fragment_admin_profile.xml b/app/src/main/res/layout/fragment_admin_profile.xml
+--- a/app/src/main/res/layout/fragment_admin_profile.xml	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/res/layout/fragment_admin_profile.xml	(date 1765708826455)
+@@ -1,46 +1,259 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical"
+-    android:gravity="center_horizontal"
+-    android:padding="24dp"
+-    android:layout_width="match_parent"
+-    android:layout_height="match_parent"
+-    android:background="@color/white">
++<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@color/background_light">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:padding="16dp">
++
++        <!-- Admin Header Card -->
++        <androidx.cardview.widget.CardView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginBottom="16dp"
++            app:cardCornerRadius="16dp"
++            app:cardElevation="4dp"
++            app:cardBackgroundColor="@color/primary_blue_dark">
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:orientation="vertical"
++                android:padding="24dp"
++                android:gravity="center_horizontal">
++
++                <!-- Admin Picture -->
++                <androidx.cardview.widget.CardView
++                    android:layout_width="100dp"
++                    android:layout_height="100dp"
++                    app:cardCornerRadius="50dp"
++                    app:cardElevation="8dp"
++                    android:layout_marginBottom="16dp">
++
++                    <ImageView
++                        android:id="@+id/ivAdminPicture"
++                        android:layout_width="match_parent"
++                        android:layout_height="match_parent"
++                        android:src="@drawable/ic_profile"
++                        android:scaleType="centerCrop"
++                        android:background="@color/white"
++                        android:padding="20dp"
++                        app:tint="@color/primary_blue_dark"
++                        android:contentDescription="Admin Profile Picture" />
++                </androidx.cardview.widget.CardView>
+ 
+-    <TextView
+-        android:id="@+id/adminName"
+-        android:text="Nama Admin"
+-        android:textSize="20sp"
+-        android:textStyle="bold"
+-        android:textColor="@color/black"
+-        android:layout_marginBottom="8dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                <!-- Admin Name -->
++                <TextView
++                    android:id="@+id/tvAdminName"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Nama Admin"
++                    android:textSize="24sp"
++                    android:textStyle="bold"
++                    android:textColor="@color/white"
++                    android:layout_marginBottom="4dp" />
+ 
+-    <TextView
+-        android:id="@+id/adminEmail"
+-        android:text="admin@example.com"
+-        android:textSize="16sp"
+-        android:textColor="@color/text_secondary"
+-        android:layout_marginBottom="8dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                <!-- Admin Email -->
++                <TextView
++                    android:id="@+id/tvAdminEmail"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="admin@example.com"
++                    android:textSize="14sp"
++                    android:textColor="@color/white"
++                    android:alpha="0.9"
++                    android:layout_marginBottom="8dp" />
++
++                <!-- Admin Role Badge -->
++                <TextView
++                    android:id="@+id/tvAdminRole"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Pengelola Taman Bacaan"
++                    android:textSize="12sp"
++                    android:textColor="@color/primary_blue_dark"
++                    android:textStyle="bold"
++                    android:background="@drawable/circle_background"
++                    android:paddingHorizontal="16dp"
++                    android:paddingVertical="6dp" />
++            </LinearLayout>
++        </androidx.cardview.widget.CardView>
++
++        <!-- Quick Stats Card -->
++        <androidx.cardview.widget.CardView
++            android:id="@+id/cardStats"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginBottom="16dp"
++            app:cardCornerRadius="12dp"
++            app:cardElevation="4dp"
++            app:cardBackgroundColor="@color/card_background">
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:orientation="vertical"
++                android:padding="20dp">
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Statistik Cepat"
++                    android:textSize="18sp"
++                    android:textStyle="bold"
++                    android:textColor="@color/text_primary"
++                    android:layout_marginBottom="16dp" />
++
++                <!-- Stats Grid -->
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="horizontal"
++                    android:weightSum="3">
++
++                    <!-- Total Books -->
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="wrap_content"
++                        android:layout_weight="1"
++                        android:orientation="vertical"
++                        android:gravity="center"
++                        android:padding="8dp">
++
++                        <ImageView
++                            android:layout_width="32dp"
++                            android:layout_height="32dp"
++                            android:src="@drawable/ic_explore"
++                            app:tint="@color/primary_blue"
++                            android:layout_marginBottom="8dp" />
++
++                        <TextView
++                            android:id="@+id/tvTotalBooks"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="0"
++                            android:textSize="24sp"
++                            android:textStyle="bold"
++                            android:textColor="@color/primary_blue" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="Total Buku"
++                            android:textSize="12sp"
++                            android:textColor="@color/text_secondary"
++                            android:textAlignment="center" />
++                    </LinearLayout>
++
++                    <!-- Total Members -->
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="wrap_content"
++                        android:layout_weight="1"
++                        android:orientation="vertical"
++                        android:gravity="center"
++                        android:padding="8dp">
++
++                        <ImageView
++                            android:layout_width="32dp"
++                            android:layout_height="32dp"
++                            android:src="@drawable/ic_profile"
++                            app:tint="@color/success_green"
++                            android:layout_marginBottom="8dp" />
++
++                        <TextView
++                            android:id="@+id/tvTotalMembers"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="0"
++                            android:textSize="24sp"
++                            android:textStyle="bold"
++                            android:textColor="@color/success_green" />
+ 
+-    <TextView
+-        android:id="@+id/adminRole"
+-        android:text="Role: Pengelola"
+-        android:textSize="16sp"
+-        android:textColor="@color/text_secondary"
+-        android:layout_marginBottom="24dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="Anggota"
++                            android:textSize="12sp"
++                            android:textColor="@color/text_secondary"
++                            android:textAlignment="center" />
++                    </LinearLayout>
++
++                    <!-- Active Loans -->
++                    <LinearLayout
++                        android:layout_width="0dp"
++                        android:layout_height="wrap_content"
++                        android:layout_weight="1"
++                        android:orientation="vertical"
++                        android:gravity="center"
++                        android:padding="8dp">
++
++                        <ImageView
++                            android:layout_width="32dp"
++                            android:layout_height="32dp"
++                            android:src="@drawable/ic_pinjamanbuku"
++                            app:tint="@color/warning_orange"
++                            android:layout_marginBottom="8dp" />
++
++                        <TextView
++                            android:id="@+id/tvActiveLoans"
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="0"
++                            android:textSize="24sp"
++                            android:textStyle="bold"
++                            android:textColor="@color/warning_orange" />
++
++                        <TextView
++                            android:layout_width="wrap_content"
++                            android:layout_height="wrap_content"
++                            android:text="Dipinjam"
++                            android:textSize="12sp"
++                            android:textColor="@color/text_secondary"
++                            android:textAlignment="center" />
++                    </LinearLayout>
++                </LinearLayout>
++            </LinearLayout>
++        </androidx.cardview.widget.CardView>
++
++        <!-- Action Buttons -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:orientation="vertical">
+ 
+-    <Button
+-        android:id="@+id/btnAdminLogout"
+-        android:text="Logout"
+-        android:backgroundTint="@color/primary_blue"
+-        android:textColor="@color/white"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content" />
+-
+-</LinearLayout>
++            <!-- Edit Profile Button -->
++            <Button
++                android:id="@+id/btnEditAdminProfile"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:text="Edit Profile"
++                android:textColor="@color/white"
++                android:background="@drawable/button_primary"
++                android:paddingVertical="14dp"
++                android:textSize="16sp"
++                android:textStyle="bold"
++                android:drawableLeft="@drawable/ic_settings"
++                android:drawablePadding="8dp"
++                android:gravity="center"
++                android:layout_marginBottom="12dp" />
++
++            <!-- Logout Button -->
++            <Button
++                android:id="@+id/btnAdminLogout"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:text="Logout"
++                android:textColor="@color/white"
++                android:backgroundTint="@color/error_red"
++                android:paddingVertical="14dp"
++                android:textSize="16sp"
++                android:textStyle="bold" />
++        </LinearLayout>
++    </LinearLayout>
++</ScrollView>
+\ No newline at end of file
+Index: app/src/main/java/com/project/tamanbacaan/fragments/admin/AdminProfileFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.caffeinatedr4t.tamanbacaan.fragments.admin\r\n\r\nimport android.app.AlertDialog\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.view.LayoutInflater\r\nimport android.view.View\r\nimport android.view.ViewGroup\r\nimport android.widget.Button\r\nimport android.widget.TextView\r\nimport androidx.fragment.app.Fragment\r\nimport com.caffeinatedr4t.tamanbacaan.R\r\nimport com.caffeinatedr4t.tamanbacaan.activities.LoginActivity\r\nimport com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager\r\n\r\n/**\r\n * Fragment untuk halaman profil Pengelola (Admin).\r\n * Menampilkan informasi admin dan tombol untuk logout.\r\n */\r\nclass AdminProfileFragment : Fragment() {\r\n\r\n    /**\r\n     * Membuat dan mengembalikan hierarki tampilan fragmen.\r\n     */\r\n    override fun onCreateView(\r\n        inflater: LayoutInflater,\r\n        container: ViewGroup?,\r\n        savedInstanceState: Bundle?\r\n    ): View? {\r\n        // Menginflate layout XML untuk fragment profil admin\r\n        val view = inflater.inflate(R.layout.fragment_admin_profile, container, false)\r\n\r\n        // Variabel untuk elemen UI\r\n        val adminName = view.findViewById<TextView>(R.id.adminName) // TextView untuk Nama Admin\r\n        val adminEmail = view.findViewById<TextView>(R.id.adminEmail) // TextView untuk Email Admin\r\n        val adminRole = view.findViewById<TextView>(R.id.adminRole) // TextView untuk Role Admin\r\n        val btnLogout = view.findViewById<Button>(R.id.btnAdminLogout) // Tombol untuk Logout Admin\r\n\r\n        // Mengisi data Admin (Data Dummy: admin@tbm.com/admin123)\r\n        adminName.text = \"Kevin Gunawan\"\r\n        adminEmail.text = \"admin@tbm.com\"\r\n        adminRole.text = \"Pengelola Taman Bacaan\"\r\n\r\n        // Listener untuk tombol Logout\r\n        btnLogout.setOnClickListener {\r\n            AlertDialog.Builder(requireContext())\r\n                .setTitle(\"Konfirmasi Logout\")\r\n                .setMessage(\"Apakah Anda yakin ingin keluar dari akun admin?\")\r\n                .setPositiveButton(\"Ya\") { _, _ ->\r\n\r\n                    val sharedPrefsManager = SharedPrefsManager(requireContext())\r\n                    sharedPrefsManager.clearSession()\r\n\r\n                    val intent = Intent(requireContext(), LoginActivity::class.java)\r\n                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK\r\n                    startActivity(intent)\r\n                    requireActivity().finish()\r\n                }\r\n                .setNegativeButton(\"Batal\") { dialog, _ ->\r\n                    dialog.dismiss()\r\n                }\r\n                .create()\r\n                .show()\r\n        }\r\n\r\n        return view\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/project/tamanbacaan/fragments/admin/AdminProfileFragment.kt b/app/src/main/java/com/project/tamanbacaan/fragments/admin/AdminProfileFragment.kt
+--- a/app/src/main/java/com/project/tamanbacaan/fragments/admin/AdminProfileFragment.kt	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/java/com/project/tamanbacaan/fragments/admin/AdminProfileFragment.kt	(date 1765710267990)
+@@ -7,62 +7,192 @@
+ import android.view.View
+ import android.view.ViewGroup
+ import android.widget.Button
++import android.widget.ImageView
+ import android.widget.TextView
++import android.widget.Toast
++import androidx.cardview.widget.CardView
+ import androidx.fragment.app.Fragment
+ import com.caffeinatedr4t.tamanbacaan.R
+ import com.caffeinatedr4t.tamanbacaan.activities.LoginActivity
++import com.caffeinatedr4t.tamanbacaan.data.BookRepository
++import com.google.android.material.textfield.TextInputEditText
+ import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
+ 
+ /**
+  * Fragment untuk halaman profil Pengelola (Admin).
+- * Menampilkan informasi admin dan tombol untuk logout.
++ * Menampilkan informasi admin, statistik TBM, dan tombol untuk edit & logout.
+  */
+ class AdminProfileFragment : Fragment() {
+ 
+-    /**
+-     * Membuat dan mengembalikan hierarki tampilan fragmen.
+-     */
++    // UI Components
++    private lateinit var ivAdminPicture: ImageView
++    private lateinit var tvAdminName: TextView
++    private lateinit var tvAdminEmail: TextView
++    private lateinit var tvAdminRole: TextView
++    private lateinit var cardStats: CardView
++    private lateinit var tvTotalBooks: TextView
++    private lateinit var tvTotalMembers: TextView
++    private lateinit var tvActiveLoans: TextView
++    private lateinit var btnEditProfile: Button
++    private lateinit var btnLogout: Button
++
++    private lateinit var sharedPrefsManager: SharedPrefsManager
++
++    // Admin data (in production, this would come from SharedPreferences or database)
++    private var adminName = "Kevin Gunawan"
++    private var adminEmail = "admin@tbm.com"
++    private var adminRole = "Pengelola Taman Bacaan"
++
+     override fun onCreateView(
+         inflater: LayoutInflater,
+         container: ViewGroup?,
+         savedInstanceState: Bundle?
+     ): View? {
+-        // Menginflate layout XML untuk fragment profil admin
+         val view = inflater.inflate(R.layout.fragment_admin_profile, container, false)
+ 
+-        // Variabel untuk elemen UI
+-        val adminName = view.findViewById<TextView>(R.id.adminName) // TextView untuk Nama Admin
+-        val adminEmail = view.findViewById<TextView>(R.id.adminEmail) // TextView untuk Email Admin
+-        val adminRole = view.findViewById<TextView>(R.id.adminRole) // TextView untuk Role Admin
+-        val btnLogout = view.findViewById<Button>(R.id.btnAdminLogout) // Tombol untuk Logout Admin
++        sharedPrefsManager = SharedPrefsManager(requireContext())
++
++        // Initialize views
++        initializeViews(view)
+ 
+-        // Mengisi data Admin (Data Dummy: admin@tbm.com/admin123)
+-        adminName.text = "Kevin Gunawan"
+-        adminEmail.text = "admin@tbm.com"
+-        adminRole.text = "Pengelola Taman Bacaan"
++        // Load admin data
++        loadAdminData()
+ 
+-        // Listener untuk tombol Logout
++        // Load statistics
++        loadStatistics()
++
++        // Setup button listeners
++        setupListeners()
++
++        return view
++    }
++
++    /**
++     * Inisialisasi semua view components
++     */
++    private fun initializeViews(view: View) {
++        ivAdminPicture = view.findViewById(R.id.ivAdminPicture)
++        tvAdminName = view.findViewById(R.id.tvAdminName)
++        tvAdminEmail = view.findViewById(R.id.tvAdminEmail)
++        tvAdminRole = view.findViewById(R.id.tvAdminRole)
++        cardStats = view.findViewById(R.id.cardStats)
++        tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
++        tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
++        tvActiveLoans = view.findViewById(R.id.tvActiveLoans)
++        btnEditProfile = view.findViewById(R.id.btnEditAdminProfile)
++        btnLogout = view.findViewById(R.id.btnAdminLogout)
++    }
++
++    /**
++     * Load dan display admin data
++     */
++    private fun loadAdminData() {
++        tvAdminName.text = adminName
++        tvAdminEmail.text = adminEmail
++        tvAdminRole.text = adminRole
++    }
++
++    /**
++     * Load dan display statistik TBM
++     */
++    private fun loadStatistics() {
++        val totalBooks = BookRepository.getAllBooks().size
++        val totalMembers = BookRepository.getAllMembers().size
++        val activeLoans = BookRepository.getAllBooks().count { it.isBorrowed }
++
++        tvTotalBooks.text = totalBooks.toString()
++        tvTotalMembers.text = totalMembers.toString()
++        tvActiveLoans.text = activeLoans.toString()
++    }
++
++    /**
++     * Setup button click listeners
++     */
++    private fun setupListeners() {
++        // Edit Profile button
++        btnEditProfile.setOnClickListener {
++            showEditAdminProfileDialog()
++        }
++
++        // Logout button
+         btnLogout.setOnClickListener {
+-            AlertDialog.Builder(requireContext())
+-                .setTitle("Konfirmasi Logout")
+-                .setMessage("Apakah Anda yakin ingin keluar dari akun admin?")
+-                .setPositiveButton("Ya") { _, _ ->
++            showLogoutConfirmation()
++        }
++    }
++
++    /**
++     * Show dialog untuk edit admin profile
++     */
++    private fun showEditAdminProfileDialog() {
++        val dialogView = LayoutInflater.from(requireContext())
++            .inflate(R.layout.dialog_edit_admin_profile, null)
++
++        // Initialize dialog views
++        val etEditAdminName = dialogView.findViewById<TextInputEditText>(R.id.etEditAdminName)
++        val etEditAdminEmail = dialogView.findViewById<TextInputEditText>(R.id.etEditAdminEmail)
++
++        // Pre-fill with current data
++        etEditAdminName.setText(adminName)
++        etEditAdminEmail.setText(adminEmail)
++
++        AlertDialog.Builder(requireContext())
++            .setTitle("Edit Profile Admin")
++            .setView(dialogView)
++            .setPositiveButton("Simpan") { _, _ ->
++                val newName = etEditAdminName.text.toString().trim()
++                val newEmail = etEditAdminEmail.text.toString().trim()
++
++                // Validate inputs
++                if (newName.isEmpty() || newEmail.isEmpty()) {
++                    Toast.makeText(requireContext(), "Nama dan Email harus diisi!", Toast.LENGTH_SHORT).show()
++                    return@setPositiveButton
++                }
++
++                // Validate email format
++                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()) {
++                    Toast.makeText(requireContext(), "Format email tidak valid!", Toast.LENGTH_SHORT).show()
++                    return@setPositiveButton
++                }
++
++                // Update local data (in production, save to SharedPreferences or database)
++                adminName = newName
++                adminEmail = newEmail
++
++                // Update UI
++                tvAdminName.text = adminName
++                tvAdminEmail.text = adminEmail
++
++                Toast.makeText(requireContext(), "Profile admin berhasil diperbarui!", Toast.LENGTH_SHORT).show()
++            }
++            .setNegativeButton("Batal") { dialog, _ ->
++                dialog.dismiss()
++            }
++            .create()
++            .show()
++    }
++
++    /**
++     * Show logout confirmation dialog
++     */
++    private fun showLogoutConfirmation() {
++        AlertDialog.Builder(requireContext())
++            .setTitle("Konfirmasi Logout")
++            .setMessage("Apakah Anda yakin ingin keluar dari akun admin?")
++            .setPositiveButton("Ya") { _, _ ->
+ 
+-                    val sharedPrefsManager = SharedPrefsManager(requireContext())
+-                    sharedPrefsManager.clearSession()
++                // 1️⃣ Hapus session
++                sharedPrefsManager.clearSession()
+ 
+-                    val intent = Intent(requireContext(), LoginActivity::class.java)
+-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+-                    startActivity(intent)
+-                    requireActivity().finish()
+-                }
+-                .setNegativeButton("Batal") { dialog, _ ->
+-                    dialog.dismiss()
+-                }
+-                .create()
+-                .show()
+-        }
+-
+-        return view
++                // 2️⃣ Pindah ke LoginActivity & clear stack
++                val intent = Intent(requireContext(), LoginActivity::class.java).apply {
++                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
++                }
++                startActivity(intent)
++            }
++            .setNegativeButton("Batal") { dialog, _ ->
++                dialog.dismiss()
++            }
++            .create()
++            .show()
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/res/layout/fragment_profile.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    android:orientation=\"vertical\"\r\n    android:gravity=\"center_horizontal\"\r\n    android:padding=\"24dp\"\r\n    android:layout_width=\"match_parent\"\r\n    android:layout_height=\"match_parent\"\r\n    android:background=\"@color/white\">\r\n\r\n\r\n    <TextView\r\n        android:id=\"@+id/userName\"\r\n        android:text=\"Nama Pengguna\"\r\n        android:textSize=\"20sp\"\r\n        android:textStyle=\"bold\"\r\n        android:textColor=\"@color/black\"\r\n        android:layout_marginBottom=\"8dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <TextView\r\n        android:id=\"@+id/userEmail\"\r\n        android:text=\"user@example.com\"\r\n        android:textSize=\"16sp\"\r\n        android:textColor=\"@color/text_secondary\"\r\n        android:layout_marginBottom=\"24dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <!-- NIK -->\r\n    <TextView\r\n        android:id=\"@+id/userNik\"\r\n        android:text=\"NIK: 3201010203040001\"\r\n        android:textSize=\"16sp\"\r\n        android:textColor=\"@color/text_secondary\"\r\n        android:layout_marginBottom=\"8dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <!-- Alamat -->\r\n    <TextView\r\n        android:id=\"@+id/userAddress\"\r\n        android:text=\"Alamat: Jl. Merdeka No. 123, Bandung\"\r\n        android:textSize=\"16sp\"\r\n        android:textColor=\"@color/text_secondary\"\r\n        android:layout_marginBottom=\"24dp\"\r\n        android:layout_width=\"wrap_content\"\r\n        android:layout_height=\"wrap_content\" />\r\n\r\n    <Button\r\n        android:id=\"@+id/btnLogout\"\r\n        android:layout_width=\"match_parent\"\r\n        android:layout_height=\"wrap_content\"\r\n        android:backgroundTint=\"@color/primary_blue\"\r\n        android:text=\"Logout\"\r\n        android:textColor=\"@color/white\" />\r\n\r\n</LinearLayout>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/res/layout/fragment_profile.xml b/app/src/main/res/layout/fragment_profile.xml
+--- a/app/src/main/res/layout/fragment_profile.xml	(revision d9745e37a398098e3a5ca08775c26577646e24cc)
++++ b/app/src/main/res/layout/fragment_profile.xml	(date 1765708735356)
+@@ -1,58 +1,235 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical"
+-    android:gravity="center_horizontal"
+-    android:padding="24dp"
+-    android:layout_width="match_parent"
+-    android:layout_height="match_parent"
+-    android:background="@color/white">
++<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:background="@color/background_light">
++
++    <LinearLayout
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:orientation="vertical"
++        android:padding="16dp">
++
++        <!-- Profile Header Card -->
++        <androidx.cardview.widget.CardView
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginBottom="16dp"
++            app:cardCornerRadius="16dp"
++            app:cardElevation="4dp"
++            app:cardBackgroundColor="@color/primary_blue">
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:orientation="vertical"
++                android:padding="24dp"
++                android:gravity="center_horizontal">
++
++                <!-- Profile Picture -->
++                <androidx.cardview.widget.CardView
++                    android:layout_width="100dp"
++                    android:layout_height="100dp"
++                    app:cardCornerRadius="50dp"
++                    app:cardElevation="8dp"
++                    android:layout_marginBottom="16dp">
++
++                    <ImageView
++                        android:id="@+id/ivProfilePicture"
++                        android:layout_width="match_parent"
++                        android:layout_height="match_parent"
++                        android:src="@drawable/ic_profile"
++                        android:scaleType="centerCrop"
++                        android:background="@color/white"
++                        android:padding="20dp"
++                        app:tint="@color/primary_blue"
++                        android:contentDescription="Profile Picture" />
++                </androidx.cardview.widget.CardView>
+ 
+-
+-    <TextView
+-        android:id="@+id/userName"
+-        android:text="Nama Pengguna"
+-        android:textSize="20sp"
+-        android:textStyle="bold"
+-        android:textColor="@color/black"
+-        android:layout_marginBottom="8dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
+-
+-    <TextView
+-        android:id="@+id/userEmail"
+-        android:text="user@example.com"
+-        android:textSize="16sp"
+-        android:textColor="@color/text_secondary"
+-        android:layout_marginBottom="24dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                <!-- User Name -->
++                <TextView
++                    android:id="@+id/tvUserName"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Nama Pengguna"
++                    android:textSize="24sp"
++                    android:textStyle="bold"
++                    android:textColor="@color/white"
++                    android:layout_marginBottom="4dp" />
++
++                <!-- User Email -->
++                <TextView
++                    android:id="@+id/tvUserEmail"
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="user@example.com"
++                    android:textSize="14sp"
++                    android:textColor="@color/white"
++                    android:alpha="0.9" />
++            </LinearLayout>
++        </androidx.cardview.widget.CardView>
++
++        <!-- Profile Information Card -->
++        <androidx.cardview.widget.CardView
++            android:id="@+id/cardProfileInfo"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:layout_marginBottom="16dp"
++            app:cardCornerRadius="12dp"
++            app:cardElevation="4dp"
++            app:cardBackgroundColor="@color/card_background">
++
++            <LinearLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:orientation="vertical"
++                android:padding="20dp">
++
++                <TextView
++                    android:layout_width="wrap_content"
++                    android:layout_height="wrap_content"
++                    android:text="Informasi Pribadi"
++                    android:textSize="18sp"
++                    android:textStyle="bold"
++                    android:textColor="@color/text_primary"
++                    android:layout_marginBottom="16dp" />
+ 
+-    <!-- NIK -->
+-    <TextView
+-        android:id="@+id/userNik"
+-        android:text="NIK: 3201010203040001"
+-        android:textSize="16sp"
+-        android:textColor="@color/text_secondary"
+-        android:layout_marginBottom="8dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                <!-- NIK -->
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="vertical"
++                    android:layout_marginBottom="16dp">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="NIK"
++                        android:textSize="12sp"
++                        android:textColor="@color/text_secondary"
++                        android:textStyle="bold"
++                        android:layout_marginBottom="4dp" />
++
++                    <TextView
++                        android:id="@+id/tvProfileNik"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="3201010203040001"
++                        android:textSize="16sp"
++                        android:textColor="@color/text_primary" />
++                </LinearLayout>
++
++                <!-- Address -->
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="vertical"
++                    android:layout_marginBottom="16dp">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Alamat RT/RW"
++                        android:textSize="12sp"
++                        android:textColor="@color/text_secondary"
++                        android:textStyle="bold"
++                        android:layout_marginBottom="4dp" />
++
++                    <TextView
++                        android:id="@+id/tvProfileAddress"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="RT 005/RW 003, Kelurahan Contoh"
++                        android:textSize="16sp"
++                        android:textColor="@color/text_primary" />
++                </LinearLayout>
++
++                <!-- Member Type -->
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="vertical"
++                    android:layout_marginBottom="16dp">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Tipe Anggota"
++                        android:textSize="12sp"
++                        android:textColor="@color/text_secondary"
++                        android:textStyle="bold"
++                        android:layout_marginBottom="4dp" />
+ 
+-    <!-- Alamat -->
+-    <TextView
+-        android:id="@+id/userAddress"
+-        android:text="Alamat: Jl. Merdeka No. 123, Bandung"
+-        android:textSize="16sp"
+-        android:textColor="@color/text_secondary"
+-        android:layout_marginBottom="24dp"
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content" />
++                    <TextView
++                        android:id="@+id/tvProfileType"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Anggota Dewasa"
++                        android:textSize="16sp"
++                        android:textColor="@color/text_primary" />
++                </LinearLayout>
++
++                <!-- Verification Status -->
++                <LinearLayout
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    android:orientation="vertical">
++
++                    <TextView
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Status Verifikasi"
++                        android:textSize="12sp"
++                        android:textColor="@color/text_secondary"
++                        android:textStyle="bold"
++                        android:layout_marginBottom="4dp" />
++
++                    <TextView
++                        android:id="@+id/tvVerificationStatus"
++                        android:layout_width="wrap_content"
++                        android:layout_height="wrap_content"
++                        android:text="Status: Terverifikasi ✓"
++                        android:textSize="16sp"
++                        android:textStyle="bold"
++                        android:textColor="@color/success_green" />
++                </LinearLayout>
++            </LinearLayout>
++        </androidx.cardview.widget.CardView>
+ 
+-    <Button
+-        android:id="@+id/btnLogout"
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:backgroundTint="@color/primary_blue"
+-        android:text="Logout"
+-        android:textColor="@color/white" />
+-
+-</LinearLayout>
++        <!-- Action Buttons -->
++        <LinearLayout
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content"
++            android:orientation="vertical">
++
++            <!-- Edit Profile Button -->
++            <Button
++                android:id="@+id/btnEditProfile"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:text="Edit Profile"
++                android:textColor="@color/white"
++                android:background="@drawable/button_primary"
++                android:paddingVertical="14dp"
++                android:textSize="16sp"
++                android:textStyle="bold"
++                android:drawableLeft="@drawable/ic_settings"
++                android:drawablePadding="8dp"
++                android:gravity="center"
++                android:layout_marginBottom="12dp" />
++
++            <!-- Logout Button -->
++            <Button
++                android:id="@+id/btnLogout"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                android:text="Logout"
++                android:textColor="@color/white"
++                android:backgroundTint="@color/error_red"
++                android:paddingVertical="14dp"
++                android:textSize="16sp"
++                android:textStyle="bold" />
++        </LinearLayout>
++    </LinearLayout>
++</ScrollView>

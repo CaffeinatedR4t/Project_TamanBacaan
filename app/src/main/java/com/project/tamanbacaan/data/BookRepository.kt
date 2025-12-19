@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+
 /**
  * Repository yang mengambil data dari MongoDB API backend.
  * Menggunakan hybrid pattern: fetch dari API, maintain local state untuk bookmarks/borrowed.
@@ -34,17 +35,6 @@ object BookRepository {
         var dueDate: String? = null
     )
 
-    init {
-        // Data Sample untuk event
-        eventNotifications.add(EventNotification("1", "Bedah Buku 'Laut Bercerita'", "Ikuti bedah buku bersama penulis Leila S. Chudori pada 10 Oktober 2025!", "05/10/2025"))
-        eventNotifications.add(EventNotification("2", "Diskon Sewa Buku 50%", "Nikmati diskon 50% untuk semua kategori buku hingga 12 Oktober 2025!", "07/10/2025"))
-
-        // Data Anggota Aktif Default (isVerified disimulasikan)
-        activeMembers.add(User(id="M100", fullName="Budi Santoso", email="user@test.com", nik="32xxxxxxxxxxxxxx", addressRtRw = "RT 005/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = true)) // Sudah diverifikasi
-        activeMembers.add(User(id="M101", fullName="Siti Aisyah", email="siti@test.com", nik="32xxxxxxxxxxxxxy", addressRtRw = "RT 004/RW 003, Kel. Demo", isChild = false, parentName = null, isVerified = false)) // Belum diverifikasi
-        activeMembers.add(User(id="M102", fullName="Daffa Permana", email="daffa@test.com", nik="32xxxxxxxxxxxxzz", addressRtRw = "RT 002/RW 001, Kel. Demo", isChild = true, parentName = "Ayah Daffa", isVerified = false)) // Belum diverifikasi
-    }
-
     /**
      * Apply local state overlay to a book from API
      */
@@ -65,23 +55,10 @@ object BookRepository {
         return true
     }
 
-    // Tambahkan fungsi-fungsi ini di dalam BookRepository
-    fun getAllEvents(): List<EventNotification> = eventNotifications.toList()
-
-    fun addEvent(title: String, message: String) {
-        val newEvent = EventNotification(
-            id = nextEventId.getAndIncrement().toString(),
-            title = title,
-            message = message,
-            date = "15/10/2025" // Tanggal hari ini (simulasi)
-        )
-        eventNotifications.add(0, newEvent) // Tambah di paling atas
-    }
-
     // --- Book CRUD (now using API) ---
-    suspend fun addBook(newBook: Book): Boolean {
+    suspend fun addBook(request: CreateBookRequest): Boolean {
         return try {
-            val response = ApiConfig.getApiService().createBook(newBook)
+            val response = ApiConfig.getApiService().createBook(request)
             response.isSuccessful
         } catch (e: Exception) {
             false
@@ -89,14 +66,10 @@ object BookRepository {
     }
 
     suspend fun getAllBooks(): List<Book> {
-        return try {
-            val response = ApiConfig.getApiService().getAllBooks()
-            if (response.isSuccessful) {
-                response.body()?.map { applyLocalState(it) } ?: emptyList()
-            } else {
-                emptyList()
-            }
-        } catch (e: Exception) {
+        val response = ApiConfig.getApiService().getBooks()
+        return if (response.isSuccessful) {
+            response.body() ?: emptyList()
+        } else {
             emptyList()
         }
     }
@@ -134,7 +107,7 @@ object BookRepository {
             false
         }
     }
-    
+
     // Local-only update for UI state (doesn't call API)
     fun updateBookLocalState(bookId: String, isAvailable: Boolean, isBorrowed: Boolean) {
         val state = localBookState.getOrPut(bookId) { LocalBookState() }
@@ -169,10 +142,10 @@ object BookRepository {
     fun getPendingRequests(): List<PendingRequest> = pendingRequests.toList()
     fun approveRequest(requestId: String): Boolean {
         val request = pendingRequests.find { it.requestId == requestId } ?: return false
-        
+
         // Update local state for the book
         val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
-        
+
         // 1. Dapatkan tanggal hari ini
         val calendar = Calendar.getInstance()
         val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -204,11 +177,11 @@ object BookRepository {
         val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
         state.isAvailable = true
         val iterator = pendingRequests.iterator()
-        while (iterator.hasNext()) { 
-            if (iterator.next().requestId == requestId) { 
+        while (iterator.hasNext()) {
+            if (iterator.next().requestId == requestId) {
                 iterator.remove()
-                return true 
-            } 
+                return true
+            }
         }
         return false
     }

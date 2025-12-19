@@ -3,14 +3,17 @@ package com.caffeinatedr4t.tamanbacaan.api
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginResponse
 import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
+import com.caffeinatedr4t.tamanbacaan.data.CreateBookRequest
 import com.caffeinatedr4t.tamanbacaan.data.UpdateProfileRequest
 import com.caffeinatedr4t.tamanbacaan.models.Book
-import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.Transaction
 import com.caffeinatedr4t.tamanbacaan.models.User
+import com.caffeinatedr4t.tamanbacaan.api.model.EventResponse
+import com.caffeinatedr4t.tamanbacaan.api.model.EventRequest
 import com.project.tamanbacaan.api.model.RegisterResponse
 import retrofit2.Response
 import retrofit2.http.*
+import retrofit2.Call
 
 interface ApiService {
     // Authentication Endpoints
@@ -21,14 +24,19 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
     // Book Endpoints
-    @GET("books")
-    suspend fun getAllBooks(): Response<List<Book>>
+    @POST("books")
+    suspend fun createBook(
+        @Body request: CreateBookRequest
+    ): Response<Book>
 
     @GET("books/{id}")
-    suspend fun getBookById(@Path("id") id: String): Response<Book>
+    suspend fun getBookById(
+        @Path("id") id: String
+    ): Response<Book>
 
-    @POST("books")
-    suspend fun createBook(@Body book: Book): Response<Book>
+
+    @GET("books")
+    suspend fun getBooks(): Response<List<Book>>
 
     @PUT("books/{id}")
     suspend fun updateBook(@Path("id") id: String, @Body book: Book): Response<Book>
@@ -36,12 +44,13 @@ interface ApiService {
     @DELETE("books/{id}")
     suspend fun deleteBook(@Path("id") id: String): Response<Unit>
 
-    // Event Endpoints
+    @POST("events")
+    fun addEvent(
+        @Header("Authorization") token: String,
+        @Body event: EventRequest
+    ): Call<EventResponse>
     @GET("events")
-    suspend fun getAllEvents(): Response<List<EventNotification>>
-
-    @GET("events/{id}")
-    suspend fun getEventById(@Path("id") id: String): Response<EventNotification>
+    fun getEvents(): Call<List<EventResponse>>
 
     // Transaction Endpoints
     @GET("transactions/user/{userId}")

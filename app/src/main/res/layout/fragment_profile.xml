@@ -59,7 +59,7 @@
                     android:id="@+id/userName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nama Pengguna"
+                    android:text=""
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="@color/white"
@@ -70,7 +70,7 @@
                     android:id="@+id/userEmail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="user@example.com"
+                    android:text=""
                     android:textSize="14sp"
                     android:textColor="@color/white"
                     android:alpha="0.9" />
