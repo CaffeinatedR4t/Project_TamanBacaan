@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope // Tambahkan import ini
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.LoginActivity
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
@@ -21,18 +22,23 @@ import com.caffeinatedr4t.tamanbacaan.viewmodels.profile.ProfileViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.project.tamanbacaan.viewmodels.profile.ProfileState
 import com.project.tamanbacaan.viewmodels.profile.ProfileViewModelFactory
+import kotlinx.coroutines.launch // Tambahkan import ini
 
 class AdminProfileFragment : Fragment() {
 
     private lateinit var adminName: TextView
     private lateinit var adminEmail: TextView
     private lateinit var adminRole: TextView
+
+    // [BARU] Variabel untuk Statistik Cepat
+    private lateinit var tvTotalBooks: TextView
+    private lateinit var tvTotalMembers: TextView
+    private lateinit var tvActiveLoans: TextView
+
     private lateinit var sharedPrefsManager: SharedPrefsManager
     private lateinit var btnEditProfile: Button
     private lateinit var viewModel: ProfileViewModel
     private lateinit var progressBar: ProgressBar
-
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,18 +52,28 @@ class AdminProfileFragment : Fragment() {
 
         viewModel = ViewModelProvider(this, factory)[ProfileViewModel::class.java]
 
+        // Init View Profil
         adminName = view.findViewById(R.id.adminName)
         adminEmail = view.findViewById(R.id.adminEmail)
         adminRole = view.findViewById(R.id.adminRole)
         btnEditProfile = view.findViewById(R.id.btnEditAdminProfile)
         progressBar = view.findViewById(R.id.progressProfile)
+
+        // [BARU] Init View Statistik
+        tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
+        tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
+        tvActiveLoans = view.findViewById(R.id.tvActiveLoans)
+
         val btnLogout = view.findViewById<Button>(R.id.btnAdminLogout)
 
         sharedPrefsManager = SharedPrefsManager(requireContext())
 
-        // [BARU] Load Data Admin dari Server
+        // Load Data Profil Admin
         observeProfile()
         viewModel.loadProfile()
+
+        // [BARU] Load Data Statistik Database
+        loadStatistics()
 
         btnEditProfile.setOnClickListener {
             showEditAdminProfileDialog()
@@ -68,6 +84,36 @@ class AdminProfileFragment : Fragment() {
         }
 
         return view
+    }
+
+    /**
+     * [BARU] Fungsi untuk mengambil data statistik dari database (via Repository)
+     * Mengambil Total Buku, Total Anggota, dan Jumlah Peminjaman Aktif.
+     */
+    private fun loadStatistics() {
+        lifecycleScope.launch {
+            try {
+                // Ambil data buku dan anggota dari server
+                val allBooks = BookRepository.getAllBooks()
+                val allMembers = BookRepository.getAllMembers()
+
+                // Hitung statistik
+                val totalBooks = allBooks.size
+                val totalMembers = allMembers.size
+                // Menghitung buku yang sedang dipinjam (status isBorrowed = true)
+                val activeLoans = allBooks.count { it.isBorrowed }
+
+                // Update UI (Pastikan fragment masih terpasang)
+                if (isAdded) {
+                    tvTotalBooks.text = totalBooks.toString()
+                    tvTotalMembers.text = totalMembers.toString()
+                    tvActiveLoans.text = activeLoans.toString()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Jika gagal, biarkan angka default (0) atau tampilkan error log
+            }
+        }
     }
 
     private fun observeProfile() {
@@ -82,12 +128,12 @@ class AdminProfileFragment : Fragment() {
                     val user = state.user
                     adminName.text = user.fullName
                     adminEmail.text = user.email
+                    // Menampilkan role dengan format rapi
                     adminRole.text = "Role: ${user.role} (Verified)"
                 }
 
                 is ProfileState.Error -> {
                     progressBar.visibility = View.GONE
-                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                     Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                 }
 
@@ -103,7 +149,7 @@ class AdminProfileFragment : Fragment() {
         val etEditAdminName = dialogView.findViewById<TextInputEditText>(R.id.etEditAdminName)
         val etEditAdminEmail = dialogView.findViewById<TextInputEditText>(R.id.etEditAdminEmail)
 
-        // Pre-fill
+        // Pre-fill data saat ini
         etEditAdminName.setText(adminName.text.toString())
         etEditAdminEmail.setText(adminEmail.text.toString())
 
@@ -132,7 +178,6 @@ class AdminProfileFragment : Fragment() {
                     return@setPositiveButton
                 }
 
-                // ⛔ JANGAN pakai lifecycleScope di MVVM
                 viewModel.updateProfile(
                     UpdateProfileRequest(
                         fullName = newName,
