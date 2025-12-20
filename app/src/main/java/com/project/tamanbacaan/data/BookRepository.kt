@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.data
 
+import android.util.Log
 import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.models.EventNotification
@@ -7,14 +8,16 @@ import com.caffeinatedr4t.tamanbacaan.models.User
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java. util.Calendar
 
 
 /**
  * Repository yang mengambil data dari MongoDB API backend.
- * Menggunakan hybrid pattern: fetch dari API, maintain local state untuk bookmarks/borrowed.
+ * Menggunakan hybrid pattern:  fetch dari API, maintain local state untuk bookmarks/borrowed.
  */
 object BookRepository {
+    private const val TAG = "BookRepository"
+
     private val eventNotifications = mutableListOf<EventNotification>()
     private val nextEventId = AtomicLong(3) // Lanjutkan dari ID 2
     // Local state untuk bookmarks dan borrowed status
@@ -31,14 +34,14 @@ object BookRepository {
         var isBookmarked: Boolean = false,
         var isBorrowed: Boolean = false,
         var isAvailable: Boolean = true,
-        var borrowedDate: String? = null,
+        var borrowedDate: String?  = null,
         var dueDate: String? = null
     )
 
     /**
      * Apply local state overlay to a book from API
      */
-    private fun applyLocalState(book: Book): Book {
+    private fun applyLocalState(book:  Book): Book {
         val state = localBookState[book.id] ?: LocalBookState()
         return book.copy(
             isBookmarked = state.isBookmarked,
@@ -50,7 +53,7 @@ object BookRepository {
     }
 
     fun toggleBookmarkStatus(bookId: String): Boolean {
-        val state = localBookState.getOrPut(bookId) { LocalBookState() }
+        val state = localBookState. getOrPut(bookId) { LocalBookState() }
         state.isBookmarked = !state.isBookmarked
         return true
     }
@@ -74,30 +77,47 @@ object BookRepository {
         }
     }
 
+    // ✅ UPDATED WITH LOGGING
     suspend fun getBookById(id: String): Book? {
         return try {
+            Log.d(TAG, "🔍 Fetching book with ID: $id")
             val response = ApiConfig.getApiService().getBookById(id)
-            if (response.isSuccessful) {
-                response.body()?.let { applyLocalState(it) }
+
+            Log.d(TAG, "📡 Response code: ${response.code()}")
+            Log.d(TAG, "📡 Response success: ${response.isSuccessful}")
+            Log.d(TAG, "📡 Response body: ${response.body()}")
+
+            if (response. isSuccessful) {
+                val book = response.body()
+                if (book != null) {
+                    Log.d(TAG, "✅ Book parsed successfully:  ${book.title}")
+                    applyLocalState(book)
+                } else {
+                    Log. e(TAG, "❌ Response body is NULL!")
+                    null
+                }
             } else {
+                Log.e(TAG, "❌ Response NOT successful!  Error:  ${response.errorBody()?.string()}")
                 null
             }
-        } catch (e: Exception) {
+        } catch (e:  Exception) {
+            Log.e(TAG, "💥 EXCEPTION in getBookById: ${e.message}", e)
+            e.printStackTrace()
             null
         }
     }
 
     suspend fun updateBook(updatedBook: Book): Boolean {
         return try {
-            val response = ApiConfig.getApiService().updateBook(updatedBook.id, updatedBook)
+            val response = ApiConfig.getApiService().updateBook(updatedBook. id, updatedBook)
             if (response.isSuccessful) {
                 // Update local state if needed
                 val state = localBookState[updatedBook.id]
                 if (state != null) {
                     state.isAvailable = updatedBook.isAvailable
                     state.isBorrowed = updatedBook.isBorrowed
-                    state.borrowedDate = updatedBook.borrowedDate
-                    state.dueDate = updatedBook.dueDate
+                    state. borrowedDate = updatedBook. borrowedDate
+                    state. dueDate = updatedBook. dueDate
                 }
                 true
             } else {
@@ -131,7 +151,7 @@ object BookRepository {
 
     // --- Transaction Request Management (uses local state) ---
     fun addPendingRequest(book: Book, memberName: String, memberId: String): Boolean {
-        if (book.isBorrowed || pendingRequests.any { it.book.id == book.id }) { return false }
+        if (book.isBorrowed || pendingRequests.any { it. book. id == book.id }) { return false }
         // Update local state to mark as unavailable
         val state = localBookState.getOrPut(book.id) { LocalBookState() }
         state.isAvailable = false
@@ -141,14 +161,14 @@ object BookRepository {
     }
     fun getPendingRequests(): List<PendingRequest> = pendingRequests.toList()
     fun approveRequest(requestId: String): Boolean {
-        val request = pendingRequests.find { it.requestId == requestId } ?: return false
+        val request = pendingRequests. find { it.requestId == requestId } ?: return false
 
         // Update local state for the book
-        val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
+        val state = localBookState.getOrPut(request. book.id) { LocalBookState() }
 
         // 1. Dapatkan tanggal hari ini
         val calendar = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale. getDefault())
         val borrowedDate = dateFormat.format(calendar.time)
 
         // 2. Tambahkan 14 hari untuk jatuh tempo
@@ -165,20 +185,20 @@ object BookRepository {
         val iterator = pendingRequests.iterator()
         while (iterator.hasNext()) {
             if (iterator.next().requestId == requestId) {
-                iterator.remove()
+                iterator. remove()
                 return true
             }
         }
         return false
     }
     fun rejectRequest(requestId: String): Boolean {
-        val request = pendingRequests.find { it.requestId == requestId } ?: return false
+        val request = pendingRequests.find { it. requestId == requestId } ?:  return false
         // Update local state to mark as available again
-        val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
+        val state = localBookState.getOrPut(request. book.id) { LocalBookState() }
         state.isAvailable = true
         val iterator = pendingRequests.iterator()
         while (iterator.hasNext()) {
-            if (iterator.next().requestId == requestId) {
+            if (iterator. next().requestId == requestId) {
                 iterator.remove()
                 return true
             }
@@ -186,7 +206,7 @@ object BookRepository {
         return false
     }
 
-    // --- Registration Management (UPDATED: Instant Activation) ---
+    // --- Registration Management (UPDATED:  Instant Activation) ---
 
     /**
      * Mendaftarkan anggota baru dan langsung mengaktifkannya (Req: Registrasi -> Langsung Login).
@@ -195,7 +215,7 @@ object BookRepository {
     fun registerNewMember(
         fullName: String,
         nik: String,
-        email: String,
+        email:  String,
         addressRtRw: String,
         isChild: Boolean,
         parentName: String?
@@ -261,7 +281,7 @@ object BookRepository {
 
     suspend fun checkUserStatus(userId: String): Boolean {
         return try {
-            val response = ApiConfig.getApiService().getUserById(userId)
+            val response = ApiConfig. getApiService().getUserById(userId)
             if (response.isSuccessful) {
                 val user = response.body()
                 // Return true jika user ada DAN sudah diverifikasi
@@ -282,7 +302,7 @@ object BookRepository {
             val response = ApiConfig.getApiService().getProfile(authHeader)
 
             if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.user
+                response. body()?.user
             } else {
                 null
             }
@@ -305,7 +325,7 @@ object BookRepository {
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (e:  Exception) {
             e.printStackTrace()
             null
         }
@@ -313,5 +333,5 @@ object BookRepository {
 
     // --- Admin Data (Tetap) ---
     fun getTopBooks(): Map<String, Int> { return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19) }
-    fun findMemberByNik(nik: String): User? { return activeMembers.find { it.nik == nik } }
+    fun findMemberByNik(nik: String): User? { return activeMembers.find { it. nik == nik } }
 }

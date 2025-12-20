@@ -1,6 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.models
 
-import com.google. gson.annotations.SerializedName
+import com. google.gson.annotations.SerializedName
 
 data class Book(
     @SerializedName("_id")
@@ -8,7 +8,7 @@ data class Book(
 
     val title: String,
 
-    val author:  String,
+    val author: String,
 
     val description: String = "",
 
@@ -21,20 +21,21 @@ data class Book(
 
     var isAvailable: Boolean = true,
 
-    var isBorrowed:  Boolean = false,
+    var isBorrowed: Boolean = false,
 
     val isbn: String = "",
 
     @SerializedName("year")
-    val publicationYear:  Int = 0,
+    val publicationYear: Int = 0,
 
     val borrowedDate: String?  = null,
 
     val dueDate: String? = null,
 
+    // ✅ CHANGED:  Make these fields optional with default values
     val avgRating: Float = 0.0f,
     val totalReviews: Int = 0,
-    val synopsis: String = description,
+    val synopsis:  String = "", // Will use description as fallback
 
     // ADD THESE NEW FIELDS FROM BACKEND
     val publisher: String = "",
@@ -45,16 +46,16 @@ data class Book(
     fun getAvailabilityStatus(): String {
         return when {
             isBorrowed -> "Borrowed by you"
-            !isAvailable -> "Not Available"
+            ! isAvailable -> "Not Available"
             else -> "Recommended"
         }
     }
 
     fun getStatusColor(): Int {
         return when {
-            isBorrowed -> android.R. color.holo_orange_dark
+            isBorrowed -> android.R.color.holo_orange_dark
             !isAvailable -> android.R.color.holo_red_dark
-            else -> android.R.color.holo_green_dark
+            else -> android. R.color.holo_green_dark
         }
     }
 }
