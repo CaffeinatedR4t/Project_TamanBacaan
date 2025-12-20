@@ -14,7 +14,8 @@ import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
-import com.caffeinatedr4t.tamanbacaan.data.BookRepository // Import Repository
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.bumptech.glide.Glide
 
 // Adapter untuk menampilkan daftar buku di sisi pengguna.
 class BookAdapter(
@@ -47,6 +48,7 @@ class BookAdapter(
         private val statusText: TextView = itemView.findViewById(R.id.statusText)
         private val actionButton: Button = itemView.findViewById(R.id.actionButton)
         private val bookmarkButton: ImageView = itemView.findViewById(R.id.bookmarkButton)
+        private val bookCover: ImageView = itemView.findViewById(R.id.bookCover)
 
         // Mengisi data buku ke view.
         fun bind(book: Book) {
@@ -54,6 +56,13 @@ class BookAdapter(
             bookAuthor.text = book.author
             bookDescription.text = book.description
             bookCategory.text = book.category
+
+            Glide.with(itemView.context)
+                .load(book.coverUrl. ifEmpty { R.drawable.ic_book_placeholder })
+                .placeholder(R.drawable.ic_book_placeholder)
+                .error(R.drawable.ic_book_placeholder)
+                .centerCrop()
+                .into(bookCover)
 
             // Mengatur teks dan warna status ketersediaan buku.
             statusText.text = book.getAvailabilityStatus()
@@ -107,10 +116,10 @@ class BookAdapter(
                 // Mengubah status bookmark melalui repository (local state only).
                 val wasBookmarked = book.isBookmarked
                 BookRepository.toggleBookmarkStatus(book.id)
-                
+
                 // Toggle UI immediately based on previous state
                 val isNowBookmarked = !wasBookmarked
-                
+
                 bookmarkButton.setImageResource(
                     if (isNowBookmarked) R.drawable.ic_bookmark_filled
                     else R.drawable.ic_bookmark
