@@ -13,31 +13,24 @@ import com.caffeinatedr4t.tamanbacaan.activities.EditBookActivity
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
 
-// Adapter untuk menampilkan daftar buku di sisi admin.
 class AdminBookAdapter(
-    private val books: List<Book>, // Daftar buku yang akan ditampilkan.
-    private val onDeleteClick: (Book) -> Unit // Fungsi yang akan dipanggil saat tombol hapus di-klik.
+    private val books: List<Book>,
+    private val onDeleteClick: (Book) -> Unit
 ) : RecyclerView.Adapter<AdminBookAdapter.AdminBookViewHolder>() {
 
-    // Membuat ViewHolder baru saat RecyclerView membutuhkannya.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AdminBookViewHolder {
-        // Inflate layout item_admin_book.xml untuk setiap item dalam daftar.
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_admin_book, parent, false)
         return AdminBookViewHolder(view)
     }
 
-    // Menghubungkan data buku dengan ViewHolder pada posisi tertentu.
     override fun onBindViewHolder(holder: AdminBookViewHolder, position: Int) {
         holder.bind(books[position])
     }
 
-    // Mengembalikan jumlah total item dalam daftar.
     override fun getItemCount(): Int = books.size
 
-    // Kelas dalam yang merepresentasikan satu item dalam RecyclerView.
     inner class AdminBookViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Inisialisasi view dari layout item.
         private val bookTitle: TextView = itemView.findViewById(R.id.bookTitle)
         private val bookAuthor: TextView = itemView.findViewById(R.id.bookAuthor)
         private val bookDescription: TextView = itemView.findViewById(R.id.bookDescription)
@@ -46,21 +39,18 @@ class AdminBookAdapter(
         private val btnEdit: Button = itemView.findViewById(R.id.btnEdit)
         private val btnDelete: Button = itemView.findViewById(R.id.btnDelete)
 
-        // Fungsi untuk mengisi data buku ke dalam view.
         fun bind(book: Book) {
             bookTitle.text = book.title
             bookAuthor.text = book.author
             bookDescription.text = book.description
             bookCategory.text = book.category
 
-            // Menampilkan status stok buku.
             val stockText = when {
                 book.isBorrowed -> "Dipinjam"
                 book.isAvailable -> "Tersedia"
                 else -> "Stok Habis"
             }
 
-            // Menentukan warna teks status berdasarkan ketersediaan.
             val stockColor = when {
                 book.isBorrowed -> android.R.color.holo_orange_dark
                 book.isAvailable -> android.R.color.holo_green_dark
@@ -70,14 +60,26 @@ class AdminBookAdapter(
             stockStatus.text = stockText
             stockStatus.setTextColor(ContextCompat.getColor(itemView.context, stockColor))
 
-            // Aksi saat tombol Edit di-klik: Navigasi ke EditBookActivity.
+            // [PERBAIKAN UTAMA] Kirim semua data buku ke EditActivity
             btnEdit.setOnClickListener {
                 val intent = Intent(itemView.context, EditBookActivity::class.java)
                 intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
+                // Kirim detail agar form langsung terisi & tidak error "not found"
+                intent.putExtra("EXTRA_TITLE", book.title)
+                intent.putExtra("EXTRA_AUTHOR", book.author)
+                intent.putExtra("EXTRA_DESCRIPTION", book.description)
+                intent.putExtra("EXTRA_CATEGORY", book.category)
+                intent.putExtra("EXTRA_ISBN", book.isbn)
+                intent.putExtra("EXTRA_PUBLICATION_YEAR", book.publicationYear)
+                intent.putExtra("EXTRA_COVER_URL", book.coverUrl)
+                intent.putExtra("EXTRA_STOCK", book.stock) // Penting agar stok tidak hilang
+                intent.putExtra("EXTRA_TOTAL_COPIES", book.totalCopies)
+                intent.putExtra("EXTRA_IS_AVAILABLE", book.isAvailable)
+                intent.putExtra("EXTRA_IS_BORROWED", book.isBorrowed)
+
                 itemView.context.startActivity(intent)
             }
 
-            // Aksi saat tombol Delete di-klik.
             btnDelete.setOnClickListener {
                 onDeleteClick(book)
             }
