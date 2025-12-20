@@ -60,8 +60,21 @@ class EventManagementFragment : Fragment() {
         // RecyclerView
         recyclerView.layoutManager = LinearLayoutManager(context)
 
+        // Ambil token user
+        val token = SharedPrefsManager(requireContext()).getUserToken()
+
         viewModel.events.observe(viewLifecycleOwner) { events ->
-            adapter = NotificationAdapter(emptyList(), events)
+            // UPDATE DI SINI:
+            // Kita pass lambda function untuk menangani klik delete
+            adapter = NotificationAdapter(
+                emptyList(),
+                events,
+                onDeleteEvent = { eventId ->
+                    if (token != null) {
+                        viewModel.deleteEvent(token, eventId)
+                    }
+                }
+            )
             recyclerView.adapter = adapter
         }
 

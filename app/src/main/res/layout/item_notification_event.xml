@@ -7,13 +7,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/tvEventTitle"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:textColor="@color/black"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvEventTitle"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Judul Event" />
+
+        <ImageButton
+            android:id="@+id/btnDeleteEvent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_menu_delete"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:contentDescription="Hapus Event" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvEventMessage"
@@ -21,7 +40,8 @@
         android:layout_marginTop="4dp"
         android:textColor="@color/text_secondary"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Isi pesan event..." />
 
     <TextView
         android:id="@+id/tvEventDate"
@@ -29,6 +49,7 @@
         android:textColor="@color/gray"
         android:layout_marginTop="6dp"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Tanggal" />
 
 </LinearLayout>

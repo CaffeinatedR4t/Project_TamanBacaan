@@ -38,4 +38,17 @@ class EventViewModel : ViewModel() {
             _events.postValue(EventRepository.getEvents())
         }
     }
+
+    fun deleteEvent(token: String, eventId: String) {
+        EventRepository.deleteEvent(token, eventId,
+            onSuccess = {
+                // Perbarui LiveData dengan list terbaru
+                _events.postValue(EventRepository.getEvents())
+            },
+            onError = { errorMsg ->
+                // Opsional: Anda bisa menambahkan LiveData untuk error jika ingin menampilkan Toast
+                System.out.println("Error delete: $errorMsg")
+            }
+        )
+    }
 }

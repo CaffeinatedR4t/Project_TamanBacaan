@@ -73,4 +73,28 @@ object EventRepository {
                 }
             })
     }
+
+    fun deleteEvent(
+        token: String,
+        eventId: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        ApiConfig.getApiService().deleteEvent("Bearer $token", eventId)
+            .enqueue(object : Callback<Unit> {
+                override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
+                    if (response.isSuccessful) {
+                        // Reload data setelah berhasil hapus
+                        loadEvents(onSuccess)
+                    } else {
+                        onError("Gagal menghapus: Kode ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<Unit>, t: Throwable) {
+                    Log.e("EVENT_REPO", t.message.toString())
+                    onError(t.message ?: "Terjadi kesalahan")
+                }
+            })
+    }
 }

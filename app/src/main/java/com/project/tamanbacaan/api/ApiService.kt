@@ -34,7 +34,6 @@ interface ApiService {
         @Path("id") id: String
     ): Response<Book>
 
-
     @GET("books")
     suspend fun getBooks(): Response<List<Book>>
 
@@ -51,6 +50,12 @@ interface ApiService {
     ): Call<EventResponse>
     @GET("events")
     fun getEvents(): Call<List<EventResponse>>
+
+    @DELETE("events/{id}")
+    fun deleteEvent(
+        @Header("Authorization") token: String,
+        @Path("id") id: String
+    ): Call<Unit>
 
     // Transaction Endpoints
     @GET("transactions/user/{userId}")
