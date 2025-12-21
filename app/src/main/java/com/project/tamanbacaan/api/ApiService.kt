@@ -90,4 +90,16 @@ interface ApiService {
         @Body request: UpdateProfileRequest
     ): Response<LoginResponse>
 
+    // [TAMBAHKAN INI] Untuk Admin mengambil semua transaksi
+    @GET("transactions")
+    suspend fun getAllTransactions(): Response<List<Transaction>>
+
+    // [TAMBAHKAN INI] Endpoint Approve (Setuju)
+    @PUT("transactions/{id}/approve")
+    suspend fun approveTransaction(@Path("id") id: String): Response<Transaction>
+
+    // [TAMBAHKAN INI] Endpoint Reject (Tolak)
+    @PUT("transactions/{id}/reject")
+    suspend fun rejectTransaction(@Path("id") id: String): Response<Transaction>
+
 }

@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest
+import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 import kotlinx.coroutines.launch
 
@@ -22,14 +23,12 @@ import kotlinx.coroutines.launch
  */
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var etEmail:  EditText
+    private lateinit var etEmail: EditText
     private lateinit var etPassword: EditText
     private lateinit var btnLogin: Button
     private lateinit var tvRegister: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var sharedPrefsManager: SharedPrefsManager
-    private var isLoggingIn = false
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,24 +38,31 @@ class LoginActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
-        tvRegister = findViewById(R.id. tvRegister)
-        // Add ProgressBar to your layout XML:  <ProgressBar android:id="@+id/progressBar" ...  />
-        progressBar = findViewById(R.id.progressBar) // You need to add this to your XML
+        tvRegister = findViewById(R.id.tvRegister)
+        progressBar = findViewById(R.id.progressBar)
 
         // Initialize SharedPreferences
         sharedPrefsManager = SharedPrefsManager(this)
 
-        // Check if user is already logged in
+        // --- CEK AUTO LOGIN (DIPERBAIKI) ---
         if (sharedPrefsManager.isLoggedIn()) {
             val user = sharedPrefsManager.getUser()
 
-            if (user != null && user.isVerified) {
+            // [FIX CRASH] Tambahkan '&& !user.id.isNullOrEmpty()'
+            // Ini mencegah crash jika data ID di HP ternyata kosong/null
+            if (user != null && user.isVerified && !user.id.isNullOrEmpty()) {
+
+                // Set ID ke Repository agar transaksi jalan
+                BookRepository.setUserId(user.id)
+
                 navigateBasedOnRole(user.role)
                 return
             } else {
+                // Jika data user tidak valid atau ID null, hapus sesi agar login ulang
                 sharedPrefsManager.clearSession()
             }
         }
+        // -----------------------------------
 
         // Login button click listener
         btnLogin.setOnClickListener {
@@ -75,7 +81,7 @@ class LoginActivity : AppCompatActivity() {
 
         // Register text click listener
         tvRegister.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity:: class.java))
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
@@ -95,7 +101,6 @@ class LoginActivity : AppCompatActivity() {
                 setLoading(false)
 
                 if (response.isSuccessful) {
-
                     val loginResponse = response.body()
 
                     if (loginResponse == null) {
@@ -124,10 +129,17 @@ class LoginActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
 
+                    // Simpan sesi user
                     sharedPrefsManager.saveUserSession(
                         loginResponse.user,
                         loginResponse.token
                     )
+
+                    // [BARU] Simpan ID User ke Repository (Safe Call)
+                    val userId = loginResponse.user.id
+                    if (!userId.isNullOrEmpty()) {
+                        BookRepository.setUserId(userId)
+                    }
 
                     navigateBasedOnRole(loginResponse.user.role)
 
@@ -151,6 +163,7 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
+
     /**
      * Navigate to appropriate screen based on user role
      */
@@ -172,10 +185,10 @@ class LoginActivity : AppCompatActivity() {
      */
     private fun setLoading(isLoading: Boolean) {
         if (isLoading) {
-            progressBar.visibility = View. VISIBLE
+            progressBar.visibility = View.VISIBLE
             btnLogin.isEnabled = false
         } else {
-            progressBar. visibility = View.GONE
+            progressBar.visibility = View.GONE
             btnLogin.isEnabled = true
         }
     }

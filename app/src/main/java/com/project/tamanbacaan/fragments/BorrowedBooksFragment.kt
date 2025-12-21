@@ -4,117 +4,91 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
-import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 import kotlinx.coroutines.launch
 
 /**
- * Fragment yang menampilkan daftar buku yang sedang dipinjam (Borrowed Books) oleh pengguna.
- * Fragment ini merupakan salah satu tab di dalam BookmarkFragment.
+ * Fragment yang menampilkan daftar buku yang sedang dipinjam atau direquest.
  */
 class BorrowedBooksFragment : Fragment() {
 
-    // RecyclerView untuk menampilkan daftar buku pinjaman
     private lateinit var recyclerView: RecyclerView
-    // Adapter untuk mengelola dan menampilkan data buku
     private lateinit var bookAdapter: BookAdapter
+    // TextView untuk pesan jika tidak ada buku
+    private var emptyTextView: TextView? = null
 
-    // Simulasi data buku yang sedang dipinjam (Data awal untuk keperluan inisialisasi/testing)
-    private val borrowedBooks = listOf(
-        Book(
-            id = "5",
-            title = "Atomic Habits",
-            author = "James Clear",
-            description = "Tiny changes, remarkable results.",
-            coverUrl = "",
-            category = "Self-Help",
-            isBorrowed = true,
-            isAvailable = false,
-            borrowedDate = "01/10/2025",
-            dueDate = "15/10/2025"
-        )
-    )
-
-    /**
-     * Membuat dan mengembalikan hierarki tampilan yang terkait dengan fragmen.
-     * Menggunakan layout `fragment_my_books_list` yang berisi RecyclerView.
-     */
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_my_books_list, container, false)
     }
 
-    /**
-     * Dipanggil setelah `onCreateView()`.
-     * Inisialisasi RecyclerView, adapter, dan set initial data/adapter.
-     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inisialisasi RecyclerView
         recyclerView = view.findViewById(R.id.recyclerViewMyBooks)
+        // Jika Anda punya TextView untuk empty state di layout, inisialisasi di sini
+        // emptyTextView = view.findViewById(R.id.tvEmptyMyBooks)
 
-        // Inisialisasi adapter dengan data dummy/initial
-        bookAdapter = BookAdapter(borrowedBooks) { book ->
-            // Logika klik item (misalnya, menampilkan detail dengan pengingat pengembalian)
-        }
+        recyclerView.layoutManager = LinearLayoutManager(context)
 
-        recyclerView.apply {
-            // Mengatur layout manager ke LinearLayoutManager (daftar vertikal)
-            layoutManager = LinearLayoutManager(context)
-            // Mengatur adapter ke RecyclerView
-            adapter = bookAdapter
-        }
-
-        // Memastikan RecyclerView disiapkan dan data yang sebenarnya dimuat dari Repository
-        setupRecyclerView()
-        loadBorrowedBooks()
+        loadMyBooks()
     }
 
-    /**
-     * Dipanggil ketika fragment mulai terlihat oleh pengguna.
-     * Memastikan daftar buku pinjaman selalu diperbarui (refresh) dari Repository.
-     */
     override fun onResume() {
         super.onResume()
-        // Muat ulang data setiap kali fragment ini ditampilkan
-        loadBorrowedBooks()
+        loadMyBooks() // Refresh data saat kembali ke tab ini
     }
 
-    /**
-     * Menyiapkan RecyclerView dengan layout manager dan menginisialisasi adapter dengan list kosong.
-     */
-    private fun setupRecyclerView() {
-        // Inisialisasi ulang adapter dengan list kosong terlebih dahulu
-        bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
-        recyclerView.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = bookAdapter
-        }
-    }
-
-    /**
-     * Mengambil daftar buku dari BookRepository, memfilter yang statusnya `isBorrowed = true`,
-     * dan memperbarui adapter RecyclerView.
-     */
-    private fun loadBorrowedBooks() {
-        // Use lifecycleScope to call suspend function
+    private fun loadMyBooks() {
         lifecycleScope.launch {
-            // Mengambil semua buku dari repository, lalu memfilter yang sedang dipinjam
-            val borrowedBooks = BookRepository.getAllBooks().filter { it.isBorrowed }
+            // 1. Cek apakah ID ada di Repository
+            var userId = BookRepository.currentUserId
 
-            // Membuat ulang dan mengatur adapter dengan data pinjaman yang sudah difilter
-            bookAdapter = BookAdapter(borrowedBooks) { }
-            recyclerView.adapter = bookAdapter
+            // 2. [SELF-HEALING] Jika null, coba ambil paksa dari SharedPreferences
+            if (userId == null) {
+                val prefs = SharedPrefsManager(requireContext())
+                val user = prefs.getUser()
+                if (user != null && !user.id.isNullOrEmpty()) {
+                    userId = user.id
+                    BookRepository.setUserId(userId) // Simpan kembali ke repo
+                }
+            }
+
+            // 3. Eksekusi jika ID valid
+            if (userId != null) {
+                // Gunakan getAllBooksWithStatus agar status PENDING/BORROWED terbaca
+                val allBooks = BookRepository.getAllBooksWithStatus()
+
+                // Filter hanya buku yang PENDING atau BORROWED
+                val myBooks = allBooks.filter {
+                    it.status == "PENDING" || it.status == "BORROWED"
+                }
+
+                bookAdapter = BookAdapter(myBooks) { _ ->
+                    // Handle klik item jika perlu
+                }
+                recyclerView.adapter = bookAdapter
+
+                // Tampilkan pesan/toast jika kosong
+                if (myBooks.isEmpty()) {
+                    // Jika ingin menggunakan Toast:
+                    // Toast.makeText(context, "Belum ada buku yang dipinjam", Toast.LENGTH_SHORT).show()
+                }
+
+            } else {
+                // Jika benar-benar tidak ada ID (misal belum login), arahkan keluar
+                Toast.makeText(context, "Sesi habis, silakan login ulang.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

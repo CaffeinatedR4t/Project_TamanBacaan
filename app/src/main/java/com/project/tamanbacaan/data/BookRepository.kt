@@ -5,10 +5,13 @@ import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.models.EventNotification
 import com.caffeinatedr4t.tamanbacaan.models.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.text.SimpleDateFormat
 import java. util.Calendar
+import com.caffeinatedr4t.tamanbacaan.models.Transaction
 
 
 /**
@@ -28,6 +31,7 @@ object BookRepository {
 
     private val nextRequestId = AtomicLong(3) // Lanjutkan dari ID 2
     private val nextUserId = AtomicLong(103) // Lanjutkan ID anggota setelah M102
+    var currentUserId: String? = null
 
     // Data class untuk menyimpan state lokal buku
     data class LocalBookState(
@@ -50,6 +54,93 @@ object BookRepository {
             borrowedDate = state.borrowedDate,
             dueDate = state.dueDate
         )
+    }
+
+    suspend fun getAllBooksWithStatus(): List<Book> = withContext(Dispatchers.IO) {
+        try {
+            // 1. Ambil daftar semua buku
+            val booksResponse = ApiConfig.getApiService().getBooks()
+            val allBooks = if (booksResponse.isSuccessful) booksResponse.body() ?: emptyList() else emptyList()
+
+            // 2. Jika user sedang login, ambil transaksi dia
+            if (currentUserId != null) {
+                val transactionsResponse = ApiConfig.getApiService().getUserTransactions(currentUserId!!)
+                val userTransactions = if (transactionsResponse.isSuccessful) transactionsResponse.body() ?: emptyList() else emptyList()
+
+                // 3. Gabungkan: Update status buku berdasarkan transaksi terakhir
+                allBooks.forEach { book ->
+                    // Cari transaksi terakhir untuk buku ini
+                    val activeTx = userTransactions.find { tx ->
+                        // [PERBAIKAN LOGIKA] Cek tipe data bookId secara manual
+                        val rawId = tx.bookId
+                        val txBookId = when (rawId) {
+                            is Map<*, *> -> rawId["_id"] as? String // Jika bentuknya Object (Populated)
+                            is String -> rawId // Jika bentuknya String ID biasa
+                            else -> rawId.toString()
+                        }
+
+                        // Bandingkan ID
+                        txBookId == book.id
+                    }
+
+                    if (activeTx != null) {
+                        book.status = activeTx.status
+                        book.isBorrowed = (activeTx.status == "BORROWED")
+                    }
+                }
+            }
+            return@withContext allBooks
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching books", e)
+            return@withContext emptyList()
+        }
+    }
+
+    suspend fun requestBorrowBook(book: Book, userId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // [FIX] Jangan kirim borrowDate (set null), biar Backend yang set tanggal sekarang
+            val transaction = Transaction(
+                userId = userId,
+                bookId = book.id,
+                borrowDate = null,
+                dueDate = "2025-12-31", // Logic due date bisa diperbaiki nanti
+                status = "PENDING"
+            )
+
+            val response = ApiConfig.getApiService().borrowBook(transaction)
+            if (response.isSuccessful) {
+                Log.d(TAG, "Request Success: ${response.body()}")
+                return@withContext true
+            } else {
+                Log.e(TAG, "Request Failed: ${response.errorBody()?.string()}")
+                return@withContext false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error request borrow", e)
+            return@withContext false
+        }
+    }
+
+    suspend fun getMyLibraryBooks(userId: String): List<Book> = withContext(Dispatchers.IO) {
+        try {
+            val response = ApiConfig.getApiService().getUserTransactions(userId)
+            if (response.isSuccessful) {
+                val transactions = response.body() ?: emptyList()
+                val allBooks = getAllBooksWithStatus()
+
+                return@withContext allBooks.filter { book ->
+                    transactions.any { tx ->
+                        // Logika ekstraksi ID yang sama
+                        val rawId = tx.bookId
+                        val txBookId = if (rawId is Map<*, *>) rawId["_id"] as? String else rawId.toString()
+                        txBookId == book.id
+                    }
+                }
+            }
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     fun toggleBookmarkStatus(bookId: String): Boolean {
@@ -329,6 +420,64 @@ object BookRepository {
             e.printStackTrace()
             null
         }
+    }
+
+    suspend fun fetchPendingRequests(): List<PendingRequest> {
+        return try {
+            val response = ApiConfig.getApiService().getAllTransactions()
+            if (response.isSuccessful) {
+                val allTransactions = response.body() ?: emptyList()
+
+                // Filter hanya yang statusnya PENDING
+                allTransactions.filter { it.status == "PENDING" }.map { tx ->
+
+                    // Mapping data Transaction -> PendingRequest
+                    // Note: Pastikan API mengirim object book & user (populate)
+                    // Jika bookId/userId masih String, app mungkin crash atau perlu penyesuaian
+
+                    val bookTitle = if (tx.bookId is Map<*, *>) (tx.bookId["title"] as? String) ?: "Judul Tidak Diketahui" else "Buku ID: ${tx.bookId}"
+                    val memberName = if (tx.userId is Map<*, *>) (tx.userId["fullName"] as? String) ?: "Member" else "Member ID: ${tx.userId}"
+                    val bookObj = if (tx.bookId is Map<*, *>) Book(id = (tx.bookId["_id"] as? String) ?: "", title = bookTitle) else Book(title = bookTitle)
+
+                    PendingRequest(
+                        requestId = tx.id ?: "",
+                        book = bookObj,
+                        memberName = memberName,
+                        memberId = if (tx.userId is Map<*, *>) (tx.userId["_id"] as? String) ?: "" else tx.userId.toString(),
+                        requestDate = tx.borrowDate ?: "Hari Ini"
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching pending requests", e)
+            emptyList()
+        }
+    }
+
+    // Fungsi Approve ke API
+    suspend fun approveRequestApi(requestId: String): Boolean {
+        return try {
+            val response = ApiConfig.getApiService().approveTransaction(requestId)
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // Fungsi Reject ke API
+    suspend fun rejectRequestApi(requestId: String): Boolean {
+        return try {
+            val response = ApiConfig.getApiService().rejectTransaction(requestId)
+            response.isSuccessful
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun setUserId(id: String) {
+        currentUserId = id
     }
 
     // --- Admin Data (Tetap) ---

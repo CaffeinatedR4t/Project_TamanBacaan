@@ -60,17 +60,22 @@ class HomeFragment : Fragment() {
      * @param view Tampilan root fragmen.
      */
     private fun setupRecyclerView(view: View) {
-        // Inisialisasi RecyclerView
         recyclerView = view.findViewById(R.id.recyclerViewBooks)
-        // Inisialisasi adapter dengan daftar buku kosong
+
+        // [PENTING] Isi lambda ini! Jangan dikosongkan.
         bookAdapter = BookAdapter(booksList) { book ->
-            // Logika klik buku (dibiarkan kosong karena sudah ditangani di dalam BookAdapter)
+            // Saat tombol diklik, panggil ViewModel
+            if (book.status == "BORROWED") {
+                // Logic Return (bisa ditambahkan di ViewModel nanti)
+                Toast.makeText(context, "Fitur kembalikan ada di tab Pinjaman", Toast.LENGTH_SHORT).show()
+            } else {
+                // Logic Request Pinjam
+                bookViewModel.requestBorrow(book)
+            }
         }
 
         recyclerView.apply {
-            // Mengatur layout manager ke LinearLayoutManager (daftar vertikal)
             layoutManager = LinearLayoutManager(context)
-            // Mengatur adapter ke RecyclerView
             adapter = bookAdapter
         }
     }
@@ -81,16 +86,14 @@ class HomeFragment : Fragment() {
     private fun setupViewModel() {
         bookViewModel = ViewModelProvider(this)[BookViewModel::class.java]
 
-        // Observe books data
         bookViewModel.books.observe(viewLifecycleOwner) { books ->
             booksList.clear()
             booksList.addAll(books)
             bookAdapter.notifyDataSetChanged()
         }
 
-        // Observe loading state (optional - could show progress bar)
-        bookViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            // Could show/hide progress bar here
+        bookViewModel.toastMessage.observe(viewLifecycleOwner) { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
 
         // Observe errors

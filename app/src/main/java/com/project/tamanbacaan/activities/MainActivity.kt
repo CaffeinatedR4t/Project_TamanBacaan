@@ -16,9 +16,8 @@ import com.caffeinatedr4t.tamanbacaan.fragments.NotificationFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.ProfileFragment
 import com.caffeinatedr4t.tamanbacaan.fragments.SearchFragment
 import com.caffeinatedr4t.tamanbacaan.utils.NotificationHelper
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlin.jvm.java
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 
 /**
@@ -28,7 +27,6 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     // Variabel untuk menyimpan informasi pengguna yang login.
-    // Data ini diterima dari LoginActivity.
     private var userName: String? = null
     private var userEmail: String? = null
     private var userNik: String? = null
@@ -41,7 +39,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAccountStatus() {
         val sharedPrefsManager = SharedPrefsManager(this)
-        val userId = sharedPrefsManager.getUserId()
+
+        // [FIX] Gunakan getUser()?.id karena getUserId() kadang mengembalikan null jika tidak disimpan terpisah
+        val userId = sharedPrefsManager.getUser()?.id
 
         if (!userId.isNullOrEmpty()) {
             lifecycleScope.launch {
@@ -70,6 +70,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // [BARU] Inisialisasi Repository saat MainActivity dibuat
+        // Ini mencegah "User ID not found" jika aplikasi di-restart atau memori dibersihkan
+        val sharedPrefsManager = SharedPrefsManager(this)
+        val currentUser = sharedPrefsManager.getUser()
+        if (currentUser != null && !currentUser.id.isNullOrEmpty()) {
+            BookRepository.setUserId(currentUser.id)
+        }
+        // ---------------------------------------------------------
+
         // Membuat channel notifikasi yang diperlukan untuk Android Oreo (API 26) ke atas.
         NotificationHelper.createNotificationChannel(this)
 
@@ -80,7 +89,6 @@ class MainActivity : AppCompatActivity() {
         userAddress = intent.getStringExtra("USER_ADDRESS")
 
         // Memuat HomeFragment sebagai tampilan awal saat aplikasi pertama kali dibuka.
-        // `savedInstanceState == null` memastikan fragment tidak dimuat ulang saat activity dibuat kembali (misal: saat rotasi layar).
         if (savedInstanceState == null) {
             loadFragment(HomeFragment())
         }
@@ -94,17 +102,14 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Mengatur logika untuk Bottom Navigation View.
-     * Mengganti fragment yang ditampilkan berdasarkan item menu yang dipilih.
      */
     private fun setupBottomNavigation() {
-        // Menemukan komponen BottomNavigationView dari layout.
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        // Menetapkan listener untuk item yang dipilih.
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.btnHome -> {
                     loadFragment(HomeFragment())
-                    true // Mengembalikan true menandakan event telah ditangani.
+                    true
                 }
                 R.id.btnSearch -> {
                     loadFragment(SearchFragment())
@@ -114,46 +119,36 @@ class MainActivity : AppCompatActivity() {
                     loadFragment(BookmarkFragment())
                     true
                 }
-                else -> false // Jika item tidak dikenali, event tidak ditangani.
+                else -> false
             }
         }
     }
 
     /**
      * Mengatur logika untuk tombol navigasi di bagian atas (top bar).
-     * Termasuk tombol Profile dan Notification.
      */
     private fun setupTopNavigation() {
-        // Menemukan tombol Profile dan mengatur aksi klik.
         val btnProfile = findViewById<ImageView>(R.id.btnProfile)
         btnProfile.setOnClickListener {
-            // Membuat instance dari ProfileFragment.
             val fragment = ProfileFragment()
-
-            // Membuat Bundle untuk mengirim data pengguna ke ProfileFragment.
             val bundle = Bundle().apply {
                 putString("USER_NAME", userName)
                 putString("USER_EMAIL", userEmail)
                 putString("USER_NIK", userNik)
                 putString("USER_ADDRESS", userAddress)
             }
-            // Menetapkan bundle sebagai arguments untuk fragment.
             fragment.arguments = bundle
-
-            // Memuat ProfileFragment ke dalam container.
             loadFragment(fragment)
         }
 
-        // Menemukan tombol Notifikasi dan mengatur aksi klik.
         val btnNotification: ImageView = findViewById(R.id.btnNotification)
         btnNotification.setOnClickListener {
-            // Memuat NotificationFragment saat tombol ditekan.
             loadFragment(NotificationFragment())
         }
     }
 
     /**
-     * Fungsi publik yang dapat dipanggil dari fragment (misal: ProfileFragment) untuk memulai proses logout.
+     * Fungsi publik untuk logout.
      */
     fun showLogoutConfirmation() {
         val sharedPrefsManager = SharedPrefsManager(this)
@@ -165,16 +160,9 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
-    /**
-     * Fungsi utilitas untuk memuat atau mengganti fragment di dalam container utama.
-     * @param fragment Fragment yang akan ditampilkan.
-     */
     private fun loadFragment(fragment: Fragment) {
-        // Memulai transaksi fragment.
         val transaction: FragmentTransaction = supportFragmentManager.beginTransaction()
-        // Mengganti fragment yang ada di container `nav_host_fragment` dengan fragment yang baru.
         transaction.replace(R.id.nav_host_fragment, fragment)
-        // Menyelesaikan transaksi.
         transaction.commit()
     }
 }
