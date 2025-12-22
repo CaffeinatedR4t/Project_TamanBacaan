@@ -39,8 +39,8 @@ class EditBookActivity : AppCompatActivity() {
     private lateinit var etCategory: EditText
     private lateinit var etIsbn: EditText
     private lateinit var etPublicationYear: EditText
+    private lateinit var etStock: EditText // [BARU] Deklarasi EditText Stok
 
-    // Ganti etCoverUrl dengan ImageView & Buttons
     private lateinit var ivBookCoverPreview: ImageView
     private lateinit var btnPickGallery: Button
     private lateinit var btnOpenCamera: Button
@@ -51,8 +51,6 @@ class EditBookActivity : AppCompatActivity() {
 
     private var bookId: String? = null
     private var currentBook: Book? = null
-
-    // Variabel untuk menyimpan gambar baru (Base64)
     private var newCoverBase64: String? = null
 
     // Launcher Galeri
@@ -106,8 +104,8 @@ class EditBookActivity : AppCompatActivity() {
         etCategory = findViewById(R.id.etEditCategory)
         etIsbn = findViewById(R.id.etEditIsbn)
         etPublicationYear = findViewById(R.id.etEditPublicationYear)
+        etStock = findViewById(R.id.etEditStock) // [BARU] Inisialisasi
 
-        // Init View Gambar Baru
         ivBookCoverPreview = findViewById(R.id.ivBookCoverPreview)
         btnPickGallery = findViewById(R.id.btnPickGallery)
         btnOpenCamera = findViewById(R.id.btnOpenCamera)
@@ -129,12 +127,10 @@ class EditBookActivity : AppCompatActivity() {
             }
         }
 
-        // Listener Galeri
         btnPickGallery.setOnClickListener {
             galleryLauncher.launch("image/*")
         }
 
-        // Listener Kamera
         btnOpenCamera.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
                 cameraLauncher.launch(null)
@@ -162,7 +158,7 @@ class EditBookActivity : AppCompatActivity() {
         val coverUrl = intent.getStringExtra("EXTRA_COVER_URL") ?: ""
         val isAvailable = intent.getBooleanExtra("EXTRA_IS_AVAILABLE", true)
         val isBorrowed = intent.getBooleanExtra("EXTRA_IS_BORROWED", false)
-        val stock = intent.getIntExtra("EXTRA_STOCK", 0)
+        val stock = intent.getIntExtra("EXTRA_STOCK", 0) // Ambil data stok
         val totalCopies = intent.getIntExtra("EXTRA_TOTAL_COPIES", 0)
 
         etTitle.setText(title)
@@ -171,14 +167,12 @@ class EditBookActivity : AppCompatActivity() {
         etCategory.setText(category)
         etIsbn.setText(isbn)
         etPublicationYear.setText(if (pubYear > 0) pubYear.toString() else "")
+        etStock.setText(stock.toString()) // [BARU] Set text stok ke UI
 
         cbIsAvailable.isChecked = isAvailable
         cbIsBorrowed.isChecked = isBorrowed
         if (isBorrowed) cbIsAvailable.isEnabled = false
 
-        // [LOGIKA GAMBAR]
-        // Jika ada URL gambar lama, coba tampilkan (jika Base64/URL).
-        // Karena tidak pakai library Glide, kita coba load sederhana di background.
         if (coverUrl.isNotEmpty()) {
             loadImageFromUrlOrBase64(coverUrl)
         }
@@ -200,17 +194,14 @@ class EditBookActivity : AppCompatActivity() {
         )
     }
 
-    // Fungsi Helper: Tampilkan gambar dari URL atau Base64 string
     private fun loadImageFromUrlOrBase64(input: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val bitmap: Bitmap? = if (input.startsWith("data:image")) {
-                    // Ini Base64
                     val base64String = input.substringAfter(",")
                     val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
                     BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
                 } else if (input.startsWith("http")) {
-                    // Ini URL Web
                     val url = URL(input)
                     BitmapFactory.decodeStream(url.openConnection().getInputStream())
                 } else {
@@ -240,19 +231,15 @@ class EditBookActivity : AppCompatActivity() {
         }
     }
 
-    // Proses Gambar dari Kamera/Galeri
     private fun displayAndProcessImage(bitmap: Bitmap?) {
         bitmap?.let {
-            // Tampilkan di UI
             ivBookCoverPreview.setImageBitmap(it)
-            // Simpan sebagai Base64
             newCoverBase64 = bitmapToBase64(it)
         }
     }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {
         val outputStream = ByteArrayOutputStream()
-        // Kompres 50% agar ringan dikirim
         bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
         val byteArray = outputStream.toByteArray()
         return "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.DEFAULT)
@@ -284,6 +271,7 @@ class EditBookActivity : AppCompatActivity() {
         val category = etCategory.text.toString().trim()
         val isbn = etIsbn.text.toString().trim()
         val publicationYearStr = etPublicationYear.text.toString().trim()
+        val stockStr = etStock.text.toString().trim() // [BARU] Ambil input stok
         val isAvailable = cbIsAvailable.isChecked
         val isBorrowed = cbIsBorrowed.isChecked
 
@@ -293,10 +281,8 @@ class EditBookActivity : AppCompatActivity() {
         }
 
         val publicationYear = publicationYearStr.toIntOrNull() ?: 0
+        val stock = stockStr.toIntOrNull() ?: 0 // [BARU] Konversi ke Int
 
-        // [LOGIKA UPDATE]
-        // Jika user memilih foto baru (newCoverBase64 != null), gunakan itu.
-        // Jika tidak, gunakan foto lama (currentBook.coverUrl).
         val finalCoverUrl = newCoverBase64 ?: currentBook!!.coverUrl
 
         val updatedBook = currentBook!!.copy(
@@ -306,7 +292,8 @@ class EditBookActivity : AppCompatActivity() {
             category = category,
             isbn = isbn,
             publicationYear = publicationYear,
-            coverUrl = finalCoverUrl, // Update di sini
+            coverUrl = finalCoverUrl,
+            stock = stock, // [BARU] Update field stock
             isAvailable = isAvailable,
             isBorrowed = isBorrowed
         )
