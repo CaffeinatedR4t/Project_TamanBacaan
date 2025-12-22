@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -36,8 +38,11 @@ class HomeFragment : Fragment() {
     // ViewModel untuk mengambil data buku dari API
     private lateinit var bookViewModel: BookViewModel
 
+    // Fitur machine learning
     private lateinit var rvRecommendations: RecyclerView
     private lateinit var recommendationAdapter: RecommendationAdapter
+    private lateinit var welcomeSection: LinearLayout
+    private lateinit var tvRecommendationTitle: TextView
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
      */
@@ -55,6 +60,10 @@ class HomeFragment : Fragment() {
      */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        welcomeSection = view.findViewById(R.id.welcomeSection)
+        tvRecommendationTitle = view.findViewById(R.id.tvRecommendationTitle)
+        rvRecommendations = view.findViewById(R.id.rvRecommendations)
 
         setupRecyclerView(view)
         setupRecommendationList(view)
@@ -92,7 +101,6 @@ class HomeFragment : Fragment() {
      */
 
     private fun setupRecommendationList(view: View) {
-        rvRecommendations = view.findViewById(R.id.rvRecommendations)
 
         // Inisialisasi Adapter dengan list kosong dan logika klik
         recommendationAdapter = RecommendationAdapter(mutableListOf()) { book ->
@@ -120,13 +128,28 @@ class HomeFragment : Fragment() {
         }
 
         bookViewModel.recommendationBooks.observe(viewLifecycleOwner) { recommendedBooks ->
-            // Pastikan data tidak null dan update adapter
             if (recommendedBooks.isNotEmpty()) {
+                // KONDISI: USER SUDAH PERNAH PINJAM (Ada Rekomendasi)
+
+                // 1. Update data adapter
                 recommendationAdapter.updateData(recommendedBooks)
+
+                // 2. Tampilkan Bagian Rekomendasi
+                tvRecommendationTitle.visibility = View.VISIBLE
                 rvRecommendations.visibility = View.VISIBLE
+
+                // 3. SEMBUNYIKAN Welcome Section
+                welcomeSection.visibility = View.GONE
+
             } else {
-                // Sembunyikan jika tidak ada rekomendasi
+                // KONDISI: USER BARU / BELUM PINJAM (Data Kosong)
+
+                // 1. Sembunyikan Bagian Rekomendasi
+                tvRecommendationTitle.visibility = View.GONE
                 rvRecommendations.visibility = View.GONE
+
+                // 2. TAMPILKAN Welcome Section
+                welcomeSection.visibility = View.VISIBLE
             }
         }
 
