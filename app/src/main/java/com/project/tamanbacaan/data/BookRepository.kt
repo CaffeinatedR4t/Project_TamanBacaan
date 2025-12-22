@@ -94,7 +94,7 @@ object BookRepository {
                 }
 
                 // 3. Gabungkan: Update status buku.
-                // Gunakan .map() untuk membuat list baru agar tidak memodifikasi iterator (menghindari error val cannot be reassigned)
+                // Gunakan .map() untuk membuat list baru agar tidak memodifikasi iterator
                 return@withContext allBooks.map { book ->
                     // Apply bookmark & local state
                     var processedBook = applyLocalState(book)
@@ -208,7 +208,6 @@ object BookRepository {
 
     fun toggleBookmarkStatus(bookId: String): Boolean {
         // Deprecated local toggle, now handled via toggleBookmark()
-        // Keeping method signature to prevent breaking changes if called elsewhere synchronously
         return true
     }
 
@@ -501,6 +500,24 @@ object BookRepository {
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching pending requests", e)
             emptyList()
+        }
+    }
+
+    // [BARU] Fungsi ini yang hilang dan menyebabkan error.
+    // Menghitung jumlah buku yang sedang dipinjam (Status = BORROWED)
+    suspend fun getBorrowedBooksCount(): Int {
+        return try {
+            val response = ApiConfig.getApiService().getAllTransactions()
+            if (response.isSuccessful) {
+                val transactions = response.body() ?: emptyList()
+                // Hitung transaksi yang statusnya 'BORROWED'
+                transactions.count { it.status == "BORROWED" }
+            } else {
+                0
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
         }
     }
 
