@@ -33,6 +33,10 @@ import com.caffeinatedr4t.tamanbacaan.viewmodels.BookManagementViewModel
 import com.caffeinatedr4t.tamanbacaan.viewmodels.EventViewModel
 import java.io.ByteArrayOutputStream
 import kotlin.jvm.java
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import java.util.regex.Pattern
 
 /**
  * Fragment untuk manajemen Buku (CRUD) oleh Admin dengan MVVM Pattern.
@@ -55,6 +59,8 @@ class BookManagementFragment : Fragment() {
     private lateinit var btnPickGallery: Button
     private lateinit var btnOpenCamera: Button
     private lateinit var btnToggleForm: ImageButton
+    private lateinit var etIsbn: EditText
+    private lateinit var btnScanIsbn: Button
     private lateinit var formContainer: View
 
     // ViewModels
@@ -83,6 +89,12 @@ class BookManagementFragment : Fragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             viewModel.loadBooks() // Refresh list via ViewModel
         }
+    }
+
+    private val scanCameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
+        bitmap?.let {
+            runTextRecognition(it)
+        } ?: Toast.makeText(context, "Gagal mengambil gambar scan", Toast.LENGTH_SHORT).show()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -121,6 +133,8 @@ class BookManagementFragment : Fragment() {
         ivBookCoverPreview = view.findViewById(R.id.ivBookCoverPreview)
         btnPickGallery = view.findViewById(R.id.btnPickGallery)
         btnOpenCamera = view.findViewById(R.id.btnOpenCamera)
+        etIsbn = view.findViewById(R.id.etIsbn)
+        btnScanIsbn = view.findViewById(R.id.btnScanIsbn)
     }
 
     private fun setupRecyclerView() {
@@ -215,6 +229,14 @@ class BookManagementFragment : Fragment() {
         btnSaveBook.setOnClickListener {
             validateAndSaveBook()
         }
+        btnScanIsbn.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                // Panggil scanLauncher (BUKAN cameraLauncher yang untuk cover)
+                scanLauncher.launch(null)
+            } else {
+                requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
     }
 
     private fun validateAndSaveBook() {
@@ -222,6 +244,7 @@ class BookManagementFragment : Fragment() {
         val author = etAuthor.text.toString().trim()
         val category = etCategory.text.toString().trim()
         val stock = etStock.text.toString().toIntOrNull() ?: 0
+        val isbnInput = etIsbn.text.toString().trim()
 
         if (title.isEmpty() || author.isEmpty()) {
             Toast.makeText(context, "Judul dan Penulis harus diisi.", Toast.LENGTH_SHORT).show()
@@ -234,7 +257,7 @@ class BookManagementFragment : Fragment() {
             category = category.ifEmpty { "Uncategorized" },
             publisher = null,
             year = null,
-            isbn = null,
+            isbn = if (isbnInput.isNotEmpty()) isbnInput else null,
             stock = stock,
             totalCopies = stock,
             description = "Deskripsi buku",
@@ -261,6 +284,7 @@ class BookManagementFragment : Fragment() {
         etAuthor.text?.clear()
         etCategory.text?.clear()
         etStock.text?.clear()
+        etIsbn.text?.clear()
         formTitle.text = "Tambah Buku Baru"
         ivBookCoverPreview.setImageResource(R.drawable.ic_book_placeholder)
         selectedCoverBase64 = null
@@ -290,6 +314,66 @@ class BookManagementFragment : Fragment() {
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    // Di dalam class BookManagementFragment
+
+    // 1. Launcher Khusus Scan ISBN (Hanya ambil Bitmap sementara, tidak disimpan ke file)
+    private val scanLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            // Jika foto berhasil diambil, langsung proses
+            runTextRecognition(bitmap)
+        } else {
+            // Jika user membatalkan kamera / gagal ambil gambar
+            Toast.makeText(context, "Batal mengambil gambar scan", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun runTextRecognition(bitmap: Bitmap) {
+        val image = InputImage.fromBitmap(bitmap, 0)
+        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+        // Ubah status tombol biar user tahu sedang proses
+        btnScanIsbn.text = "Memproses..."
+        btnScanIsbn.isEnabled = false
+
+        recognizer.process(image)
+            .addOnSuccessListener { visionText ->
+                btnScanIsbn.text = "SCAN ISBN"
+                btnScanIsbn.isEnabled = true
+
+                // Masuk ke tahap pengecekan teks
+                processIsbnResult(visionText.text)
+            }
+            .addOnFailureListener { e ->
+                btnScanIsbn.text = "SCAN ISBN"
+                btnScanIsbn.isEnabled = true
+
+                // TOAST GAGAL (Error dari ML Kit)
+                Toast.makeText(context, "Gagal memproses gambar: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun processIsbnResult(text: String) {
+        // Pola Regex untuk ISBN 10 atau 13 digit (dengan atau tanpa strip)
+        // Mencakup format: 978-1-23-456789-0 atau 9781234567890
+        val isbnPattern = Pattern.compile("\\b(?:97[89][ -]?)?(?:[0-9][ -]?){9}[0-9xX]\\b")
+        val matcher = isbnPattern.matcher(text)
+
+        if (matcher.find()) {
+            // --- SUKSES ---
+            val rawIsbn = matcher.group()
+            // Bersihkan strip (-) dan spasi agar hanya angka
+            val cleanIsbn = rawIsbn.replace("-", "").replace(" ", "")
+
+            etIsbn.setText(cleanIsbn)
+            if (cleanIsbn.length == 10 || cleanIsbn.length == 13) {
+                etIsbn.setText(cleanIsbn)
+                Toast.makeText(context, "ISBN Ditemukan: $cleanIsbn", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "ISBN tidak valid", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

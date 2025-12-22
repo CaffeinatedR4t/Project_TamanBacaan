@@ -161,6 +161,22 @@
             </LinearLayout>
 
             <Button
+                android:id="@+id/btnScanIsbn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="SCAN ISBN / TEKS BUKU"
+                android:drawableLeft="@drawable/ic_search"
+                android:backgroundTint="@color/black"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/etIsbn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="ISBN Buku (Auto-fill)"
+                android:inputType="number" />
+
+            <Button
                 android:id="@+id/btnSaveBook"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
