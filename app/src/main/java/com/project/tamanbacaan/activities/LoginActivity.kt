@@ -1,3 +1,4 @@
+// LoginActivity.kt
 package com.caffeinatedr4t.tamanbacaan.activities
 
 import android.content.Intent
@@ -8,19 +9,14 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan.api.ApiConfig
-import com.caffeinatedr4t.tamanbacaan.api.model.LoginRequest
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
-import kotlinx.coroutines.launch
+import com.caffeinatedr4t.tamanbacaan.state.LoginState
+import com.caffeinatedr4t.tamanbacaan.viewmodels.LoginViewModel
 
-/**
- * Activity untuk login pengguna dan admin dengan koneksi ke Backend API.
- * Mendukung login untuk role MEMBER dan ADMIN.
- */
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var etEmail: EditText
@@ -29,6 +25,9 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvRegister: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var sharedPrefsManager: SharedPrefsManager
+
+    // Inisialisasi ViewModel
+    private val viewModel: LoginViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,132 +40,80 @@ class LoginActivity : AppCompatActivity() {
         tvRegister = findViewById(R.id.tvRegister)
         progressBar = findViewById(R.id.progressBar)
 
-        // Initialize SharedPreferences
         sharedPrefsManager = SharedPrefsManager(this)
 
-        // --- CEK AUTO LOGIN (DIPERBAIKI) ---
-        if (sharedPrefsManager.isLoggedIn()) {
-            val user = sharedPrefsManager.getUser()
+        // 1. Cek Auto Login (Tetap di sini atau dipindah ke SplashActivity lebih baik)
+        checkAutoLogin()
 
-            // [FIX CRASH] Tambahkan '&& !user.id.isNullOrEmpty()'
-            // Ini mencegah crash jika data ID di HP ternyata kosong/null
-            if (user != null && user.isVerified && !user.id.isNullOrEmpty()) {
+        // 2. Setup Listeners
+        setupListeners()
 
-                // Set ID ke Repository agar transaksi jalan
-                BookRepository.setUserId(user.id)
+        // 3. Observe ViewModel (Bagian Penting MVVM)
+        observeViewModel()
+    }
 
-                navigateBasedOnRole(user.role)
-                return
-            } else {
-                // Jika data user tidak valid atau ID null, hapus sesi agar login ulang
-                sharedPrefsManager.clearSession()
-            }
-        }
-        // -----------------------------------
-
-        // Login button click listener
+    private fun setupListeners() {
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString()
 
-            // Validate input
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email dan Password tidak boleh kosong", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            // Call login API
-            loginUser(email, password)
+            // Panggil fungsi login di ViewModel
+            viewModel.login(email, password)
         }
 
-        // Register text click listener
         tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
-    /**
-     * Function to call login API
-     */
-    private fun loginUser(email: String, password: String) {
-        setLoading(true)
+    private fun observeViewModel() {
+        viewModel.loginState.observe(this) { state ->
+            when (state) {
+                is LoginState.Loading -> {
+                    setLoading(true)
+                }
+                is LoginState.Success -> {
+                    setLoading(false)
+                    val response = state.data
 
-        val loginRequest = LoginRequest(email, password)
+                    Toast.makeText(this, "Login Berhasil! Selamat datang ${response.user.fullName}", Toast.LENGTH_SHORT).show()
 
-        lifecycleScope.launch {
-            try {
-                val apiService = ApiConfig.getApiService()
-                val response = apiService.login(loginRequest)
+                    // Simpan sesi (Side Effect UI/Storage tetap aman di Activity)
+                    sharedPrefsManager.saveUserSession(response.user, response.token)
 
-                setLoading(false)
-
-                if (response.isSuccessful) {
-                    val loginResponse = response.body()
-
-                    if (loginResponse == null) {
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "Login gagal: response kosong",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@launch
-                    }
-
-                    // 🔒 CEK VERIFIKASI USER
-                    if (!loginResponse.user.isVerified) {
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "Akun Anda belum diverifikasi oleh admin.\nSilakan tunggu proses verifikasi.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        return@launch
-                    }
-
-                    // ✅ LOGIN SAH
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Login Berhasil! Selamat datang ${loginResponse.user.fullName}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // Simpan sesi user
-                    sharedPrefsManager.saveUserSession(
-                        loginResponse.user,
-                        loginResponse.token
-                    )
-
-                    // [BARU] Simpan ID User ke Repository (Safe Call)
-                    val userId = loginResponse.user.id
+                    // Simpan ID User ke Repository (Safe Call)
+                    val userId = response.user.id
                     if (!userId.isNullOrEmpty()) {
                         BookRepository.setUserId(userId)
                     }
 
-                    navigateBasedOnRole(loginResponse.user.role)
-
-                } else {
-                    // ❌ HTTP ERROR (401, 403, dll)
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "Gagal login: ${response.message()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    navigateBasedOnRole(response.user.role)
                 }
-
-            } catch (e: Exception) {
-                setLoading(false)
-                Toast.makeText(
-                    this@LoginActivity,
-                    "Error: ${e.message}\nPastikan backend sudah berjalan!",
-                    Toast.LENGTH_LONG
-                ).show()
-                e.printStackTrace()
+                is LoginState.Error -> {
+                    setLoading(false)
+                    Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
+                    // Opsional: Reset state agar error tidak muncul lagi saat rotasi layar
+                    viewModel.resetState()
+                }
+                is LoginState.Idle -> {
+                    setLoading(false)
+                }
             }
         }
     }
 
-    /**
-     * Navigate to appropriate screen based on user role
-     */
+    private fun checkAutoLogin() {
+        if (sharedPrefsManager.isLoggedIn()) {
+            val user = sharedPrefsManager.getUser()
+            if (user != null && user.isVerified && !user.id.isNullOrEmpty()) {
+                BookRepository.setUserId(user.id)
+                navigateBasedOnRole(user.role)
+            } else {
+                sharedPrefsManager.clearSession()
+            }
+        }
+    }
+
     private fun navigateBasedOnRole(role: String?) {
         val intent = when (role) {
             "ADMIN" -> Intent(this, AdminActivity::class.java)
@@ -180,9 +127,6 @@ class LoginActivity : AppCompatActivity() {
         finish()
     }
 
-    /**
-     * Show/hide loading indicator
-     */
     private fun setLoading(isLoading: Boolean) {
         if (isLoading) {
             progressBar.visibility = View.VISIBLE

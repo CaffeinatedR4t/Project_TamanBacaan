@@ -1,25 +1,23 @@
+// RegisterActivity.kt
 package com.caffeinatedr4t.tamanbacaan.activities
 
-import android.content. Intent
+import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
-import android.widget. ProgressBar
-import android.widget. TextView
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
-import com.caffeinatedr4t.tamanbacaan. api.ApiConfig
-import com. caffeinatedr4t.tamanbacaan.api.model. RegisterRequest
-import kotlinx.coroutines.launch
+import com.caffeinatedr4t.tamanbacaan.api.model.RegisterRequest
+import com.caffeinatedr4t.tamanbacaan.state.RegisterState
+import com.caffeinatedr4t.tamanbacaan.viewmodels.RegisterViewModel
 
-/**
- * Activity untuk registrasi anggota baru dengan koneksi ke Backend API.
- * Mendukung registrasi untuk anggota dewasa dan anak-anak.
- */
 class RegisterActivity : AppCompatActivity() {
 
     private lateinit var etFullName: EditText
@@ -32,15 +30,23 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var etPhoneNumber: EditText
     private lateinit var cbIsChild: CheckBox
     private lateinit var etParentName: EditText
-    private lateinit var btnRegister:  Button
+    private lateinit var btnRegister: Button
     private lateinit var tvLogin: TextView
-    private lateinit var progressBar:  ProgressBar
+    private lateinit var progressBar: ProgressBar
+
+    // Inisialisasi ViewModel
+    private val viewModel: RegisterViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout. activity_register)
+        setContentView(R.layout.activity_register)
 
-        // Initialize UI components
+        initViews()
+        setupListeners()
+        observeViewModel()
+    }
+
+    private fun initViews() {
         etFullName = findViewById(R.id.etFullName)
         etNik = findViewById(R.id.etNik)
         etEmail = findViewById(R.id.etEmail)
@@ -48,28 +54,27 @@ class RegisterActivity : AppCompatActivity() {
         etAddressRtRw = findViewById(R.id.etAddressRtRw)
         etAddressKelurahan = findViewById(R.id.etAddressKelurahan)
         etAddressKecamatan = findViewById(R.id.etAddressKecamatan)
-        // Add these fields to your XML layout if not exist:
-        etPhoneNumber = findViewById(R. id.etPhoneNumber)
+        etPhoneNumber = findViewById(R.id.etPhoneNumber)
         cbIsChild = findViewById(R.id.cbIsChild)
         etParentName = findViewById(R.id.etParentName)
         btnRegister = findViewById(R.id.btnRegister)
         tvLogin = findViewById(R.id.tvLogin)
-        progressBar = findViewById(R. id.progressBar) // Add to XML
+        progressBar = findViewById(R.id.progressBar)
+    }
 
+    private fun setupListeners() {
         // Show/hide parent name field based on checkbox
         cbIsChild.setOnCheckedChangeListener { _, isChecked ->
             etParentName.visibility = if (isChecked) View.VISIBLE else View.GONE
             if (!isChecked) {
-                etParentName.text. clear()
+                etParentName.text.clear()
             }
         }
 
-        // Register button click listener
         btnRegister.setOnClickListener {
-            validateAndRegister()
+            validateAndSubmit()
         }
 
-        // Login text click listener
         tvLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -77,9 +82,39 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     /**
-     * Validate input and call register API
+     * Mengamati perubahan state dari ViewModel
      */
-    private fun validateAndRegister() {
+    private fun observeViewModel() {
+        viewModel.registerState.observe(this) { state ->
+            when (state) {
+                is RegisterState.Loading -> {
+                    setLoading(true)
+                }
+                is RegisterState.Success -> {
+                    setLoading(false)
+                    Toast.makeText(this, state.message, Toast.LENGTH_LONG).show()
+
+                    // Arahkan ke Login setelah sukses
+                    val intent = Intent(this, LoginActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                is RegisterState.Error -> {
+                    setLoading(false)
+                    Toast.makeText(this, state.message, Toast.LENGTH_SHORT).show()
+                    viewModel.resetState() // Reset agar error tidak muncul berulang saat rotasi layar
+                }
+                is RegisterState.Idle -> {
+                    setLoading(false)
+                }
+            }
+        }
+    }
+
+    /**
+     * Validasi input UI dan kirim data ke ViewModel
+     */
+    private fun validateAndSubmit() {
         // Get input values
         val fullName = etFullName.text.toString().trim()
         val nik = etNik.text.toString().trim()
@@ -92,47 +127,47 @@ class RegisterActivity : AppCompatActivity() {
         val isChild = cbIsChild.isChecked
         val parentName = if (isChild) etParentName.text.toString().trim() else null
 
-        // Validate required fields
+        // Validate required fields (Validation Logic tetap di Activity untuk feedback instan UI)
         when {
             fullName.isEmpty() -> {
-                Toast.makeText(this, "Nama lengkap tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                etFullName.error = "Nama lengkap wajib diisi"
                 return
             }
             nik.length != 16 -> {
-                Toast.makeText(this, "NIK harus 16 digit", Toast.LENGTH_SHORT).show()
+                etNik.error = "NIK harus 16 digit"
                 return
             }
-            email.isEmpty() || !android.util.Patterns. EMAIL_ADDRESS.matcher(email).matches() -> {
-                Toast. makeText(this, "Email tidak valid", Toast.LENGTH_SHORT).show()
+            email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                etEmail.error = "Email tidak valid"
                 return
             }
             password.length < 6 -> {
-                Toast.makeText(this, "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+                etPassword.error = "Password minimal 6 karakter"
                 return
             }
             addressRtRw.isEmpty() -> {
-                Toast.makeText(this, "Alamat RT/RW tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                etAddressRtRw.error = "Alamat RT/RW wajib diisi"
                 return
             }
             addressKelurahan.isEmpty() -> {
-                Toast.makeText(this, "Kelurahan tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                etAddressKelurahan.error = "Kelurahan wajib diisi"
                 return
             }
             addressKecamatan.isEmpty() -> {
-                Toast.makeText(this, "Kecamatan tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                etAddressKecamatan.error = "Kecamatan wajib diisi"
                 return
             }
             phoneNumber.isEmpty() -> {
-                Toast.makeText(this, "Nomor telepon tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                etPhoneNumber.error = "Nomor telepon wajib diisi"
                 return
             }
-            isChild && parentName. isNullOrEmpty() -> {
-                Toast.makeText(this, "Nama orang tua wajib diisi untuk anak", Toast.LENGTH_SHORT).show()
+            isChild && parentName.isNullOrEmpty() -> {
+                etParentName.error = "Nama orang tua wajib diisi untuk anak"
                 return
             }
         }
 
-        // Create register request
+        // Create register request object
         val registerRequest = RegisterRequest(
             fullName = fullName,
             email = email,
@@ -146,81 +181,16 @@ class RegisterActivity : AppCompatActivity() {
             parentName = parentName
         )
 
-        // Call register API
-        registerUser(registerRequest)
+        // Delegate API call to ViewModel
+        viewModel.register(registerRequest)
     }
 
-    /**
-     * Function to call register API
-     */
-    private fun registerUser(registerRequest: RegisterRequest) {
-        // Show loading
-        setLoading(true)
-
-        // Call API using coroutine
-        lifecycleScope.launch {
-            try {
-                val apiService = ApiConfig.getApiService()
-                val response = apiService.register(registerRequest)
-
-                // Hide loading
-                setLoading(false)
-
-                if (response.isSuccessful) {
-                    val registerResponse = response.body()
-
-                    if (registerResponse?.success == true) {
-                        // Registration successful
-                        Toast.makeText(
-                            this@RegisterActivity,
-                            "Pendaftaran berhasil! Silakan login dengan akun Anda.",
-                            Toast. LENGTH_LONG
-                        ).show()
-
-                        // Navigate to login
-                        val intent = Intent(this@RegisterActivity, LoginActivity::class.java)
-                        startActivity(intent)
-                        finish()
-
-                    } else {
-                        // Registration failed
-                        Toast. makeText(
-                            this@RegisterActivity,
-                            registerResponse?.message ?: "Pendaftaran gagal",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else {
-                    // HTTP error
-                    Toast.makeText(
-                        this@RegisterActivity,
-                        "Gagal mendaftar: ${response.message()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-            } catch (e:  Exception) {
-                // Network error or other exceptions
-                setLoading(false)
-                Toast.makeText(
-                    this@RegisterActivity,
-                    "Error:  ${e.message}\nPastikan backend sudah berjalan! ",
-                    Toast.LENGTH_LONG
-                ).show()
-                e.printStackTrace()
-            }
-        }
-    }
-
-    /**
-     * Show/hide loading indicator
-     */
-    private fun setLoading(isLoading:  Boolean) {
+    private fun setLoading(isLoading: Boolean) {
         if (isLoading) {
             progressBar.visibility = View.VISIBLE
             btnRegister.isEnabled = false
         } else {
-            progressBar.visibility = View. GONE
+            progressBar.visibility = View.GONE
             btnRegister.isEnabled = true
         }
     }

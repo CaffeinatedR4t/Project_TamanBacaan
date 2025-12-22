@@ -72,6 +72,10 @@ class SearchFragment : Fragment() {
             allBooks.addAll(books)
 
             setupCategoryChips()
+            filterBooks(etSearch.text.toString())
+
+
+            setupCategoryChips()
 
             if (etSearch.text.toString().isNotEmpty()) {
                 filterBooks(etSearch.text.toString())
@@ -152,30 +156,33 @@ class SearchFragment : Fragment() {
         searchResults.clear()
         val lowerCaseQuery = query.trim().lowercase()
 
-        val fullSearchList = allBooks.filter { book ->
+        val filtered = allBooks.filter { book ->
+
+            // ✅ Jika query kosong → semua buku lolos query
             val matchesQuery = lowerCaseQuery.isEmpty() ||
                     book.title.lowercase().contains(lowerCaseQuery) ||
                     book.author.lowercase().contains(lowerCaseQuery) ||
                     book.category.lowercase().contains(lowerCaseQuery)
 
-            val matchesCategory = selectedCategory == null || book.category == selectedCategory
+            // ✅ Jika chip "Semua" → semua kategori lolos
+            val matchesCategory =
+                selectedCategory == null || book.category == selectedCategory
+
             matchesQuery && matchesCategory
         }
 
-        searchResults.addAll(fullSearchList)
+        searchResults.addAll(filtered)
 
-        if (lowerCaseQuery.isEmpty() && selectedCategory == null) {
-            tvEmptySearch.text = "Ketik judul, penulis, atau kategori untuk mencari."
-            tvEmptySearch.visibility = View.VISIBLE
-            recyclerView.visibility = View.GONE
-        } else if (fullSearchList.isEmpty()) {
-            tvEmptySearch.text = "Tidak ada hasil ditemukan."
+        if (filtered.isEmpty()) {
+            tvEmptySearch.text = "Tidak ada buku ditemukan."
             tvEmptySearch.visibility = View.VISIBLE
             recyclerView.visibility = View.GONE
         } else {
             tvEmptySearch.visibility = View.GONE
             recyclerView.visibility = View.VISIBLE
         }
+
         bookAdapter.notifyDataSetChanged()
     }
+
 }

@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan.viewmodel
+package com.caffeinatedr4t.tamanbacaan.viewmodels
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

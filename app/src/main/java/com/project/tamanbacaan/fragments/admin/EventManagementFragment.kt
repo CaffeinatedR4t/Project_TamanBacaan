@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.adapters.NotificationAdapter
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
-import com.caffeinatedr4t.tamanbacaan.viewmodel.EventViewModel
+import com.caffeinatedr4t.tamanbacaan.viewmodels.EventViewModel
 
 
 /**
