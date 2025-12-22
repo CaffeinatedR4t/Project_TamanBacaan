@@ -83,7 +83,7 @@
                         android:id="@+id/tvTotalMembers"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0"
+                        android:text=""
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/primary_blue"/>
@@ -111,7 +111,7 @@
                         android:id="@+id/tvPendingRequests"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0"
+                        android:text=""
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/warning_orange"/>
@@ -140,7 +140,7 @@
                         android:id="@+id/tvBorrowedBooks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0"
+                        android:text=""
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/error_red"/>
@@ -168,7 +168,7 @@
                         android:id="@+id/tvTotalBooks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="0"
+                        android:text=""
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="@color/success_green"/>
