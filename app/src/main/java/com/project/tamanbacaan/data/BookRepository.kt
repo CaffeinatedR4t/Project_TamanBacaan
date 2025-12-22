@@ -568,4 +568,29 @@ object BookRepository {
             emptyList()
         }
     }
+
+    suspend fun submitReview(bookId: String, rating: Double, comment: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            if (currentUserId == null) return@withContext false
+
+            // 1. Ambil Info User (untuk mendapatkan Nama)
+            val userResponse = ApiConfig.getApiService().getUserById(currentUserId!!)
+            val userName = if (userResponse.isSuccessful) userResponse.body()?.fullName ?: "Pengguna" else "Pengguna"
+
+            // 2. Buat Request Body
+            val request = com.caffeinatedr4t.tamanbacaan.api.model.ReviewRequest(
+                userId = currentUserId!!,
+                userName = userName,
+                rating = rating,
+                comment = comment
+            )
+
+            // 3. Kirim ke API
+            val response = ApiConfig.getApiService().addReview(bookId, request)
+            return@withContext response.isSuccessful
+        } catch (e: Exception) {
+            Log.e(TAG, "Error submitting review", e)
+            return@withContext false
+        }
+    }
 }

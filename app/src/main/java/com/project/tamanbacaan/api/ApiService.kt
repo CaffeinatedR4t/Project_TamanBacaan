@@ -113,4 +113,10 @@ interface ApiService {
     @PUT("users/{id}/bookmark")
     suspend fun toggleBookmark(@Path("id") id: String, @Body body: Map<String, String>): Response<Map<String, Any>>
 
+    @POST("books/{id}/review")
+    suspend fun addReview(
+        @Path("id") bookId: String,
+        @Body review: com.caffeinatedr4t.tamanbacaan.api.model.ReviewRequest
+    ): Response<Book>
+
 }

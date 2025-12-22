@@ -1,4 +1,4 @@
-package com.caffeinatedr4t.tamanbacaan. activities
+package com.caffeinatedr4t.tamanbacaan.activities
 
 import android.os.Bundle
 import android.widget.Button
@@ -23,15 +23,18 @@ import kotlinx.coroutines.launch
  */
 class BookDetailActivity : AppCompatActivity() {
 
+    // [MODIFIKASI] Simpan bookId di level class agar bisa diakses saat submit review
+    private var currentBookId: String? = null
+
     /**
      * Fungsi yang dipanggil saat Activity pertama kali dibuat.
      * Fungsi ini bertanggung jawab untuk inisialisasi layout dan pengambilan data.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout. activity_book_detail)
+        setContentView(R.layout.activity_book_detail)
 
-        findViewById<ImageButton>(R.id. btnBack).setOnClickListener {
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
             finish()
         }
 
@@ -40,27 +43,19 @@ class BookDetailActivity : AppCompatActivity() {
         supportActionBar?.title = "Detail Buku"
 
         // Mengambil ID buku yang dikirim dari activity sebelumnya melalui Intent.
-        val bookId = intent. getStringExtra(Constants.EXTRA_BOOK_ID)
+        currentBookId = intent.getStringExtra(Constants.EXTRA_BOOK_ID)
 
         // Memeriksa apakah bookId null atau tidak.  Jika null, activity akan ditutup.
-        if (bookId == null) {
-            Toast.makeText(this, "Book ID tidak ditemukan.", Toast. LENGTH_SHORT).show()
+        if (currentBookId == null) {
+            Toast.makeText(this, "Book ID tidak ditemukan.", Toast.LENGTH_SHORT).show()
             finish() // Menutup activity jika tidak ada ID buku.
             return
         }
 
-        // ✅ CHANGED: Fetch from database instead of dummy
-        lifecycleScope. launch {
-            val book = BookRepository.getBookById(bookId)
+        // [MODIFIKASI] Panggil fungsi loadBookData terpisah agar bisa direfresh
+        loadBookData()
 
-            if (book != null) {
-                displayBookDetails(book)
-                setupReviewSubmission()
-            } else {
-                Toast.makeText(this@BookDetailActivity, "Buku tidak ditemukan.", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-        }
+        setupReviewSubmission()
     }
 
     // ✅ ADD THIS FUNCTION - Handle back button click
@@ -70,17 +65,37 @@ class BookDetailActivity : AppCompatActivity() {
     }
 
     /**
+     * [BARU] Fungsi untuk memuat data buku dari Repository.
+     * Dipisahkan agar bisa dipanggil ulang setelah submit review (untuk update rating realtime).
+     */
+    private fun loadBookData() {
+        lifecycleScope.launch {
+            val book = BookRepository.getBookById(currentBookId!!)
+
+            if (book != null) {
+                displayBookDetails(book)
+            } else {
+                Toast.makeText(this@BookDetailActivity, "Buku tidak ditemukan.", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    /**
      * Fungsi untuk menampilkan semua detail buku ke komponen UI (TextView, ImageView, dll).
      * @param book Objek buku yang datanya akan ditampilkan.
      */
-    private fun displayBookDetails(book:  Book) {
+    private fun displayBookDetails(book: Book) {
         // Menetapkan data buku ke elemen-elemen UI.
-        findViewById<TextView>(R.id. detailTitle).text = book.title
+        findViewById<TextView>(R.id.detailTitle).text = book.title
         findViewById<TextView>(R.id.detailAuthor).text = book.author
+
+        // [MODIFIKASI] Tampilkan Rating dan Jumlah Review dari Database
         findViewById<TextView>(R.id.detailRating).text = book.avgRating.toString()
-        findViewById<RatingBar>(R. id.ratingBarSmall).rating = book.avgRating
+        findViewById<RatingBar>(R.id.ratingBarSmall).rating = book.avgRating
         findViewById<TextView>(R.id.detailReviewCount).text = "(${book.totalReviews} Ulasan)"
-        findViewById<TextView>(R.id. detailSinopsis).text = book.synopsis
+
+        findViewById<TextView>(R.id.detailSinopsis).text = book.synopsis
 
         // Menemukan komponen ImageView untuk cover buku.
         val bookCover: ImageView = findViewById(R.id.bookCover)
@@ -100,22 +115,43 @@ class BookDetailActivity : AppCompatActivity() {
         // Inisialisasi komponen UI untuk bagian ulasan.
         val ratingBarUser: RatingBar = findViewById(R.id.ratingBarUser)
         val etReview: EditText = findViewById(R.id.etReview)
-        val btnSubmitReview:  Button = findViewById(R.id. btnSubmitReview)
+        val btnSubmitReview: Button = findViewById(R.id.btnSubmitReview)
 
         // Menetapkan aksi yang akan dijalankan saat tombol "Submit" ditekan.
         btnSubmitReview.setOnClickListener {
             // Mengambil nilai rating dan teks ulasan dari input pengguna.
-            val userRating = ratingBarUser.rating
+            val userRating = ratingBarUser.rating.toDouble() // Convert ke Double untuk API
             val userReview = etReview.text.toString().trim()
 
-            // Validasi:  pastikan pengguna memberikan rating dan menulis ulasan.
+            // Validasi: pastikan pengguna memberikan rating dan menulis ulasan.
             if (userRating > 0 && userReview.isNotEmpty()) {
-                // Simulasi pengiriman ulasan ke backend (sesuai Req. 8).
-                Toast.makeText(this, "Ulasan berhasil dikirim!  Rating: $userRating", Toast.LENGTH_LONG).show()
 
-                // Mengosongkan kembali input setelah ulasan berhasil dikirim.
-                etReview.text. clear()
-                ratingBarUser.rating = 0f
+                // Disable tombol sementara agar tidak double click
+                btnSubmitReview.isEnabled = false
+                btnSubmitReview.text = "Mengirim..."
+
+                // [MODIFIKASI] Panggil API via Repository
+                lifecycleScope.launch {
+                    val isSuccess = BookRepository.submitReview(currentBookId!!, userRating, userReview)
+
+                    if (isSuccess) {
+                        Toast.makeText(this@BookDetailActivity, "Ulasan berhasil dikirim!", Toast.LENGTH_SHORT).show()
+
+                        // Mengosongkan kembali input setelah ulasan berhasil dikirim.
+                        etReview.text.clear()
+                        ratingBarUser.rating = 0f
+
+                        // [PENTING] Reload data buku agar Avg Rating dan Total Reviews terupdate di layar
+                        loadBookData()
+                    } else {
+                        Toast.makeText(this@BookDetailActivity, "Gagal mengirim ulasan. Cek koneksi internet.", Toast.LENGTH_SHORT).show()
+                    }
+
+                    // Enable tombol kembali
+                    btnSubmitReview.isEnabled = true
+                    btnSubmitReview.text = "Kirim Ulasan"
+                }
+
             } else {
                 // Menampilkan pesan jika input tidak valid.
                 Toast.makeText(this, "Mohon berikan rating dan tulis ulasan Anda.", Toast.LENGTH_SHORT).show()
