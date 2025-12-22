@@ -28,3 +28,8 @@ data class ApiResponse<T>(
     val token: String? = null,
     val user: User? = null
 )
+
+data class RecommendationResponse(
+    val source: String,
+    val data: List<Book>
+)

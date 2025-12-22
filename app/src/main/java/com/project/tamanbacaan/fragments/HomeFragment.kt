@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,10 +12,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
+import com.caffeinatedr4t.tamanbacaan.adapters.RecommendationAdapter
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.viewmodels.BookViewModel
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import kotlinx.coroutines.launch
 
 /**
@@ -32,6 +36,8 @@ class HomeFragment : Fragment() {
     // ViewModel untuk mengambil data buku dari API
     private lateinit var bookViewModel: BookViewModel
 
+    private lateinit var rvRecommendations: RecyclerView
+    private lateinit var recommendationAdapter: RecommendationAdapter
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
      */
@@ -51,6 +57,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupRecyclerView(view)
+        setupRecommendationList(view)
         setupViewModel()
         loadBooks()
     }
@@ -83,13 +90,44 @@ class HomeFragment : Fragment() {
     /**
      * Menyiapkan ViewModel dan observers untuk mengambil data buku dari API.
      */
+
+    private fun setupRecommendationList(view: View) {
+        rvRecommendations = view.findViewById(R.id.rvRecommendations)
+
+        // Inisialisasi Adapter dengan list kosong dan logika klik
+        recommendationAdapter = RecommendationAdapter(mutableListOf()) { book ->
+            // Logic saat item rekomendasi diklik (Buka Detail)
+            val intent = Intent(context, BookDetailActivity::class.java)
+            intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
+            startActivity(intent)
+        }
+
+        rvRecommendations.apply {
+            // Set layout manager horizontal
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            adapter = recommendationAdapter
+        }
+    }
+
     private fun setupViewModel() {
         bookViewModel = ViewModelProvider(this)[BookViewModel::class.java]
 
+        bookViewModel.fetchRecommendations()
         bookViewModel.books.observe(viewLifecycleOwner) { books ->
             booksList.clear()
             booksList.addAll(books)
             bookAdapter.notifyDataSetChanged()
+        }
+
+        bookViewModel.recommendationBooks.observe(viewLifecycleOwner) { recommendedBooks ->
+            // Pastikan data tidak null dan update adapter
+            if (recommendedBooks.isNotEmpty()) {
+                recommendationAdapter.updateData(recommendedBooks)
+                rvRecommendations.visibility = View.VISIBLE
+            } else {
+                // Sembunyikan jika tidak ada rekomendasi
+                rvRecommendations.visibility = View.GONE
+            }
         }
 
         bookViewModel.toastMessage.observe(viewLifecycleOwner) { message ->
@@ -109,6 +147,8 @@ class HomeFragment : Fragment() {
      */
     private fun loadBooks() {
         bookViewModel.fetchBooks()
+        // memfilter berdasarkan genre/penulis
+        bookViewModel.fetchRecommendations()
     }
 
     /**

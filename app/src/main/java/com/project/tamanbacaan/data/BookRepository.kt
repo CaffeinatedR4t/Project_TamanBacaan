@@ -483,4 +483,20 @@ object BookRepository {
     // --- Admin Data (Tetap) ---
     fun getTopBooks(): Map<String, Int> { return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19) }
     fun findMemberByNik(nik: String): User? { return activeMembers.find { it. nik == nik } }
+    suspend fun getRecommendations(userId: String): List<Book> = withContext(Dispatchers.IO) {
+        try {
+            val response = ApiConfig.getApiService().getRecommendations(userId)
+            if (response.isSuccessful) {
+                val books = response.body()?.data ?: emptyList()
+                // Opsional: Cek status availability/borrowed lokal juga jika perlu
+                books.forEach { applyLocalState(it) }
+                books
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching recommendations", e)
+            emptyList()
+        }
+    }
 }

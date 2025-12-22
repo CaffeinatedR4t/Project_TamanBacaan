@@ -10,6 +10,7 @@ import com.caffeinatedr4t.tamanbacaan.models.Transaction
 import com.caffeinatedr4t.tamanbacaan.models.User
 import com.caffeinatedr4t.tamanbacaan.api.model.EventResponse
 import com.caffeinatedr4t.tamanbacaan.api.model.EventRequest
+import com.caffeinatedr4t.tamanbacaan.models.RecommendationResponse
 import com.project.tamanbacaan.api.model.RegisterResponse
 import retrofit2.Response
 import retrofit2.http.*
@@ -66,6 +67,12 @@ interface ApiService {
 
     @PUT("transactions/{id}/return")
     suspend fun returnBook(@Path("id") transactionId: String): Response<Transaction>
+
+    // [TAMBAHKAN INI] Endpoint Rekomendasi
+    @GET("books/recommendations/{userId}")
+    suspend fun getRecommendations(
+        @Path("userId") userId: String
+    ): Response<RecommendationResponse>
 
     @GET("users")
     suspend fun getAllMembers(): Response<List<User>>

@@ -25,6 +25,10 @@ class BookViewModel : ViewModel() {
     private val _toastMessage = MutableLiveData<String>()
     val toastMessage: LiveData<String> = _toastMessage
 
+    // Inisiasi fitur machine learning
+    private val _recommendationBooks = MutableLiveData<List<Book>>()
+    val recommendationBooks: LiveData<List<Book>> = _recommendationBooks
+
     // Ambil buku + status transaksi user
     fun fetchBooks() {
         viewModelScope.launch {
@@ -64,6 +68,21 @@ class BookViewModel : ViewModel() {
                 _toastMessage.value = "Error: ${e.message}"
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun fetchRecommendations() {
+        viewModelScope.launch {
+            // Ambil ID user yang sedang login dari Repository
+            val userId = BookRepository.currentUserId
+            if (userId != null) {
+                try {
+                    val books = BookRepository.getRecommendations(userId)
+                    _recommendationBooks.value = books
+                } catch (e: Exception) {
+                    // Handle error silent
+                }
             }
         }
     }
