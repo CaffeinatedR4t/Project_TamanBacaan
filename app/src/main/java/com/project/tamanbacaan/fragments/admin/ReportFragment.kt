@@ -64,17 +64,23 @@ class ReportFragment : Fragment() {
      */
     private fun loadActivityStats() {
         lifecycleScope.launch {
-            // Ambil data dari repository
+            // 1. Total Anggota
             val totalMembers = BookRepository.getAllMembers().size
-            val pendingRequests = BookRepository.getPendingRequests().size
+
+            // 2. Pending Requests (Gunakan fetchPendingRequests untuk data realtime dari API)
+            val pendingRequests = BookRepository.fetchPendingRequests().size
+
+            // 3. [UPDATED] Buku Dipinjam - Ambil dari Transaksi (API)
+            val borrowedBooksCount = BookRepository.getBorrowedBooksCount()
+
+            // 4. Total Buku
             val allBooks = BookRepository.getAllBooks()
-            val borrowedBooks = allBooks.count { it.isBorrowed }
             val totalBooks = allBooks.size
 
             // Set teks ke TextViews
             tvTotalMembers.text = totalMembers.toString()
             tvPendingRequests.text = pendingRequests.toString()
-            tvBorrowedBooks.text = borrowedBooks.toString()
+            tvBorrowedBooks.text = borrowedBooksCount.toString() // Gunakan count dari transaksi
             tvTotalBooks.text = totalBooks.toString()
         }
     }
