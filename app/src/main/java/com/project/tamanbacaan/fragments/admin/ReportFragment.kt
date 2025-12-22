@@ -12,143 +12,155 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.models.Book
 import kotlinx.coroutines.launch
 
 /**
  * Fragment untuk menampilkan Laporan dan Statistik (Reports) TBM bagi Admin.
- * Menampilkan statistik kunci seperti jumlah anggota, permintaan pinjaman, buku dipinjam, dan buku terpopuler.
  */
 class ReportFragment : Fragment() {
 
-    // TextViews untuk statistik aktivitas TBM
-    private lateinit var tvTotalMembers: TextView // Jumlah total anggota aktif
-    private lateinit var tvPendingRequests: TextView // Jumlah permintaan pinjaman yang tertunda
-    private lateinit var tvBorrowedBooks: TextView // Jumlah total buku yang sedang dipinjam
-    private lateinit var tvTotalBooks: TextView // Jumlah total koleksi buku
+    private lateinit var tvTotalMembers: TextView
+    private lateinit var tvPendingRequests: TextView
+    private lateinit var tvBorrowedBooks: TextView
+    private lateinit var tvTotalBooks: TextView
+    private lateinit var containerTopBooks: LinearLayout // Container untuk grafik
 
-
-    /**
-     * Membuat dan mengembalikan hierarki tampilan fragmen.
-     * Menggunakan layout `fragment_admin_report`.
-     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_admin_report, container, false)
     }
 
-    /**
-     * Dipanggil setelah `onCreateView()`.
-     * Menginisialisasi View dan memuat data statistik.
-     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Inisialisasi container untuk Top Books
-        val container = view.findViewById<LinearLayout>(R.id.containerTopBooks)
-        // Menampilkan visualisasi buku terpopuler
-        displayTopBooks(container)
+        // Init Container Grafik
+        containerTopBooks = view.findViewById(R.id.containerTopBooks)
 
-        // Inisialisasi TextViews untuk statistik TBM
+        // Init TextViews Statistik
         tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
         tvPendingRequests = view.findViewById(R.id.tvPendingRequests)
         tvBorrowedBooks = view.findViewById(R.id.tvBorrowedBooks)
         tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
 
-        // Muat data statistik aktivitas
+        // Muat semua data
         loadActivityStats()
     }
 
-    /**
-     * Mengambil data statistik aktivitas TBM (Anggota, Pinjaman, Request) dari BookRepository dan menampilkannya di UI.
-     */
     private fun loadActivityStats() {
         lifecycleScope.launch {
-            // 1. Total Anggota
-            val totalMembers = BookRepository.getAllMembers().size
-
-            // 2. Pending Requests (Gunakan fetchPendingRequests untuk data realtime dari API)
-            val pendingRequests = BookRepository.fetchPendingRequests().size
-
-            // 3. [UPDATED] Buku Dipinjam - Ambil dari Transaksi (API)
+            // 1. Ambil semua data yang diperlukan
+            val allMembers = BookRepository.getAllMembers()
+            val pendingRequests = BookRepository.fetchPendingRequests() // Gunakan fetch live dari API
             val borrowedBooksCount = BookRepository.getBorrowedBooksCount()
-
-            // 4. Total Buku
             val allBooks = BookRepository.getAllBooks()
-            val totalBooks = allBooks.size
 
-            // Set teks ke TextViews
-            tvTotalMembers.text = totalMembers.toString()
-            tvPendingRequests.text = pendingRequests.toString()
-            tvBorrowedBooks.text = borrowedBooksCount.toString() // Gunakan count dari transaksi
-            tvTotalBooks.text = totalBooks.toString()
+            // 2. Update UI Statistik Atas
+            if (isAdded) {
+                tvTotalMembers.text = allMembers.size.toString()
+                tvPendingRequests.text = pendingRequests.size.toString()
+                tvBorrowedBooks.text = borrowedBooksCount.toString()
+                tvTotalBooks.text = allBooks.size.toString()
+
+                // 3. Update Grafik Buku Terpopuler (Top 5)
+                // Logika: Urutkan berdasarkan Total Reviews terbanyak, lalu Avg Rating tertinggi
+                val topBooks = allBooks
+                    .sortedWith(compareByDescending<Book> { it.totalReviews }
+                        .thenByDescending { it.avgRating })
+                    .take(5)
+
+                displayTopBooks(topBooks)
+            }
         }
     }
 
     /**
-     * Mengambil daftar buku terpopuler dan menampilkan visualisasi bar (grafik batang sederhana) di LinearLayout.
-     * @param container LinearLayout tempat bar visualisasi akan ditambahkan.
+     * Menampilkan visualisasi bar chart berdasarkan data buku asli.
      */
-    private fun displayTopBooks(container: LinearLayout) {
-        // Mengambil dan mengurutkan buku terpopuler (Map<Judul, JumlahPinjaman>)
-        val topBooks = BookRepository.getTopBooks().entries.sortedByDescending { it.value }
-        // Menentukan jumlah pinjaman maksimum untuk skala visualisasi
-        val maxCount = topBooks.firstOrNull()?.value ?: 1
+    private fun displayTopBooks(books: List<Book>) {
+        containerTopBooks.removeAllViews() // Bersihkan view lama
 
-        topBooks.forEach { (title, count) ->
-            // Container horizontal untuk satu baris (Judul + Bar + Jumlah)
+        if (books.isEmpty()) {
+            val emptyText = TextView(context).apply {
+                text = "Belum ada data ulasan buku."
+                setTextColor(Color.GRAY)
+                setPadding(0, 16, 0, 0)
+            }
+            containerTopBooks.addView(emptyText)
+            return
+        }
+
+        // Tentukan nilai maksimum untuk skala bar (gunakan totalReviews tertinggi)
+        // Tambahkan safety check agar tidak membagi dengan 0
+        val maxMetric = books.firstOrNull()?.totalReviews?.toFloat()?.takeIf { it > 0 } ?: 1f
+
+        books.forEach { book ->
+            // Container per baris
             val barContainer = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { bottomMargin = 8 }
+                ).apply { bottomMargin = 16 } // Beri jarak antar baris
+                gravity = android.view.Gravity.CENTER_VERTICAL
             }
 
-            // Text Judul Buku (menggunakan 40% lebar)
+            // 1. Judul Buku (35% lebar)
             val titleView = TextView(context).apply {
-                text = title
-                width = 0
+                text = book.title
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
                 layoutParams = LinearLayout.LayoutParams(
                     0,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    0.4f // 40% lebar
-                ).apply {
-                    setMargins(16, 4, 0, 4)
-                }
+                    0.35f
+                ).apply { marginEnd = 8 }
                 setTextColor(Color.parseColor("#212121"))
+                textSize = 12f
             }
             barContainer.addView(titleView)
 
-            // Bar Visualisasi (menggunakan sisa lebar, diskalakan dengan maxCount)
-            val barWidthWeight = count.toFloat() / maxCount.toFloat() * 0.6f
+            // 2. Bar Visualisasi (Flexible width)
+            // Hitung persentase lebar berdasarkan totalReviews
+            val reviewCount = book.totalReviews
+            val barWeight = (reviewCount / maxMetric) * 0.45f // Max 45% lebar layar
+
+            // Minimal bar tetap terlihat meski review sedikit (0.01f)
+            val finalWeight = if (barWeight < 0.01f) 0.01f else barWeight
+
             val barView = View(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     0,
                     24, // Tinggi bar
-                    barWidthWeight // Berat untuk menentukan lebar relatif
-                ).apply {
-                    setMargins(16, 4, 0, 4)
-                }
-                setBackgroundColor(resources.getColor(R.color.primary_blue))
+                    finalWeight
+                ).apply { marginEnd = 8 }
+
+                // Warna bar beda dikit jika review 0
+                setBackgroundColor(
+                    if (reviewCount > 0) resources.getColor(R.color.primary_blue)
+                    else Color.LTGRAY
+                )
             }
             barContainer.addView(barView)
 
-            // Jumlah (Pinjaman)
-            val countView = TextView(context).apply {
-                text = count.toString()
+            // 3. Info Statistik (Rating & Review)
+            // Format: "4.5★ (10)"
+            val statsText = "${book.avgRating}★ (${book.totalReviews})"
+
+            val statsView = TextView(context).apply {
+                text = statsText
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    setMargins(8, 4, 0, 4)
-                }
+                )
                 setTextColor(resources.getColor(R.color.primary_blue_dark))
+                textSize = 12f
                 setTypeface(null, Typeface.BOLD)
             }
-            barContainer.addView(countView)
+            barContainer.addView(statsView)
 
-            container.addView(barContainer)
+            containerTopBooks.addView(barContainer)
         }
     }
 }

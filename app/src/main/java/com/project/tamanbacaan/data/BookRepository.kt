@@ -545,11 +545,6 @@ object BookRepository {
         currentUserId = id
     }
 
-    // --- Admin Data (Tetap) ---
-    fun getTopBooks(): Map<String, Int> {
-        return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19)
-    }
-
     fun findMemberByNik(nik: String): User? {
         return activeMembers.find { it.nik == nik }
     }
