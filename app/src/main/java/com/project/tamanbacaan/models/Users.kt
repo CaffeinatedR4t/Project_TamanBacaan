@@ -3,7 +3,6 @@ package com.caffeinatedr4t.tamanbacaan.models
 import com.google.gson.annotations.SerializedName
 
 data class User(
-    // [PERBAIKAN] Tambahkan alternate = ["id"] agar bisa membaca 'id' dari login response
     @SerializedName("_id", alternate = ["id"])
     val id: String = "",
 

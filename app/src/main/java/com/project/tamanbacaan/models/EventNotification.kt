@@ -13,7 +13,6 @@ data class EventNotification(
     @SerializedName("createdAt")
     val date: String,
 
-    // ADD THESE NEW FIELDS FROM BACKEND
     val createdBy: String = "",
     val isActive: Boolean = true
 )

@@ -23,7 +23,6 @@ import java.util.Locale
  */
 class ReportFragment : Fragment() {
 
-    // 1. [UBAH] Gunakan nama variabel tvReportDate
     private lateinit var tvReportDate: TextView
 
     private lateinit var tvTotalMembers: TextView
@@ -41,13 +40,10 @@ class ReportFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Init Container Grafik
         containerTopBooks = view.findViewById(R.id.containerTopBooks)
 
-        // 2. [UBAH] Hubungkan dengan ID R.id.tvReportDate yang ada di XML
         tvReportDate = view.findViewById(R.id.tvReportDate)
 
-        // Init TextViews Statistik
         tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
         tvPendingRequests = view.findViewById(R.id.tvPendingRequests)
         tvBorrowedBooks = view.findViewById(R.id.tvBorrowedBooks)
@@ -62,11 +58,9 @@ class ReportFragment : Fragment() {
 
     private fun displayReportDate() {
         try {
-            // Format: "Desember 2025"
             val dateFormat = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
             val currentMonthYear = dateFormat.format(Date())
 
-            // Set text ke TextView tanggal
             tvReportDate.text = "Bulan: $currentMonthYear"
 
         } catch (e: Exception) {
@@ -77,20 +71,17 @@ class ReportFragment : Fragment() {
 
     private fun loadActivityStats() {
         lifecycleScope.launch {
-            // 1. Ambil semua data yang diperlukan
             val allMembers = BookRepository.getAllMembers()
             val pendingRequests = BookRepository.fetchPendingRequests()
             val borrowedBooksCount = BookRepository.getBorrowedBooksCount()
             val allBooks = BookRepository.getAllBooks()
 
-            // 2. Update UI Statistik Atas
             if (isAdded) {
                 tvTotalMembers.text = allMembers.size.toString()
                 tvPendingRequests.text = pendingRequests.size.toString()
                 tvBorrowedBooks.text = borrowedBooksCount.toString()
                 tvTotalBooks.text = allBooks.size.toString()
 
-                // 3. Update Grafik Buku Terpopuler (Top 5)
                 val topBooks = allBooks
                     .sortedWith(compareByDescending<Book> { it.totalReviews }
                         .thenByDescending { it.avgRating })
@@ -126,7 +117,6 @@ class ReportFragment : Fragment() {
                 gravity = android.view.Gravity.CENTER_VERTICAL
             }
 
-            // Judul Buku
             val titleView = TextView(context).apply {
                 text = book.title
                 maxLines = 1
@@ -141,7 +131,6 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(titleView)
 
-            // Bar Grafik
             val reviewCount = book.totalReviews
             val barWeight = (reviewCount / maxMetric) * 0.45f
             val finalWeight = if (barWeight < 0.01f) 0.01f else barWeight
@@ -160,7 +149,6 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(barView)
 
-            // Info Angka
             val statsText = "${book.avgRating}★ (${book.totalReviews})"
             val statsView = TextView(context).apply {
                 text = statsText

@@ -68,7 +68,6 @@ interface ApiService {
     @PUT("transactions/{id}/return")
     suspend fun returnBook(@Path("id") transactionId: String): Response<Transaction>
 
-    // [TAMBAHKAN INI] Endpoint Rekomendasi
     @GET("books/recommendations/{userId}")
     suspend fun getRecommendations(
         @Path("userId") userId: String
@@ -83,11 +82,9 @@ interface ApiService {
     @DELETE("users/{id}")
     suspend fun deleteUser(@Path("id") id: String): Response<Unit>
 
-    // [BARU] Endpoint untuk Cek Status User (Force Logout)
     @GET("users/{id}")
     suspend fun getUserById(@Path("id") id: String): Response<User>
 
-    // [BARU] Ambil profil user yang sedang login (butuh Token)
     @GET("auth/me")
     suspend fun getProfile(@Header("Authorization") token: String): Response<LoginResponse>
 
@@ -97,15 +94,12 @@ interface ApiService {
         @Body request: UpdateProfileRequest
     ): Response<LoginResponse>
 
-    // [TAMBAHKAN INI] Untuk Admin mengambil semua transaksi
     @GET("transactions")
     suspend fun getAllTransactions(): Response<List<Transaction>>
 
-    // [TAMBAHKAN INI] Endpoint Approve (Setuju)
     @PUT("transactions/{id}/approve")
     suspend fun approveTransaction(@Path("id") id: String): Response<Transaction>
 
-    // [TAMBAHKAN INI] Endpoint Reject (Tolak)
     @PUT("transactions/{id}/reject")
     suspend fun rejectTransaction(@Path("id") id: String): Response<Transaction>
 

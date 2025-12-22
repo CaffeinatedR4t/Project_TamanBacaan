@@ -40,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     private fun checkAccountStatus() {
         val sharedPrefsManager = SharedPrefsManager(this)
 
-        // [FIX] Gunakan getUser()?.id karena getUserId() kadang mengembalikan null jika tidak disimpan terpisah
         val userId = sharedPrefsManager.getUser()?.id
 
         if (!userId.isNullOrEmpty()) {

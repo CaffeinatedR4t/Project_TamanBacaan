@@ -6,8 +6,6 @@ data class Transaction(
     @SerializedName("_id")
     val id: String? = null,
 
-    // [PENTING] Ubah userId dan bookId menjadi Any
-    // Agar bisa menampung String (saat POST) atau Objek Map (saat GET populated)
     val userId: Any,
     val bookId: Any,
 

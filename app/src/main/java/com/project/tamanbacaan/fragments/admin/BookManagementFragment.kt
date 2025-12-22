@@ -356,15 +356,12 @@ class BookManagementFragment : Fragment() {
     }
 
     private fun processIsbnResult(text: String) {
-        // Pola Regex untuk ISBN 10 atau 13 digit (dengan atau tanpa strip)
-        // Mencakup format: 978-1-23-456789-0 atau 9781234567890
+
         val isbnPattern = Pattern.compile("\\b(?:97[89][ -]?)?(?:[0-9][ -]?){9}[0-9xX]\\b")
         val matcher = isbnPattern.matcher(text)
 
         if (matcher.find()) {
-            // --- SUKSES ---
             val rawIsbn = matcher.group()
-            // Bersihkan strip (-) dan spasi agar hanya angka
             val cleanIsbn = rawIsbn.replace("-", "").replace(" ", "")
 
             etIsbn.setText(cleanIsbn)

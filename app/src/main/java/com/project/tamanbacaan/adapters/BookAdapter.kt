@@ -17,11 +17,10 @@ import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
 
-// [UBAH] Tambahkan callback 'onBookmarkClick' di constructor
 class BookAdapter(
     private val books: List<Book>,
     private val onActionClick: (Book) -> Unit,
-    private val onBookmarkClick: (Book) -> Unit = {} // [BARU] Default empty biar aman jika tidak dipassing
+    private val onBookmarkClick: (Book) -> Unit = {}
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {

@@ -17,11 +17,8 @@ data class Book(
     var isAvailable: Boolean = true,
     var stock: Int = 0,
 
-    // [PENTING] Tambahkan ini untuk status Transaksi User
-    // Nilainya nanti diisi: "PENDING", "BORROWED", "RETURNED", atau null
     var status: String? = null,
 
-    // Field lain (tetap biarkan seperti adanya)
     var isBookmarked: Boolean = false,
     var isBorrowed: Boolean = false,
     val isbn: String = "",
@@ -36,7 +33,7 @@ data class Book(
     val totalCopies: Int = 0,
     val createdAt: String = ""
 ) {
-    // Helper untuk Adapter
+
     fun getAvailabilityStatus(): String {
         return when (status) {
             "PENDING" -> "Menunggu Persetujuan"

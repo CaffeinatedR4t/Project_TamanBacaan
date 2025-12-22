@@ -84,7 +84,6 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        // [FIX] Menggunakan Named Arguments
         bookAdapter = BookAdapter(
             books = searchResults,
             onActionClick = { book ->

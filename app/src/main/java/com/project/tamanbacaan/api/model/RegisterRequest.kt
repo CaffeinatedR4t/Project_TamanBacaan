@@ -18,7 +18,6 @@ data class RegisterRequest(
     @field:SerializedName("addressRtRw")
     val addressRtRw: String,
 
-    // [BARU] Tambahkan Phone Number
     @field:SerializedName("phoneNumber")
     val phoneNumber: String,
 

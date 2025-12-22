@@ -12,7 +12,6 @@ object NotificationHelper {
     private const val CHANNEL_NAME = "Notifikasi Utama Taman Bacaan"
 
     fun createNotificationChannel(context: Context) {
-        // Harus dijalankan di API 26+ (Oreo)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
@@ -35,7 +34,7 @@ object NotificationHelper {
             .setSmallIcon(R.drawable.ic_notifications)
             .setContentTitle(title)
             .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message)) // Teks panjang
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
 
