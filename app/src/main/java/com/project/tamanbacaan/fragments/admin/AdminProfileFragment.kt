@@ -12,7 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope // Tambahkan import ini
+import androidx.lifecycle.lifecycleScope
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.LoginActivity
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
@@ -22,7 +22,7 @@ import com.caffeinatedr4t.tamanbacaan.viewmodels.profile.ProfileViewModel
 import com.google.android.material.textfield.TextInputEditText
 import com.project.tamanbacaan.viewmodels.profile.ProfileState
 import com.project.tamanbacaan.viewmodels.profile.ProfileViewModelFactory
-import kotlinx.coroutines.launch // Tambahkan import ini
+import kotlinx.coroutines.launch
 
 class AdminProfileFragment : Fragment() {
 
@@ -93,15 +93,19 @@ class AdminProfileFragment : Fragment() {
     private fun loadStatistics() {
         lifecycleScope.launch {
             try {
-                // Ambil data buku dan anggota dari server
+                // 1. Ambil data buku untuk total koleksi
                 val allBooks = BookRepository.getAllBooks()
+
+                // 2. Ambil data anggota
                 val allMembers = BookRepository.getAllMembers()
 
-                // Hitung statistik
+                // Hitung statistik dasar
                 val totalBooks = allBooks.size
                 val totalMembers = allMembers.size
-                // Menghitung buku yang sedang dipinjam (status isBorrowed = true)
-                val activeLoans = allBooks.count { it.isBorrowed }
+
+                // 3. [UPDATED] Ambil jumlah buku yang sedang dipinjam langsung dari data Transaksi
+                // Menggunakan fungsi yang sama dengan ReportFragment agar data konsisten
+                val activeLoans = BookRepository.getBorrowedBooksCount()
 
                 // Update UI (Pastikan fragment masih terpasang)
                 if (isAdded) {
@@ -111,7 +115,7 @@ class AdminProfileFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Jika gagal, biarkan angka default (0) atau tampilkan error log
+                // Jika gagal, biarkan angka default (0)
             }
         }
     }
