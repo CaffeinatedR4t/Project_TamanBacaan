@@ -37,7 +37,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Bulan: Oktober 2025"
+                    android:text="Bulan: Desember 2025"
                     android:textColor="@color/text_secondary"
                     android:layout_marginBottom="8dp"/>
 

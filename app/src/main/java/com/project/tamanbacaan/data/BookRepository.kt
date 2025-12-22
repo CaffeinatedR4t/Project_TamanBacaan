@@ -593,4 +593,46 @@ object BookRepository {
             return@withContext false
         }
     }
+
+    suspend fun returnActiveBook(bookId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val userId = currentUserId ?: return@withContext false
+
+            // 1. Ambil daftar transaksi user terbaru
+            val responseTx = ApiConfig.getApiService().getUserTransactions(userId)
+            if (!responseTx.isSuccessful) return@withContext false
+
+            val transactions = responseTx.body() ?: emptyList()
+
+            // 2. Cari transaksi yang statusnya 'BORROWED' untuk buku yang dipilih
+            val activeTx = transactions.find { tx ->
+                // Parsing ID karena bisa berupa String atau Object (jika dipopulate)
+                val rawId = tx.bookId
+                val txBookId = if (rawId is Map<*, *>) rawId["_id"] as? String else rawId.toString()
+
+                txBookId == bookId && tx.status == "BORROWED"
+            }
+
+            if (activeTx == null || activeTx.id == null) {
+                Log.e(TAG, "Tidak ditemukan transaksi aktif untuk buku ini")
+                return@withContext false
+            }
+
+            // 3. Panggil API Return
+            val responseReturn = ApiConfig.getApiService().returnBook(activeTx.id)
+
+            if (responseReturn.isSuccessful) {
+                // Update state lokal agar UI langsung berubah (opsional, agar responsif)
+                val state = localBookState.getOrPut(bookId) { LocalBookState() }
+                state.isBorrowed = false
+                state.isAvailable = true
+                return@withContext true
+            } else {
+                return@withContext false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error returning book", e)
+            return@withContext false
+        }
+    }
 }
