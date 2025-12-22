@@ -162,12 +162,19 @@ object BookRepository {
 
     suspend fun requestBorrowBook(book: Book, userId: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            // [FIX] Jangan kirim borrowDate (set null), biar Backend yang set tanggal sekarang
+            // [UBAH BAGIAN INI] Hitung Due Date (Contoh: 14 hari dari sekarang)
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, 14) // Tambah 14 hari
+
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val dynamicDueDate = dateFormat.format(calendar.time)
+
+            // Buat objek transaksi dengan tanggal dinamis
             val transaction = Transaction(
                 userId = userId,
                 bookId = book.id,
-                borrowDate = null,
-                dueDate = "2025-12-31", // Logic due date bisa diperbaiki nanti
+                borrowDate = null, // Biarkan null, backend biasanya set tanggal pinjam = NOW
+                dueDate = dynamicDueDate, // Gunakan tanggal yang baru dihitung
                 status = "PENDING"
             )
 

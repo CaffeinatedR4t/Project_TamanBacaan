@@ -14,17 +14,23 @@ import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Fragment untuk menampilkan Laporan dan Statistik (Reports) TBM bagi Admin.
  */
 class ReportFragment : Fragment() {
 
+    // 1. [UBAH] Gunakan nama variabel tvReportDate
+    private lateinit var tvReportDate: TextView
+
     private lateinit var tvTotalMembers: TextView
     private lateinit var tvPendingRequests: TextView
     private lateinit var tvBorrowedBooks: TextView
     private lateinit var tvTotalBooks: TextView
-    private lateinit var containerTopBooks: LinearLayout // Container untuk grafik
+    private lateinit var containerTopBooks: LinearLayout
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -38,21 +44,42 @@ class ReportFragment : Fragment() {
         // Init Container Grafik
         containerTopBooks = view.findViewById(R.id.containerTopBooks)
 
+        // 2. [UBAH] Hubungkan dengan ID R.id.tvReportDate yang ada di XML
+        tvReportDate = view.findViewById(R.id.tvReportDate)
+
         // Init TextViews Statistik
         tvTotalMembers = view.findViewById(R.id.tvTotalMembers)
         tvPendingRequests = view.findViewById(R.id.tvPendingRequests)
         tvBorrowedBooks = view.findViewById(R.id.tvBorrowedBooks)
         tvTotalBooks = view.findViewById(R.id.tvTotalBooks)
 
-        // Muat semua data
+        // Set Tanggal Laporan
+        displayReportDate()
+
+        // Muat semua data statistik
         loadActivityStats()
+    }
+
+    private fun displayReportDate() {
+        try {
+            // Format: "Desember 2025"
+            val dateFormat = SimpleDateFormat("MMMM yyyy", Locale("id", "ID"))
+            val currentMonthYear = dateFormat.format(Date())
+
+            // Set text ke TextView tanggal
+            tvReportDate.text = "Bulan: $currentMonthYear"
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            tvReportDate.text = "Laporan Bulanan"
+        }
     }
 
     private fun loadActivityStats() {
         lifecycleScope.launch {
             // 1. Ambil semua data yang diperlukan
             val allMembers = BookRepository.getAllMembers()
-            val pendingRequests = BookRepository.fetchPendingRequests() // Gunakan fetch live dari API
+            val pendingRequests = BookRepository.fetchPendingRequests()
             val borrowedBooksCount = BookRepository.getBorrowedBooksCount()
             val allBooks = BookRepository.getAllBooks()
 
@@ -64,7 +91,6 @@ class ReportFragment : Fragment() {
                 tvTotalBooks.text = allBooks.size.toString()
 
                 // 3. Update Grafik Buku Terpopuler (Top 5)
-                // Logika: Urutkan berdasarkan Total Reviews terbanyak, lalu Avg Rating tertinggi
                 val topBooks = allBooks
                     .sortedWith(compareByDescending<Book> { it.totalReviews }
                         .thenByDescending { it.avgRating })
@@ -75,11 +101,8 @@ class ReportFragment : Fragment() {
         }
     }
 
-    /**
-     * Menampilkan visualisasi bar chart berdasarkan data buku asli.
-     */
     private fun displayTopBooks(books: List<Book>) {
-        containerTopBooks.removeAllViews() // Bersihkan view lama
+        containerTopBooks.removeAllViews()
 
         if (books.isEmpty()) {
             val emptyText = TextView(context).apply {
@@ -91,22 +114,19 @@ class ReportFragment : Fragment() {
             return
         }
 
-        // Tentukan nilai maksimum untuk skala bar (gunakan totalReviews tertinggi)
-        // Tambahkan safety check agar tidak membagi dengan 0
         val maxMetric = books.firstOrNull()?.totalReviews?.toFloat()?.takeIf { it > 0 } ?: 1f
 
         books.forEach { book ->
-            // Container per baris
             val barContainer = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { bottomMargin = 16 } // Beri jarak antar baris
+                ).apply { bottomMargin = 16 }
                 gravity = android.view.Gravity.CENTER_VERTICAL
             }
 
-            // 1. Judul Buku (35% lebar)
+            // Judul Buku
             val titleView = TextView(context).apply {
                 text = book.title
                 maxLines = 1
@@ -121,22 +141,18 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(titleView)
 
-            // 2. Bar Visualisasi (Flexible width)
-            // Hitung persentase lebar berdasarkan totalReviews
+            // Bar Grafik
             val reviewCount = book.totalReviews
-            val barWeight = (reviewCount / maxMetric) * 0.45f // Max 45% lebar layar
-
-            // Minimal bar tetap terlihat meski review sedikit (0.01f)
+            val barWeight = (reviewCount / maxMetric) * 0.45f
             val finalWeight = if (barWeight < 0.01f) 0.01f else barWeight
 
             val barView = View(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     0,
-                    24, // Tinggi bar
+                    24,
                     finalWeight
                 ).apply { marginEnd = 8 }
 
-                // Warna bar beda dikit jika review 0
                 setBackgroundColor(
                     if (reviewCount > 0) resources.getColor(R.color.primary_blue)
                     else Color.LTGRAY
@@ -144,10 +160,8 @@ class ReportFragment : Fragment() {
             }
             barContainer.addView(barView)
 
-            // 3. Info Statistik (Rating & Review)
-            // Format: "4.5★ (10)"
+            // Info Angka
             val statsText = "${book.avgRating}★ (${book.totalReviews})"
-
             val statsView = TextView(context).apply {
                 text = statsText
                 layoutParams = LinearLayout.LayoutParams(
