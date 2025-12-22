@@ -10,24 +10,26 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.text.SimpleDateFormat
-import java. util.Calendar
+import java.util.Calendar
 import com.caffeinatedr4t.tamanbacaan.models.Transaction
-
 
 /**
  * Repository yang mengambil data dari MongoDB API backend.
- * Menggunakan hybrid pattern:  fetch dari API, maintain local state untuk bookmarks/borrowed.
+ * Menggunakan hybrid pattern: fetch dari API, maintain local state untuk bookmarks/borrowed.
  */
 object BookRepository {
     private const val TAG = "BookRepository"
 
     private val eventNotifications = mutableListOf<EventNotification>()
     private val nextEventId = AtomicLong(3) // Lanjutkan dari ID 2
+
     // Local state untuk bookmarks dan borrowed status
     private val localBookState = mutableMapOf<String, LocalBookState>()
     private val pendingRequests = mutableListOf<PendingRequest>()
-    // registrationRequests REMOVED (Diganti dengan aktivasi instan)
     private val activeMembers = mutableListOf<User>()
+
+    // [BARU] Cache untuk bookmark agar UI responsif & sinkron dengan User Profile
+    private val cachedBookmarks = mutableSetOf<String>()
 
     private val nextRequestId = AtomicLong(3) // Lanjutkan dari ID 2
     private val nextUserId = AtomicLong(103) // Lanjutkan ID anggota setelah M102
@@ -38,22 +40,33 @@ object BookRepository {
         var isBookmarked: Boolean = false,
         var isBorrowed: Boolean = false,
         var isAvailable: Boolean = true,
-        var borrowedDate: String?  = null,
+        var borrowedDate: String? = null,
         var dueDate: String? = null
     )
 
     /**
-     * Apply local state overlay to a book from API
+     * Apply local state overlay to a book from API.
+     * Menggunakan .copy() untuk menghindari error immutability.
      */
-    private fun applyLocalState(book:  Book): Book {
-        val state = localBookState[book.id] ?: LocalBookState()
-        return book.copy(
-            isBookmarked = state.isBookmarked,
-            isBorrowed = state.isBorrowed,
-            isAvailable = state.isAvailable,
-            borrowedDate = state.borrowedDate,
-            dueDate = state.dueDate
-        )
+    private fun applyLocalState(book: Book): Book {
+        val state = localBookState[book.id]
+
+        // Priority: Jika ada di cachedBookmarks (dari User Profile), maka true.
+        val isBookmarked = cachedBookmarks.contains(book.id)
+
+        // Buat object baru dengan status bookmark yang benar
+        var newBook = book.copy(isBookmarked = isBookmarked)
+
+        // Overlay dengan state lokal lainnya jika ada
+        if (state != null) {
+            newBook = newBook.copy(
+                isBorrowed = state.isBorrowed,
+                isAvailable = state.isAvailable,
+                borrowedDate = state.borrowedDate,
+                dueDate = state.dueDate
+            )
+        }
+        return newBook
     }
 
     suspend fun getAllBooksWithStatus(): List<Book> = withContext(Dispatchers.IO) {
@@ -62,37 +75,88 @@ object BookRepository {
             val booksResponse = ApiConfig.getApiService().getBooks()
             val allBooks = if (booksResponse.isSuccessful) booksResponse.body() ?: emptyList() else emptyList()
 
-            // 2. Jika user sedang login, ambil transaksi dia
+            // 2. Jika user sedang login, ambil data User (Bookmarks) & Transaksi
             if (currentUserId != null) {
+                // A. Ambil Transaksi
                 val transactionsResponse = ApiConfig.getApiService().getUserTransactions(currentUserId!!)
                 val userTransactions = if (transactionsResponse.isSuccessful) transactionsResponse.body() ?: emptyList() else emptyList()
 
-                // 3. Gabungkan: Update status buku berdasarkan transaksi terakhir
-                allBooks.forEach { book ->
+                // B. Ambil User Profile untuk Sync Bookmarks
+                try {
+                    val userResponse = ApiConfig.getApiService().getUserById(currentUserId!!)
+                    if (userResponse.isSuccessful) {
+                        val user = userResponse.body()
+                        cachedBookmarks.clear()
+                        user?.bookmarks?.let { cachedBookmarks.addAll(it) }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error fetching user bookmarks", e)
+                }
+
+                // 3. Gabungkan: Update status buku.
+                // Gunakan .map() untuk membuat list baru agar tidak memodifikasi iterator (menghindari error val cannot be reassigned)
+                return@withContext allBooks.map { book ->
+                    // Apply bookmark & local state
+                    var processedBook = applyLocalState(book)
+
                     // Cari transaksi terakhir untuk buku ini
                     val activeTx = userTransactions.find { tx ->
-                        // [PERBAIKAN LOGIKA] Cek tipe data bookId secara manual
                         val rawId = tx.bookId
                         val txBookId = when (rawId) {
                             is Map<*, *> -> rawId["_id"] as? String // Jika bentuknya Object (Populated)
                             is String -> rawId // Jika bentuknya String ID biasa
                             else -> rawId.toString()
                         }
-
-                        // Bandingkan ID
-                        txBookId == book.id
+                        txBookId == processedBook.id
                     }
 
                     if (activeTx != null) {
-                        book.status = activeTx.status
-                        book.isBorrowed = (activeTx.status == "BORROWED")
+                        processedBook = processedBook.copy(
+                            status = activeTx.status,
+                            isBorrowed = (activeTx.status == "BORROWED")
+                        )
                     }
+                    processedBook
                 }
             }
-            return@withContext allBooks
+
+            // Jika tidak login, tetap jalankan applyLocalState untuk guest
+            return@withContext allBooks.map { applyLocalState(it) }
+
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching books", e)
             return@withContext emptyList()
+        }
+    }
+
+    // [BARU] Toggle Bookmark ke API
+    suspend fun toggleBookmark(bookId: String): Boolean = withContext(Dispatchers.IO) {
+        if (currentUserId == null) return@withContext false
+
+        // 1. Optimistic Update (Update Lokal Dulu biar Cepat)
+        val wasBookmarked = cachedBookmarks.contains(bookId)
+        if (wasBookmarked) {
+            cachedBookmarks.remove(bookId)
+        } else {
+            cachedBookmarks.add(bookId)
+        }
+
+        // 2. Kirim Request ke API
+        try {
+            val body = mapOf("bookId" to bookId)
+            val response = ApiConfig.getApiService().toggleBookmark(currentUserId!!, body)
+
+            if (!response.isSuccessful) {
+                // Revert jika gagal
+                if (wasBookmarked) cachedBookmarks.add(bookId) else cachedBookmarks.remove(bookId)
+                return@withContext false
+            }
+            return@withContext true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error toggling bookmark API", e)
+            // Revert jika error network
+            if (wasBookmarked) cachedBookmarks.add(bookId) else cachedBookmarks.remove(bookId)
+            return@withContext false
         }
     }
 
@@ -126,11 +190,10 @@ object BookRepository {
             val response = ApiConfig.getApiService().getUserTransactions(userId)
             if (response.isSuccessful) {
                 val transactions = response.body() ?: emptyList()
-                val allBooks = getAllBooksWithStatus()
+                val allBooks = getAllBooksWithStatus() // Use the one with status logic
 
                 return@withContext allBooks.filter { book ->
                     transactions.any { tx ->
-                        // Logika ekstraksi ID yang sama
                         val rawId = tx.bookId
                         val txBookId = if (rawId is Map<*, *>) rawId["_id"] as? String else rawId.toString()
                         txBookId == book.id
@@ -144,8 +207,8 @@ object BookRepository {
     }
 
     fun toggleBookmarkStatus(bookId: String): Boolean {
-        val state = localBookState. getOrPut(bookId) { LocalBookState() }
-        state.isBookmarked = !state.isBookmarked
+        // Deprecated local toggle, now handled via toggleBookmark()
+        // Keeping method signature to prevent breaking changes if called elsewhere synchronously
         return true
     }
 
@@ -160,12 +223,8 @@ object BookRepository {
     }
 
     suspend fun getAllBooks(): List<Book> {
-        val response = ApiConfig.getApiService().getBooks()
-        return if (response.isSuccessful) {
-            response.body() ?: emptyList()
-        } else {
-            emptyList()
-        }
+        // Redirect to new logic
+        return getAllBooksWithStatus()
     }
 
     // ✅ UPDATED WITH LOGGING
@@ -178,20 +237,21 @@ object BookRepository {
             Log.d(TAG, "📡 Response success: ${response.isSuccessful}")
             Log.d(TAG, "📡 Response body: ${response.body()}")
 
-            if (response. isSuccessful) {
+            if (response.isSuccessful) {
                 val book = response.body()
                 if (book != null) {
                     Log.d(TAG, "✅ Book parsed successfully:  ${book.title}")
-                    applyLocalState(book)
+                    // Apply local state overlay using the return value
+                    return applyLocalState(book)
                 } else {
-                    Log. e(TAG, "❌ Response body is NULL!")
+                    Log.e(TAG, "❌ Response body is NULL!")
                     null
                 }
             } else {
                 Log.e(TAG, "❌ Response NOT successful!  Error:  ${response.errorBody()?.string()}")
                 null
             }
-        } catch (e:  Exception) {
+        } catch (e: Exception) {
             Log.e(TAG, "💥 EXCEPTION in getBookById: ${e.message}", e)
             e.printStackTrace()
             null
@@ -200,15 +260,15 @@ object BookRepository {
 
     suspend fun updateBook(updatedBook: Book): Boolean {
         return try {
-            val response = ApiConfig.getApiService().updateBook(updatedBook. id, updatedBook)
+            val response = ApiConfig.getApiService().updateBook(updatedBook.id, updatedBook)
             if (response.isSuccessful) {
                 // Update local state if needed
                 val state = localBookState[updatedBook.id]
                 if (state != null) {
                     state.isAvailable = updatedBook.isAvailable
                     state.isBorrowed = updatedBook.isBorrowed
-                    state. borrowedDate = updatedBook. borrowedDate
-                    state. dueDate = updatedBook. dueDate
+                    state.borrowedDate = updatedBook.borrowedDate
+                    state.dueDate = updatedBook.dueDate
                 }
                 true
             } else {
@@ -242,54 +302,60 @@ object BookRepository {
 
     // --- Transaction Request Management (uses local state) ---
     fun addPendingRequest(book: Book, memberName: String, memberId: String): Boolean {
-        if (book.isBorrowed || pendingRequests.any { it. book. id == book.id }) { return false }
-        // Update local state to mark as unavailable
+        if (book.isBorrowed || pendingRequests.any { it.book.id == book.id }) { return false }
+
         val state = localBookState.getOrPut(book.id) { LocalBookState() }
         state.isAvailable = false
-        val request = PendingRequest(requestId = nextRequestId.getAndIncrement().toString(), book = book, memberName = memberName, memberId = memberId, requestDate = "Hari Ini")
+
+        val request = PendingRequest(
+            requestId = nextRequestId.getAndIncrement().toString(),
+            book = book,
+            memberName = memberName,
+            memberId = memberId,
+            requestDate = "Hari Ini"
+        )
         pendingRequests.add(request)
         return true
     }
+
     fun getPendingRequests(): List<PendingRequest> = pendingRequests.toList()
+
     fun approveRequest(requestId: String): Boolean {
-        val request = pendingRequests. find { it.requestId == requestId } ?: return false
+        val request = pendingRequests.find { it.requestId == requestId } ?: return false
 
-        // Update local state for the book
-        val state = localBookState.getOrPut(request. book.id) { LocalBookState() }
+        val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
 
-        // 1. Dapatkan tanggal hari ini
         val calendar = Calendar.getInstance()
-        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale. getDefault())
+        val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
         val borrowedDate = dateFormat.format(calendar.time)
 
-        // 2. Tambahkan 14 hari untuk jatuh tempo
         calendar.add(Calendar.DAY_OF_YEAR, 14)
         val dueDate = dateFormat.format(calendar.time)
 
-        // 3. Update local state
         state.isAvailable = false
         state.isBorrowed = true
         state.borrowedDate = borrowedDate
         state.dueDate = dueDate
 
-        // Hapus dari daftar permintaan
         val iterator = pendingRequests.iterator()
         while (iterator.hasNext()) {
             if (iterator.next().requestId == requestId) {
-                iterator. remove()
+                iterator.remove()
                 return true
             }
         }
         return false
     }
+
     fun rejectRequest(requestId: String): Boolean {
-        val request = pendingRequests.find { it. requestId == requestId } ?:  return false
-        // Update local state to mark as available again
-        val state = localBookState.getOrPut(request. book.id) { LocalBookState() }
+        val request = pendingRequests.find { it.requestId == requestId } ?: return false
+
+        val state = localBookState.getOrPut(request.book.id) { LocalBookState() }
         state.isAvailable = true
+
         val iterator = pendingRequests.iterator()
         while (iterator.hasNext()) {
-            if (iterator. next().requestId == requestId) {
+            if (iterator.next().requestId == requestId) {
                 iterator.remove()
                 return true
             }
@@ -298,20 +364,14 @@ object BookRepository {
     }
 
     // --- Registration Management (UPDATED:  Instant Activation) ---
-
-    /**
-     * Mendaftarkan anggota baru dan langsung mengaktifkannya (Req: Registrasi -> Langsung Login).
-     * Anggota baru memiliki status isVerified = false.
-     */
     fun registerNewMember(
         fullName: String,
         nik: String,
-        email:  String,
+        email: String,
         addressRtRw: String,
         isChild: Boolean,
         parentName: String?
     ): User? {
-        // Cek duplikasi NIK/Email (simulasi)
         if (activeMembers.any { it.email == email || it.nik == nik }) {
             return null
         }
@@ -325,7 +385,7 @@ object BookRepository {
             isChild = isChild,
             parentName = parentName,
             status = "Active",
-            isVerified = false // Anggota baru selalu belum diverifikasi
+            isVerified = false
         )
         activeMembers.add(newUser)
         return newUser
@@ -341,12 +401,8 @@ object BookRepository {
         }
     }
 
-    /**
-     * Fungsi yang digunakan Admin untuk memverifikasi status RT/RW (Verifikasi Warga).
-     */
     suspend fun toggleVerificationStatus(userId: String, currentStatus: Boolean): Boolean {
         return try {
-            // Mengirim status kebalikan dari saat ini
             val newStatus = !currentStatus
             val body = mapOf("isVerified" to newStatus)
             val response = ApiConfig.getApiService().updateUserStatus(userId, body)
@@ -357,7 +413,7 @@ object BookRepository {
     }
 
     fun updateMember(updatedUser: User): Boolean {
-        val index = activeMembers.indexOfFirst { it.id == updatedUser.id };
+        val index = activeMembers.indexOfFirst { it.id == updatedUser.id }
         return if (index != -1) { activeMembers[index] = updatedUser; true } else { false }
     }
 
@@ -372,28 +428,26 @@ object BookRepository {
 
     suspend fun checkUserStatus(userId: String): Boolean {
         return try {
-            val response = ApiConfig. getApiService().getUserById(userId)
+            val response = ApiConfig.getApiService().getUserById(userId)
             if (response.isSuccessful) {
                 val user = response.body()
-                // Return true jika user ada DAN sudah diverifikasi
                 user != null && user.isVerified
             } else {
-                false // User tidak ditemukan atau error (anggap invalid untuk keamanan)
+                false
             }
         } catch (e: Exception) {
-            true // Jika error jaringan, jangan logout user (opsional, tergantung kebijakan)
+            true
         }
     }
 
     // [BARU] Fungsi Get Profile untuk Member & Admin
     suspend fun getUserProfile(token: String): User? {
         return try {
-            // Backend butuh format "Bearer <token>"
             val authHeader = "Bearer $token"
             val response = ApiConfig.getApiService().getProfile(authHeader)
 
             if (response.isSuccessful && response.body()?.success == true) {
-                response. body()?.user
+                response.body()?.user
             } else {
                 null
             }
@@ -416,7 +470,7 @@ object BookRepository {
             } else {
                 null
             }
-        } catch (e:  Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             null
         }
@@ -428,13 +482,7 @@ object BookRepository {
             if (response.isSuccessful) {
                 val allTransactions = response.body() ?: emptyList()
 
-                // Filter hanya yang statusnya PENDING
                 allTransactions.filter { it.status == "PENDING" }.map { tx ->
-
-                    // Mapping data Transaction -> PendingRequest
-                    // Note: Pastikan API mengirim object book & user (populate)
-                    // Jika bookId/userId masih String, app mungkin crash atau perlu penyesuaian
-
                     val bookTitle = if (tx.bookId is Map<*, *>) (tx.bookId["title"] as? String) ?: "Judul Tidak Diketahui" else "Buku ID: ${tx.bookId}"
                     val memberName = if (tx.userId is Map<*, *>) (tx.userId["fullName"] as? String) ?: "Member" else "Member ID: ${tx.userId}"
                     val bookObj = if (tx.bookId is Map<*, *>) Book(id = (tx.bookId["_id"] as? String) ?: "", title = bookTitle) else Book(title = bookTitle)
@@ -481,16 +529,20 @@ object BookRepository {
     }
 
     // --- Admin Data (Tetap) ---
-    fun getTopBooks(): Map<String, Int> { return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19) }
-    fun findMemberByNik(nik: String): User? { return activeMembers.find { it. nik == nik } }
+    fun getTopBooks(): Map<String, Int> {
+        return mapOf("To Kill a Mockingbird" to 45, "1984" to 38, "The Great Gatsby" to 32, "Atomic Habits" to 25, "Pride and Prejudice" to 19)
+    }
+
+    fun findMemberByNik(nik: String): User? {
+        return activeMembers.find { it.nik == nik }
+    }
+
     suspend fun getRecommendations(userId: String): List<Book> = withContext(Dispatchers.IO) {
         try {
             val response = ApiConfig.getApiService().getRecommendations(userId)
             if (response.isSuccessful) {
                 val books = response.body()?.data ?: emptyList()
-                // Opsional: Cek status availability/borrowed lokal juga jika perlu
-                books.forEach { applyLocalState(it) }
-                books
+                books.map { applyLocalState(it) } // Use map to avoid modification of loop variable
             } else {
                 emptyList()
             }

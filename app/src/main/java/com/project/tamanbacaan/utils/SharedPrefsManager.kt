@@ -1,10 +1,10 @@
 package com.caffeinatedr4t.tamanbacaan.utils
 
-import android.content.Context
+import android.content. Context
 import android.content.SharedPreferences
 import com.caffeinatedr4t.tamanbacaan.models.User
-import com.caffeinatedr4t.tamanbacaan.utils.Constants.KEY_USER
-import com.google.gson.Gson
+import com.caffeinatedr4t. tamanbacaan.utils.Constants.KEY_USER
+import com. google.gson.Gson
 
 class SharedPrefsManager(context: Context) {
 
@@ -14,6 +14,8 @@ class SharedPrefsManager(context: Context) {
     fun saveUserSession(user: User, token: String) {
         prefs.edit().apply {
             putString(Constants.KEY_USER, Gson().toJson(user))
+            putString(Constants.KEY_USER_ID, user.id)  // ✅ SAVE USER ID
+            putString(Constants.KEY_USER_ROLE, user.role)  // ✅ SAVE USER ROLE
             putString(Constants.KEY_USER_TOKEN, token)
             putBoolean(Constants.KEY_IS_LOGGED_IN, true)
             apply()
@@ -30,11 +32,21 @@ class SharedPrefsManager(context: Context) {
     }
 
     fun getUserRole(): String? {
-        return prefs.getString(Constants.KEY_USER_ROLE, null)
+        // Try direct storage first
+        val directRole = prefs.getString(Constants. KEY_USER_ROLE, null)
+        if (directRole != null) return directRole
+
+        // Fallback to User object
+        return getUser()?.role
     }
 
     fun getUserId(): String? {
-        return prefs.getString(Constants.KEY_USER_ID, null)
+        // Try direct storage first
+        val directId = prefs.getString(Constants.KEY_USER_ID, null)
+        if (directId != null) return directId
+
+        // Fallback to User object
+        return getUser()?.id
     }
 
     fun getUserToken(): String? {
@@ -42,7 +54,7 @@ class SharedPrefsManager(context: Context) {
     }
 
     fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(Constants.KEY_IS_LOGGED_IN, false)
+        return prefs.getBoolean(Constants. KEY_IS_LOGGED_IN, false)
     }
 
     fun clearSession() {

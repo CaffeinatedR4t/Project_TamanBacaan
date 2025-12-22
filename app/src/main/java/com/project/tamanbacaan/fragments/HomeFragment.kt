@@ -43,6 +43,7 @@ class HomeFragment : Fragment() {
     private lateinit var recommendationAdapter: RecommendationAdapter
     private lateinit var welcomeSection: LinearLayout
     private lateinit var tvRecommendationTitle: TextView
+
     /**
      * Membuat dan mengembalikan hierarki tampilan fragmen.
      */
@@ -65,8 +66,8 @@ class HomeFragment : Fragment() {
         tvRecommendationTitle = view.findViewById(R.id.tvRecommendationTitle)
         rvRecommendations = view.findViewById(R.id.rvRecommendations)
 
+        setupRecommendationList(view) // [Moved up for cleaner init]
         setupRecyclerView(view)
-        setupRecommendationList(view)
         setupViewModel()
         loadBooks()
     }
@@ -79,16 +80,26 @@ class HomeFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerViewBooks)
 
         // [PENTING] Isi lambda ini! Jangan dikosongkan.
-        bookAdapter = BookAdapter(booksList) { book ->
-            // Saat tombol diklik, panggil ViewModel
-            if (book.status == "BORROWED") {
-                // Logic Return (bisa ditambahkan di ViewModel nanti)
-                Toast.makeText(context, "Fitur kembalikan ada di tab Pinjaman", Toast.LENGTH_SHORT).show()
-            } else {
-                // Logic Request Pinjam
-                bookViewModel.requestBorrow(book)
+        // [UPDATE] Added onBookmarkClick callback
+        bookAdapter = BookAdapter(
+            books = booksList,
+            onActionClick = { book ->
+                // Saat tombol diklik, panggil ViewModel
+                if (book.status == "BORROWED") {
+                    // Logic Return (bisa ditambahkan di ViewModel nanti)
+                    Toast.makeText(context, "Fitur kembalikan ada di tab Pinjaman", Toast.LENGTH_SHORT).show()
+                } else {
+                    // Logic Request Pinjam
+                    bookViewModel.requestBorrow(book)
+                }
+            },
+            onBookmarkClick = { book ->
+                // [BARU] Panggil Repository untuk toggle bookmark
+                lifecycleScope.launch {
+                    BookRepository.toggleBookmark(book.id)
+                }
             }
-        }
+        )
 
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
@@ -99,7 +110,6 @@ class HomeFragment : Fragment() {
     /**
      * Menyiapkan ViewModel dan observers untuk mengambil data buku dari API.
      */
-
     private fun setupRecommendationList(view: View) {
 
         // Inisialisasi Adapter dengan list kosong dan logika klik
@@ -120,7 +130,9 @@ class HomeFragment : Fragment() {
     private fun setupViewModel() {
         bookViewModel = ViewModelProvider(this)[BookViewModel::class.java]
 
+        // Fetch Recommendations & Books
         bookViewModel.fetchRecommendations()
+
         bookViewModel.books.observe(viewLifecycleOwner) { books ->
             booksList.clear()
             booksList.addAll(books)
@@ -180,9 +192,10 @@ class HomeFragment : Fragment() {
      * @return List<Book> Daftar semua buku di perpustakaan.
      */
     internal suspend fun getSampleLibraryBooks(): List<Book> {
-        return BookRepository.getAllBooks()
+        return BookRepository.getAllBooksWithStatus() // [UPDATE] Use WithStatus version
     }
 
+    // [RESTORED] Previously deleted method
     fun getBooks(): List<Book> {
         lifecycleScope.launch {
             booksList.clear()

@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -8,14 +9,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -49,14 +53,11 @@ class SearchFragment : Fragment() {
 
         setupRecyclerView()
         setupSearchListener()
-
-        // Load data awal
         loadData()
     }
 
     private fun loadData() {
         lifecycleScope.launch {
-            // [FIX] Pastikan User ID tersetting agar status tombol benar
             if (BookRepository.currentUserId == null) {
                 val prefs = SharedPrefsManager(requireContext())
                 val user = prefs.getUser()
@@ -65,8 +66,6 @@ class SearchFragment : Fragment() {
                 }
             }
 
-            // [FIX] Gunakan getAllBooksWithStatus()
-            // Agar tombol 'Request' berubah jadi 'Pending' jika user sudah request
             val books = BookRepository.getAllBooksWithStatus()
 
             allBooks.clear()
@@ -74,7 +73,6 @@ class SearchFragment : Fragment() {
 
             setupCategoryChips()
 
-            // Jika ada teks pencarian sebelumnya, filter ulang
             if (etSearch.text.toString().isNotEmpty()) {
                 filterBooks(etSearch.text.toString())
             }
@@ -82,7 +80,35 @@ class SearchFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        bookAdapter = BookAdapter(searchResults) { _ -> }
+        // [FIX] Menggunakan Named Arguments
+        bookAdapter = BookAdapter(
+            books = searchResults,
+            onActionClick = { book ->
+                // Logic Borrow (Pinjam) dari halaman Search
+                lifecycleScope.launch {
+                    val userId = BookRepository.currentUserId
+                    if (userId != null) {
+                        val success = BookRepository.requestBorrowBook(book, userId)
+                        if (success) {
+                            Toast.makeText(context, "Permintaan pinjam berhasil", Toast.LENGTH_SHORT).show()
+                            loadData() // Refresh status button
+                        } else {
+                            Toast.makeText(context, "Gagal meminjam buku", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Silakan login terlebih dahulu", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onBookmarkClick = { book ->
+                // Logic Bookmark
+                lifecycleScope.launch {
+                    BookRepository.toggleBookmark(book.id)
+                    // Tidak perlu reloadData() karena adapter update UI secara optimistic
+                }
+            }
+        )
+
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = bookAdapter

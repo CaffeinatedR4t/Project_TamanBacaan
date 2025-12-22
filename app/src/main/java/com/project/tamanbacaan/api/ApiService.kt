@@ -109,4 +109,8 @@ interface ApiService {
     @PUT("transactions/{id}/reject")
     suspend fun rejectTransaction(@Path("id") id: String): Response<Transaction>
 
+    // Toggle Bookmark
+    @PUT("users/{id}/bookmark")
+    suspend fun toggleBookmark(@Path("id") id: String, @Body body: Map<String, String>): Response<Map<String, Any>>
+
 }

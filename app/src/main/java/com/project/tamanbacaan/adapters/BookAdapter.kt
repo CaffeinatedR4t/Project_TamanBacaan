@@ -14,14 +14,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.caffeinatedr4t.tamanbacaan.R
 import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
-import com.caffeinatedr4t.tamanbacaan.data.BookRepository
 import com.caffeinatedr4t.tamanbacaan.models.Book
 import com.caffeinatedr4t.tamanbacaan.utils.Constants
 
-// [UBAH] Tambahkan callback 'onActionClick' di constructor
+// [UBAH] Tambahkan callback 'onBookmarkClick' di constructor
 class BookAdapter(
     private val books: List<Book>,
-    private val onActionClick: (Book) -> Unit
+    private val onActionClick: (Book) -> Unit,
+    private val onBookmarkClick: (Book) -> Unit = {} // [BARU] Default empty biar aman jika tidak dipassing
 ) : RecyclerView.Adapter<BookAdapter.BookViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookViewHolder {
@@ -57,6 +57,23 @@ class BookAdapter(
                 .placeholder(R.drawable.ic_book_placeholder)
                 .into(bookCover)
 
+            // [BARU] Set Icon Bookmark berdasarkan status
+            if (book.isBookmarked) {
+                bookmarkButton.setImageResource(R.drawable.ic_bookmark_filled)
+            } else {
+                bookmarkButton.setImageResource(R.drawable.ic_bookmark)
+            }
+
+            // [BARU] Listener Bookmark
+            bookmarkButton.setOnClickListener {
+                // Optimistic UI Update (Ganti icon langsung)
+                book.isBookmarked = !book.isBookmarked
+                notifyItemChanged(adapterPosition)
+
+                // Panggil callback agar Activity/Fragment/Repo memproses ke API
+                onBookmarkClick(book)
+            }
+
             val currentStatus = book.status
 
             when (currentStatus) {
@@ -75,7 +92,6 @@ class BookAdapter(
                     statusText.setTextColor(Color.BLUE)
 
                     actionButton.setOnClickListener {
-                        // [FIX] Panggil callback asli untuk Return
                         onActionClick(book)
                     }
                 }
@@ -89,7 +105,6 @@ class BookAdapter(
                         statusText.setTextColor(Color.GREEN)
 
                         actionButton.setOnClickListener {
-                            // [FIX] Panggil callback asli untuk Request
                             onActionClick(book)
                         }
                     } else {
@@ -100,11 +115,6 @@ class BookAdapter(
                         statusText.setTextColor(Color.RED)
                     }
                 }
-            }
-
-            bookmarkButton.setOnClickListener {
-                // Logic bookmark (lokal/API bookmark terpisah)
-                Toast.makeText(itemView.context, "Fitur Bookmark", Toast.LENGTH_SHORT).show()
             }
 
             itemView.setOnClickListener {

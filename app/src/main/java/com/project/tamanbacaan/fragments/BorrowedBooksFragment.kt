@@ -1,5 +1,6 @@
 package com.caffeinatedr4t.tamanbacaan.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.caffeinatedr4t.tamanbacaan.R
+import com.caffeinatedr4t.tamanbacaan.activities.BookDetailActivity
 import com.caffeinatedr4t.tamanbacaan.adapters.BookAdapter
 import com.caffeinatedr4t.tamanbacaan.data.BookRepository
+import com.caffeinatedr4t.tamanbacaan.utils.Constants
 import com.caffeinatedr4t.tamanbacaan.utils.SharedPrefsManager
 import kotlinx.coroutines.launch
 
@@ -23,7 +26,6 @@ class BorrowedBooksFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var bookAdapter: BookAdapter
-    // TextView untuk pesan jika tidak ada buku
     private var emptyTextView: TextView? = null
 
     override fun onCreateView(
@@ -36,9 +38,6 @@ class BorrowedBooksFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView = view.findViewById(R.id.recyclerViewMyBooks)
-        // Jika Anda punya TextView untuk empty state di layout, inisialisasi di sini
-        // emptyTextView = view.findViewById(R.id.tvEmptyMyBooks)
-
         recyclerView.layoutManager = LinearLayoutManager(context)
 
         loadMyBooks()
@@ -51,22 +50,18 @@ class BorrowedBooksFragment : Fragment() {
 
     private fun loadMyBooks() {
         lifecycleScope.launch {
-            // 1. Cek apakah ID ada di Repository
             var userId = BookRepository.currentUserId
 
-            // 2. [SELF-HEALING] Jika null, coba ambil paksa dari SharedPreferences
             if (userId == null) {
                 val prefs = SharedPrefsManager(requireContext())
                 val user = prefs.getUser()
                 if (user != null && !user.id.isNullOrEmpty()) {
                     userId = user.id
-                    BookRepository.setUserId(userId) // Simpan kembali ke repo
+                    BookRepository.setUserId(userId)
                 }
             }
 
-            // 3. Eksekusi jika ID valid
             if (userId != null) {
-                // Gunakan getAllBooksWithStatus agar status PENDING/BORROWED terbaca
                 val allBooks = BookRepository.getAllBooksWithStatus()
 
                 // Filter hanya buku yang PENDING atau BORROWED
@@ -74,19 +69,29 @@ class BorrowedBooksFragment : Fragment() {
                     it.status == "PENDING" || it.status == "BORROWED"
                 }
 
-                bookAdapter = BookAdapter(myBooks) { _ ->
-                    // Handle klik item jika perlu
-                }
+                // [FIX] Menggunakan Named Arguments untuk mengatasi error parameter
+                bookAdapter = BookAdapter(
+                    books = myBooks,
+                    onActionClick = { book ->
+                        // Saat klik tombol action (Kembalikan/Detail)
+                        val intent = Intent(context, BookDetailActivity::class.java)
+                        intent.putExtra(Constants.EXTRA_BOOK_ID, book.id)
+                        startActivity(intent)
+                    },
+                    onBookmarkClick = { book ->
+                        // Logic Bookmark
+                        lifecycleScope.launch {
+                            BookRepository.toggleBookmark(book.id)
+                        }
+                    }
+                )
                 recyclerView.adapter = bookAdapter
 
-                // Tampilkan pesan/toast jika kosong
                 if (myBooks.isEmpty()) {
-                    // Jika ingin menggunakan Toast:
-                    // Toast.makeText(context, "Belum ada buku yang dipinjam", Toast.LENGTH_SHORT).show()
+                    // Optional: Show empty state
                 }
 
             } else {
-                // Jika benar-benar tidak ada ID (misal belum login), arahkan keluar
                 Toast.makeText(context, "Sesi habis, silakan login ulang.", Toast.LENGTH_SHORT).show()
             }
         }

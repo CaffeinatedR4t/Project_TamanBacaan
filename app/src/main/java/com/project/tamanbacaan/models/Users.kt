@@ -29,5 +29,8 @@ data class User(
 
     val isVerified: Boolean = false,
 
-    val password: String = ""
+    val password: String = "",
+
+    val bookmarks: List<String> = emptyList()
+
 )

@@ -66,7 +66,8 @@ class BookmarkedFragment : Fragment() {
      */
     private fun setupRecyclerView() {
         // Inisialisasi adapter dengan list kosong terlebih dahulu
-        bookAdapter = BookAdapter(emptyList()) { /* Klik item ditangani di adapter */ }
+        // [UPDATE] Added empty callbacks to satisfy constructor
+        bookAdapter = BookAdapter(emptyList(), {}, {})
         recyclerView.apply {
             // Mengatur layout manager ke LinearLayoutManager (daftar vertikal)
             layoutManager = LinearLayoutManager(context)
@@ -82,11 +83,25 @@ class BookmarkedFragment : Fragment() {
     private fun loadBookmarkedBooks() {
         // Use lifecycleScope to call suspend function
         lifecycleScope.launch {
-            // Ambil semua buku dari repository, lalu filter yang statusnya isBookmarked = true
-            val bookmarkedBooks = BookRepository.getAllBooks().filter { it.isBookmarked }
+            // [UPDATE] Gunakan getAllBooksWithStatus agar status bookmark sinkron dengan API/User Profile
+            val allBooks = BookRepository.getAllBooksWithStatus()
+
+            // Filter yang statusnya isBookmarked = true
+            val bookmarkedBooks = allBooks.filter { it.isBookmarked }
 
             // Membuat adapter baru dengan data yang sudah difilter dan mengaturnya ke RecyclerView
-            bookAdapter = BookAdapter(bookmarkedBooks) { }
+            bookAdapter = BookAdapter(
+                books = bookmarkedBooks,
+                onActionClick = { /* Klik action (Borrow) tidak dihandle di tab ini */ },
+                onBookmarkClick = { book ->
+                    // [BARU] Logic Remove Bookmark
+                    lifecycleScope.launch {
+                        BookRepository.toggleBookmark(book.id)
+                        // Refresh list setelah unbookmark agar item hilang dari layar
+                        loadBookmarkedBooks()
+                    }
+                }
+            )
             recyclerView.adapter = bookAdapter
         }
     }
